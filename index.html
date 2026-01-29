@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Development Team Website</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow-x: hidden;
+    }
+    
+    /* ===== APP CONTAINER ===== */
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .app.dark {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    }
+    
+    /* ===== NAVBAR ===== */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .app.dark .navbar {
+      background: rgba(15, 12, 41, 0.95);
+      border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .brand-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .app.dark .brand-text {
+      background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .navbar-links {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+    
+    .app.dark .nav-link {
+      background: rgba(102, 126, 234, 0.15);
+      color: #a5b4fc;
+    }
+    
+    .nav-link:hover {
+      background: rgba(102, 126, 234, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    .nav-link.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .settings-btn {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #667eea;
+    }
+    
+    .settings-btn:hover {
+      background: rgba(102, 126, 234, 0.1);
+      transform: rotate(90deg);
+    }
+    
+    .dev-mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .toggle-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .app.dark .toggle-label {
+      color: #a5b4fc;
+    }
+    
+    .toggle-switch {
+      width: 50px;
+      height: 26px;
+      background: #ccc;
+      border: none;
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .toggle-switch.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .toggle-slider {
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(24px) rotate(90deg);
+    }
+    
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    
+    .page-content {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .app.dark .page-content {
+      background: rgba(15, 12, 41, 0.8);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .page-title {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .app.dark .page-title {
+      background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* ===== HERO SECTION ===== */
+    .hero-section {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    
+    .hero-title {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .app.dark .hero-title {
+      background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.5rem;
+      color: #666;
+      margin-bottom: 3rem;
+    }
+    
+    .app.dark .hero-subtitle {
+      color: #a5b4fc;
+    }
+    
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
+      border-radius: 20px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-10px);
+    }
+    
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+    
+    /* ===== FEATURES GRID ===== */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    
+    .feature-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    
+    .app.dark .feature-card {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-10px);
+      border-color: #667eea;
+      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+    
+    .app.dark .feature-card h3 {
+      color: #a5b4fc;
+    }
+    
+    .feature-card p {
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .app.dark .feature-card p {
+      color: #cbd5e1;
+    }
+    
+    /* ===== PROJECTS ===== */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    
+    .project-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    
+    .app.dark .project-card {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .project-card:hover {
+      transform: translateY(-10px);
+      border-color: #667eea;
+      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .project-image {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+    }
+    
+    .project-content {
+      padding: 1.5rem;
+    }
+    
+    .project-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #667eea;
+    }
+    
+    .app.dark .project-title {
+      color: #a5b4fc;
+    }
+    
+    .project-description {
+      color: #666;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    
+    .app.dark .project-description {
+      color: #cbd5e1;
+    }
+    
+    .project-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #999;
+      margin-bottom: 1rem;
+    }
+    
+    /* ===== BUTTONS ===== */
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(245, 87, 108, 0.4);
+    }
+    
+    .btn-icon {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #667eea;
+    }
+    
+    .btn-icon:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .edit-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin-left: 0.5rem;
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+    }
+    
+    .edit-btn:hover {
+      opacity: 1;
+    }
+    
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal {
+      background: white;
+      padding: 3rem;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      animation: slideUp 0.3s ease;
+    }
+    
+    .app.dark .modal {
+      background: #1e1b4b;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .modal h2 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .modal-input {
+      width: 100%;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .app.dark .modal-input {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    /* ===== ADMIN PANEL ===== */
+    .admin-panel {
+      position: fixed;
+      right: -500px;
+      top: 0;
+      bottom: 0;
+      width: 500px;
+      background: white;
+      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+      transition: right 0.3s ease;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .app.dark .admin-panel {
+      background: #1e1b4b;
+      border-left: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .admin-panel.open {
+      right: 0;
+    }
+    
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .app.dark .admin-header {
+      border-bottom-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .admin-header h2 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .admin-tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .app.dark .admin-tabs {
+      border-bottom-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .admin-tab {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .app.dark .admin-tab {
+      color: #a5b4fc;
+    }
+    
+    .admin-tab:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .admin-tab.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .admin-content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    
+    .admin-overview {
+      text-align: center;
+    }
+    
+    .admin-overview h3 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+    
+    .app.dark .admin-overview h3 {
+      color: #a5b4fc;
+    }
+    
+    .admin-role {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #666;
+    }
+    
+    .app.dark .admin-role {
+      color: #cbd5e1;
+    }
+    
+    .admin-permissions {
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      color: #999;
+    }
+    
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1.5rem;
+      border-radius: 15px;
+      color: white;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    
+    /* ===== CLOUD ===== */
+    .cloud-selector {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .cloud-btn {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      color: #667eea;
+    }
+    
+    .app.dark .cloud-btn {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: #a5b4fc;
+    }
+    
+    .cloud-btn:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+    
+    .cloud-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .files-list {
+      margin-top: 1rem;
+    }
+    
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .app.dark .file-item {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .file-item:hover {
+      border-color: #667eea;
+      transform: translateX(5px);
+    }
+    
+    .file-icon {
+      font-size: 2rem;
+    }
+    
+    .file-info {
+      flex: 1;
+    }
+    
+    .file-name {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 0.25rem;
+    }
+    
+    .app.dark .file-name {
+      color: #a5b4fc;
+    }
+    
+    .file-meta {
+      font-size: 0.85rem;
+      color: #999;
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .no-files {
+      text-align: center;
+      color: #999;
+      padding: 2rem;
+    }
+    
+    .cloud-prompt {
+      text-align: center;
+      padding: 3rem;
+      color: #999;
+    }
+    
+    /* ===== CHAT ===== */
+    .chat-messages {
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 12px;
+    }
+    
+    .chat-message {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .chat-message.own-message {
+      flex-direction: row-reverse;
+    }
+    
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .message-content {
+      flex: 1;
+      max-width: 70%;
+    }
+    
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .message-header strong {
+      color: #667eea;
+    }
+    
+    .app.dark .message-header strong {
+      color: #a5b4fc;
+    }
+    
+    .message-time {
+      color: #999;
+    }
+    
+    .message-text {
+      background: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      color: #333;
+    }
+    
+    .app.dark .message-text {
+      background: rgba(30, 27, 75, 0.6);
+      color: #cbd5e1;
+    }
+    
+    .own-message .message-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .no-messages {
+      text-align: center;
+      color: #999;
+      padding: 2rem;
+    }
+    
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .chat-input {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .app.dark .chat-input {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    .call-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .call-btn {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .call-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .call-btn.active {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .control-btn {
+      padding: 0.75rem;
+      border: 2px solid #667eea;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+      color: #667eea;
+      transition: all 0.3s ease;
+    }
+    
+    .app.dark .control-btn {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: #a5b4fc;
+    }
+    
+    .control-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .control-btn.disabled {
+      opacity: 0.5;
+      background: #e0e0e0;
+      border-color: #e0e0e0;
+      color: #999;
+    }
+    
+    .control-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .call-status {
+      background: rgba(102, 126, 234, 0.1);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .app.dark .call-status {
+      background: rgba(102, 126, 234, 0.2);
+      color: #a5b4fc;
+    }
+    
+    /* ===== EDIT ===== */
+    .edit-actions {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .edit-info {
+      background: rgba(102, 126, 234, 0.1);
+      padding: 1.5rem;
+      border-radius: 12px;
+      color: #667eea;
+      line-height: 1.8;
+    }
+    
+    .app.dark .edit-info {
+      background: rgba(102, 126, 234, 0.2);
+      color: #a5b4fc;
+    }
+    
+    /* ===== SEARCH BAR ===== */
+    .search-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .search-input {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .app.dark .search-input {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .navbar-links {
+        display: none;
+      }
+      
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.2rem;
+      }
+      
+      .admin-panel {
+        width: 100%;
+        right: -100%;
+      }
+      
+      .features-grid,
+      .projects-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* ===== UTILITY ===== */
+    .hidden {
+      display: none;
+    }
+    
+    svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Logo" class="brand-logo">
+        <span class="brand-text">Development Team</span>
+      </div>
+      
+      <div class="navbar-links">
+        <button class="nav-link active" onclick="changePage('home')">
+          <svg><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Home
+        </button>
+        <button class="nav-link" onclick="changePage('about')">
+          <svg><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          About Us
+        </button>
+        <button class="nav-link" onclick="changePage('contact')">
+          <svg><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Contact
+        </button>
+        <button class="nav-link" onclick="changePage('community')">
+          <svg><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Community
+        </button>
+        <button class="nav-link" onclick="changePage('roblox')">
+          <svg><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>
+          Roblox
+        </button>
+        <button class="nav-link" onclick="changePage('creations')">
+          <svg><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Creations
+        </button>
+      </div>
+      
+      <div class="navbar-actions">
+        <button class="settings-btn" onclick="toggleTheme()">
+          <svg><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+        <div class="dev-mode-toggle">
+          <span class="toggle-label">Dev Mode</span>
+          <button class="toggle-switch" id="devToggle" onclick="toggleDevMode()">
+            <div class="toggle-slider"></div>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div id="pageContent" class="page-content">
+        <!-- Content will be rendered here -->
+      </div>
+    </main>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="admin-panel">
+      <div class="admin-header">
+        <h2>Admin Panel</h2>
+        <button class="btn-icon" onclick="closeAdminPanel()">
+          <svg><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="changeAdminSection('overview')">Overview</button>
+        <button class="admin-tab" onclick="changeAdminSection('cloud')">
+          <svg><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+          Cloud
+        </button>
+        <button class="admin-tab" onclick="changeAdminSection('chat')">
+          <svg><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Chat
+        </button>
+        <button class="admin-tab" onclick="changeAdminSection('edit')">
+          <svg><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          Edit
+        </button>
+      </div>
+      
+      <div id="adminContent" class="admin-content">
+        <!-- Admin content will be rendered here -->
+      </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2 id="authTitle">Developer Authentication</h2>
+        <div id="authContent">
+          <!-- Auth form will be rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ STATE ============
+    let state = {
+      currentPage: 'home',
+      theme: 'light',
+      devModeActive: false,
+      showAuthModal: false,
+      authStep: 'code',
+      currentUser: null,
+      adminMenuOpen: false,
+      adminSection: 'overview',
+      editMode: false,
+      editHistory: [],
+      editHistoryIndex: -1,
+      cloudView: null,
+      personalFiles: [],
+      devCloudFiles: [],
+      chatMessages: [],
+      chatInput: '',
+      inCall: false,
+      micEnabled: true,
+      videoEnabled: true,
+      screenSharing: false,
+      projects: [
+        {
+          id: 1,
+          title: 'E-Commerce Platform',
+          description: 'Full-stack online shopping website with payment integration',
+          date: '2024-01-15',
+          image: '🛒',
+          link: '#',
+          poster: 'ThéoDevO'
+        },
+        {
+          id: 2,
+          title: 'Task Management App',
+          description: 'Collaborative task tracking with real-time updates',
+          date: '2024-01-10',
+          image: '📋',
+          link: '#',
+          poster: 'GabrielDevCoO'
+        }
+      ],
+      searchQuery: '',
+      editableTexts: {
+        heroTitle: { text: 'Welcome to Development Team', author: 'System', editable: true },
+        heroSubtitle: { text: 'Building the future, one project at a time', author: 'System', editable: true },
+        aboutIntro: { text: 'Development Team is a passionate group of developers, designers, and creators dedicated to building exceptional digital experiences.', author: 'System', editable: true }
+      }
+    };
+
+    // ============ CONSTANTS ============
+    const SECURITY_CODE = '5839201746029184573206';
+    const USERS = {
+      'ThéoDevO': { password: '12345!O', rank: 'Owner', permissions: 'ALL' },
+      'GabrielDevCoO': { password: 'Dev0ppemenTeamAdminaccessCoO!?', rank: 'CoOwner', permissions: 'ALL' },
+      'NeuraXIDev': { password: '0987654!Dev?', rank: 'Developer', permissions: 'DEVELOPER' },
+      'AprenticeDev': { password: 'WTDT?AppD!', rank: 'Apprentice', permissions: 'APPRENTICE' }
+    };
+
+    // ============ PERMISSIONS ============
+    function canEditText(textAuthor) {
+      if (!state.currentUser) return false;
+      if (state.currentUser.username === textAuthor) return true;
+      return ['Owner', 'CoOwner', 'Developer'].includes(state.currentUser.rank);
+    }
+
+    function canDeleteText(textAuthor) {
+      if (!state.currentUser) return false;
+      return ['Owner', 'CoOwner', 'Developer'].includes(state.currentUser.rank);
+    }
+
+    // ============ THEME ============
+    function toggleTheme() {
+      state.theme = state.theme === 'light' ? 'dark' : 'light';
+      document.getElementById('app').className = 'app ' + state.theme;
+    }
+
+    // ============ DEV MODE ============
+    function toggleDevMode() {
+      if (!state.devModeActive) {
+        showAuthModal();
+      } else {
+        handleLogout();
+      }
+    }
+
+    function showAuthModal() {
+      state.showAuthModal = true;
+      state.authStep = 'code';
+      renderAuthModal();
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      state.showAuthModal = false;
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function renderAuthModal() {
+      const title = document.getElementById('authTitle');
+      const content = document.getElementById('authContent');
+      
+      if (state.authStep === 'code') {
+        title.textContent = 'Developer Authentication';
+        content.innerHTML = `
+          <input type="password" id="securityCodeInput" class="modal-input" placeholder="Enter security code" />
+          <div class="modal-buttons">
+            <button class="btn-primary" onclick="handleAuthSubmit()">Next</button>
+            <button class="btn-danger" onclick="closeAuthModal()">Cancel</button>
+          </div>
+        `;
+      } else {
+        title.textContent = 'Enter Credentials';
+        content.innerHTML = `
+          <input type="text" id="usernameInput" class="modal-input" placeholder="Username" />
+          <input type="password" id="passwordInput" class="modal-input" placeholder="Password" />
+          <div class="modal-buttons">
+            <button class="btn-primary" onclick="handleAuthSubmit()">Login</button>
+            <button class="btn-danger" onclick="closeAuthModal()">Cancel</button>
+          </div>
+        `;
+      }
+    }
+
+    function handleAuthSubmit() {
+      if (state.authStep === 'code') {
+        const code = document.getElementById('securityCodeInput').value;
+        if (code === SECURITY_CODE) {
+          state.authStep = 'credentials';
+          renderAuthModal();
+        } else {
+          alert('❌ Invalid security code!');
+        }
+      } else {
+        const username = document.getElementById('usernameInput').value;
+        const password = document.getElementById('passwordInput').value;
+        const user = USERS[username];
+        
+        if (user && user.password === password) {
+          state.currentUser = { username, rank: user.rank, permissions: user.permissions };
+          state.devModeActive = true;
+          document.getElementById('devToggle').classList.add('active');
+          closeAuthModal();
+          alert(`✅ Welcome, ${username}! Rank: ${user.rank}`);
+          renderPage();
+        } else {
+          alert('❌ Invalid credentials!');
+        }
+      }
+    }
+
+    function handleLogout() {
+      state.currentUser = null;
+      state.devModeActive = false;
+      state.adminMenuOpen = false;
+      state.editMode = false;
+      document.getElementById('devToggle').classList.remove('active');
+      closeAdminPanel();
+      alert('👋 Logged out successfully');
+      renderPage();
+    }
+
+    // ============ NAVIGATION ============
+    function changePage(page) {
+      state.currentPage = page;
+      
+      // Update active nav link
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      event.target.closest('.nav-link').classList.add('active');
+      
+      renderPage();
+    }
+
+    // ============ ADMIN PANEL ============
+    function openAdminPanel() {
+      if (!state.currentUser) {
+        alert('❌ Please login first');
+        return;
+      }
+      state.adminMenuOpen = true;
+      document.getElementById('adminPanel').classList.add('open');
+      renderAdminContent();
+    }
+
+    function closeAdminPanel() {
+      state.adminMenuOpen = false;
+      document.getElementById('adminPanel').classList.remove('open');
+    }
+
+    function changeAdminSection(section) {
+      state.adminSection = section;
+      
+      // Update active tab
+      document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.closest('.admin-tab').classList.add('active');
+      
+      renderAdminContent();
+    }
+
+    function renderAdminContent() {
+      const content = document.getElementById('adminContent');
+      
+      if (state.adminSection === 'overview') {
+        content.innerHTML = `
+          <div class="admin-overview">
+            <h3>Welcome, ${state.currentUser.username}!</h3>
+            <p class="admin-role">Rank: <strong>${state.currentUser.rank}</strong></p>
+            <p class="admin-permissions">Permissions: <strong>${state.currentUser.permissions}</strong></p>
+            
+            <div class="admin-stats">
+              <div class="stat-box">
+                <div class="stat-value">${state.projects.length}</div>
+                <div class="stat-label">Projects</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">${state.personalFiles.length}</div>
+                <div class="stat-label">Personal Files</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">${state.devCloudFiles.length}</div>
+                <div class="stat-label">DevCloud Files</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">${state.chatMessages.length}</div>
+                <div class="stat-label">Messages</div>
+              </div>
+            </div>
+            
+            <button class="btn-danger" onclick="handleLogout()">Logout</button>
+          </div>
+        `;
+      } else if (state.adminSection === 'cloud') {
+        renderCloudSection(content);
+      } else if (state.adminSection === 'chat') {
+        renderChatSection(content);
+      } else if (state.adminSection === 'edit') {
+        content.innerHTML = `
+          <div class="admin-edit">
+            <h3>Content Editor</h3>
+            <p>Control website content editing</p>
+            
+            <div class="edit-actions">
+              <button class="${state.editMode ? 'btn-primary btn-success' : 'btn-primary'}" onclick="toggleEditMode()">
+                ${state.editMode ? '✓ Save Changes' : 'Start Editing'}
+              </button>
+              ${state.editMode ? '<button class="btn-danger" onclick="cancelEdit()">Cancel</button>' : ''}
+            </div>
+            
+            ${state.editMode ? `
+              <div class="edit-info">
+                <p>✏️ Edit mode active!</p>
+                <p>• Click edit icons (✏️) to modify text</p>
+                <p>• You can edit your own text</p>
+                <p>• Developer+ can delete/move others' text</p>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+    }
+
+    function renderCloudSection(content) {
+      const files = state.cloudView === 'personal' ? state.personalFiles : state.devCloudFiles;
+      
+      content.innerHTML = `
+        <div class="admin-cloud">
+          <div class="cloud-selector">
+            <button class="cloud-btn ${state.cloudView === 'personal' ? 'active' : ''}" onclick="setCloudView('personal')">
+              Personal Cloud
+            </button>
+            <button class="cloud-btn ${state.cloudView === 'devcloud' ? 'active' : ''}" onclick="setCloudView('devcloud')">
+              DevCloud (Shared)
+            </button>
+          </div>
+          
+          ${state.cloudView ? `
+            <div class="cloud-content">
+              <button class="btn-primary" onclick="uploadFile()">
+                <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Upload File
+              </button>
+              
+              <div class="files-list">
+                ${files.length === 0 ? '<p class="no-files">No files yet</p>' : files.map(file => `
+                  <div class="file-item">
+                    <div class="file-icon">📄</div>
+                    <div class="file-info">
+                      <div class="file-name">${file.name}</div>
+                      <div class="file-meta">${file.uploadedBy} • ${new Date(file.date).toLocaleDateString()} • ${file.size}</div>
+                    </div>
+                    <div class="file-actions">
+                      <button class="btn-icon" title="Download">
+                        <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      </button>
+                      ${(state.cloudView === 'personal' || file.uploadedBy === state.currentUser.username) ? `
+                        <button class="btn-icon btn-danger" onclick="deleteFile(${file.id})" title="Delete">
+                          <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : '<div class="cloud-prompt"><p>Select a cloud to view files</p></div>'}
+        </div>
+      `;
+    }
+
+    function renderChatSection(content) {
+      content.innerHTML = `
+        <div class="admin-chat">
+          <div class="chat-messages" id="chatMessages">
+            ${state.chatMessages.length === 0 ? '<p class="no-messages">No messages yet. Start chatting!</p>' : state.chatMessages.map(msg => `
+              <div class="chat-message ${msg.sender === state.currentUser.username ? 'own-message' : ''}">
+                <div class="message-avatar">${msg.avatar}</div>
+                <div class="message-content">
+                  <div class="message-header">
+                    <strong>${msg.sender}</strong>
+                    <span class="message-time">${msg.timestamp}</span>
+                  </div>
+                  <div class="message-text">${msg.text}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="chat-input-area">
+            <input
+              type="text"
+              id="chatInput"
+              placeholder="Type a message..."
+              class="chat-input"
+              onkeypress="if(event.key==='Enter') sendMessage()"
+            />
+            <button class="btn-primary" onclick="sendMessage()">
+              <svg><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+          
+          <div class="call-controls">
+            <button class="call-btn ${state.inCall ? 'active' : ''}" onclick="toggleCall()">
+              ${state.inCall ? 'End Call' : 'Start Call'}
+            </button>
+            
+            ${state.inCall ? `
+              <button class="control-btn ${!state.micEnabled ? 'disabled' : ''}" onclick="toggleMic()">
+                <svg>${state.micEnabled ? '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line>' : '<line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line>'}</svg>
+              </button>
+              <button class="control-btn ${!state.videoEnabled ? 'disabled' : ''}" onclick="toggleVideo()">
+                <svg>${state.videoEnabled ? '<polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>' : '<path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path><line x1="1" y1="1" x2="23" y2="23"></line>'}</svg>
+              </button>
+              <button class="control-btn ${state.screenSharing ? 'active' : ''}" onclick="toggleScreenShare()">
+                <svg><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              </button>
+            ` : ''}
+          </div>
+          
+          ${state.inCall ? `
+            <div class="call-status">
+              <p>📞 In call with team</p>
+              ${state.screenSharing ? '<p>🖥️ Screen sharing active</p>' : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function setCloudView(view) {
+      state.cloudView = view;
+      renderAdminContent();
+    }
+
+    function uploadFile() {
+      const fileName = prompt('File name:');
+      if (fileName) {
+        const newFile = {
+          id: Date.now(),
+          name: fileName,
+          uploadedBy: state.currentUser.username,
+          date: new Date().toISOString(),
+          size: (Math.random() * 10).toFixed(2) + ' MB'
+        };
+        
+        if (state.cloudView === 'personal') {
+          state.personalFiles.push(newFile);
+        } else {
+          state.devCloudFiles.push(newFile);
+        }
+        
+        alert(`✅ Uploaded to ${state.cloudView === 'personal' ? 'Personal Cloud' : 'DevCloud'}`);
+        renderAdminContent();
+      }
+    }
+
+    function deleteFile(fileId) {
+      if (confirm('Delete this file?')) {
+        if (state.cloudView === 'personal') {
+          state.personalFiles = state.personalFiles.filter(f => f.id !== fileId);
+        } else {
+          state.devCloudFiles = state.devCloudFiles.filter(f => f.id !== fileId);
+        }
+        alert('🗑️ File deleted');
+        renderAdminContent();
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      
+      if (text) {
+        state.chatMessages.push({
+          id: Date.now(),
+          sender: state.currentUser.username,
+          text: text,
+          timestamp: new Date().toLocaleTimeString(),
+          avatar: state.currentUser.username[0]
+        });
+        input.value = '';
+        renderAdminContent();
+        
+        // Scroll to bottom
+        setTimeout(() => {
+          const messages = document.getElementById('chatMessages');
+          messages.scrollTop = messages.scrollHeight;
+        }, 100);
+      }
+    }
+
+    function toggleCall() {
+      state.inCall = !state.inCall;
+      if (!state.inCall) {
+        state.micEnabled = true;
+        state.videoEnabled = true;
+        state.screenSharing = false;
+      }
+      renderAdminContent();
+    }
+
+    function toggleMic() {
+      state.micEnabled = !state.micEnabled;
+      renderAdminContent();
+    }
+
+    function toggleVideo() {
+      state.videoEnabled = !state.videoEnabled;
+      renderAdminContent();
+    }
+
+    function toggleScreenShare() {
+      state.screenSharing = !state.screenSharing;
+      renderAdminContent();
+    }
+
+    // ============ EDIT MODE ============
+    function toggleEditMode() {
+      if (!state.editMode) {
+        state.editHistory.push({
+          projects: JSON.parse(JSON.stringify(state.projects)),
+          texts: JSON.parse(JSON.stringify(state.editableTexts))
+        });
+        state.editHistoryIndex = state.editHistory.length - 1;
+        state.editMode = true;
+      } else {
+        alert('✅ Changes saved!');
+        state.editMode = false;
+      }
+      renderAdminContent();
+      renderPage();
+    }
+
+    function cancelEdit() {
+      if (state.editHistory.length > 0) {
+        const first = state.editHistory[0];
+        state.projects = JSON.parse(JSON.stringify(first.projects));
+        state.editableTexts = JSON.parse(JSON.stringify(first.texts));
+      }
+      state.editMode = false;
+      renderAdminContent();
+      renderPage();
+    }
+
+    function editText(key) {
+      const current = state.editableTexts[key];
+      if (!canEditText(current.author)) {
+        alert('❌ You can only edit your own text or text if you are Developer+');
+        return;
+      }
+      const newText = prompt('Edit text:', current.text);
+      if (newText !== null) {
+        state.editableTexts[key] = {
+          ...current,
+          text: newText,
+          author: state.currentUser.username
+        };
+        renderPage();
+      }
+    }
+
+    function deleteText(key) {
+      const current = state.editableTexts[key];
+      if (!canDeleteText(current.author)) {
+        alert('❌ Developer+ required to delete text');
+        return;
+      }
+      if (confirm('Delete this text?')) {
+        state.editableTexts[key] = {
+          ...current,
+          text: '',
+          author: state.currentUser.username
+        };
+        renderPage();
+      }
+    }
+
+    function deleteProject(projectId) {
+      if (confirm('Delete this project?')) {
+        state.projects = state.projects.filter(p => p.id !== projectId);
+        renderPage();
+      }
+    }
+
+    function addProject() {
+      const title = prompt('Project title:');
+      if (!title) return;
+      
+      const description = prompt('Project description:');
+      if (!description) return;
+      
+      const image = prompt('Project emoji icon:', '📦');
+      
+      state.projects.push({
+        id: Date.now(),
+        title: title,
+        description: description,
+        date: new Date().toISOString().split('T')[0],
+        image: image || '📦',
+        link: '#',
+        poster: state.currentUser.username
+      });
+      
+      alert('✅ Project added!');
+      renderPage();
+    }
+
+    // ============ RENDER PAGES ============
+    function renderPage() {
+      const content = document.getElementById('pageContent');
+      
+      switch (state.currentPage) {
+        case 'home':
+          content.innerHTML = renderHome();
+          break;
+        case 'about':
+          content.innerHTML = renderAbout();
+          break;
+        case 'contact':
+          content.innerHTML = renderContact();
+          break;
+        case 'community':
+          content.innerHTML = renderCommunity();
+          break;
+        case 'roblox':
+          content.innerHTML = renderRoblox();
+          break;
+        case 'creations':
+          content.innerHTML = renderCreations();
+          break;
+      }
+    }
+
+    function renderHome() {
+      return `
+        <div class="hero-section">
+          <h1 class="hero-title">
+            ${state.editableTexts.heroTitle.text}
+            ${state.editMode ? '<button class="edit-btn" onclick="editText(\'heroTitle\')">✏️</button>' : ''}
+          </h1>
+          <p class="hero-subtitle">
+            ${state.editableTexts.heroSubtitle.text}
+            ${state.editMode ? '<button class="edit-btn" onclick="editText(\'heroSubtitle\')">✏️</button>' : ''}
+          </p>
+          <div class="hero-stats">
+            <div class="stat-card">
+              <div class="stat-number">50+</div>
+              <div class="stat-label">Projects Completed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">15+</div>
+              <div class="stat-label">Team Members</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">100%</div>
+              <div class="stat-label">Dedication</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🚀</div>
+            <h3>Innovative Solutions</h3>
+            <p>We create cutting-edge solutions that push the boundaries of technology</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">💡</div>
+            <h3>Creative Design</h3>
+            <p>Beautiful, user-friendly interfaces that engage and inspire</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Fast Delivery</h3>
+            <p>Quick turnaround times without compromising on quality</p>
+          </div>
+        </div>
+        
+        ${state.currentUser ? `
+          <div style="text-align: center; margin-top: 3rem;">
+            <button class="btn-primary" onclick="openAdminPanel()">
+              <svg><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6"></path></svg>
+              Open Admin Panel
+            </button>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    function renderAbout() {
+      return `
+        <h1 class="page-title">About Us</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: #666; margin-bottom: 2rem;">
+          ${state.editableTexts.aboutIntro.text}
+          ${state.editMode ? '<button class="edit-btn" onclick="editText(\'aboutIntro\')">✏️</button>' : ''}
+        </p>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">👨‍💻</div>
+            <h3>Expert Team</h3>
+            <p>Our team consists of experienced developers, designers, and project managers</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Mission Driven</h3>
+            <p>We're committed to delivering excellence in every project we undertake</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🌟</div>
+            <h3>Quality First</h3>
+            <p>We never compromise on quality and always strive for perfection</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderContact() {
+      return `
+        <h1 class="page-title">Contact Us</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: #666; margin-bottom: 2rem;">
+          Get in touch with us for collaborations, inquiries, or just to say hello!
+        </p>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">📧</div>
+            <h3>Email</h3>
+            <p>contact@developmentteam.com</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">💬</div>
+            <h3>Discord</h3>
+            <p>Join our community server</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🐦</div>
+            <h3>Twitter</h3>
+            <p>@DevTeamOfficial</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCommunity() {
+      return `
+        <h1 class="page-title">Community</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: #666; margin-bottom: 2rem;">
+          Join our growing community of developers, designers, and creators!
+        </p>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">👥</div>
+            <h3>Discord Server</h3>
+            <p>Connect with other members, share ideas, and collaborate on projects</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📚</div>
+            <h3>Resources</h3>
+            <p>Access tutorials, guides, and learning materials</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎉</div>
+            <h3>Events</h3>
+            <p>Participate in hackathons, workshops, and community events</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRoblox() {
+      return `
+        <h1 class="page-title">Roblox Projects</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: #666; margin-bottom: 2rem;">
+          Explore our Roblox game development projects and creations
+        </p>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎮</div>
+            <h3>Game Development</h3>
+            <p>Custom Roblox games with unique gameplay mechanics</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🛠️</div>
+            <h3>Scripting Services</h3>
+            <p>Professional Lua scripting for your Roblox projects</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎨</div>
+            <h3>UI/UX Design</h3>
+            <p>Beautiful and intuitive interfaces for Roblox games</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCreations() {
+      const filteredProjects = state.projects.filter(p => 
+        p.title.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(state.searchQuery.toLowerCase())
+      );
+      
+      return `
+        <h1 class="page-title">Our Creations</h1>
+        
+        <div class="search-bar">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search projects..."
+            value="${state.searchQuery}"
+            oninput="state.searchQuery = this.value; renderPage();"
+          />
+          ${state.currentUser ? `
+            <button class="btn-primary" onclick="addProject()">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Project
+            </button>
+          ` : ''}
+        </div>
+        
+        <div class="projects-grid">
+          ${filteredProjects.map(p => `
+            <div class="project-card">
+              <div class="project-image">${p.image}</div>
+              <div class="project-content">
+                <h3 class="project-title">${p.title}</h3>
+                <p class="project-description">${p.description}</p>
+                <div class="project-meta">
+                  <span>📅 ${p.date}</span>
+                  <span>👤 ${p.poster}</span>
+                </div>
+                ${state.currentUser ? `
+                  <button class="btn-danger" onclick="deleteProject(${p.id})">
+                    <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Delete
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // ============ INITIALIZE ============
+    renderPage();
+  </script>
+</body>
+</html>
