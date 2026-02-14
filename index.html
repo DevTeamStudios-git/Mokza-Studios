@@ -1,0 +1,3859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Development Team Website</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow-x: hidden;
+    }
+    
+    /* ===== APP CONTAINER ===== */
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .app.dark {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    }
+    
+    /* ===== NAVBAR ===== */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .app.dark .navbar {
+      background: rgba(15, 12, 41, 0.95);
+      border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .brand-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .app.dark .brand-text {
+      background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .navbar-links {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border: none;
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+    
+    .app.dark .nav-link {
+      background: rgba(102, 126, 234, 0.15);
+      color: #a5b4fc;
+    }
+    
+    .nav-link:hover {
+      background: rgba(102, 126, 234, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    .nav-link.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .settings-btn {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #667eea;
+    }
+    
+    .settings-btn:hover {
+      background: rgba(102, 126, 234, 0.1);
+      transform: rotate(90deg);
+    }
+    
+    .dev-mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .toggle-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .app.dark .toggle-label {
+      color: #a5b4fc;
+    }
+    
+    .toggle-switch {
+      width: 50px;
+      height: 26px;
+      background: #ccc;
+      border: none;
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .toggle-switch.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .toggle-slider {
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(24px) rotate(90deg);
+    }
+    
+    /* ===== NOTIFICATION SYSTEM ===== */
+    .notification-container {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .notification {
+      background: white;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-width: 300px;
+      animation: slideInRight 0.3s ease;
+    }
+    
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .app.dark .notification {
+      background: #1e1b4b;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .notification.success {
+      border-left: 4px solid #38ef7d;
+    }
+    
+    .notification.error {
+      border-left: 4px solid #f5576c;
+    }
+    
+    .notification.info {
+      border-left: 4px solid #667eea;
+    }
+    
+    .notification-icon {
+      font-size: 1.5rem;
+    }
+    
+    .notification-content {
+      flex: 1;
+    }
+    
+    .notification-title {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: #333;
+    }
+    
+    .app.dark .notification-title {
+      color: #a5b4fc;
+    }
+    
+    .notification-message {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .app.dark .notification-message {
+      color: #cbd5e1;
+    }
+    
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    .page-content {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.5s ease;
+      position: relative;
+    }
+    
+    .app.dark .page-content {
+      background: rgba(15, 12, 41, 0.8);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .page-title {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .app.dark .page-title {
+      background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* ===== EDITABLE ELEMENTS ===== */
+    .editable-element {
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .editable-element.edit-mode {
+      outline: 2px dashed #667eea;
+      outline-offset: 4px;
+    }
+    
+    .editable-element.edit-mode:hover {
+      outline-color: #764ba2;
+      cursor: move;
+    }
+    
+    .element-controls {
+      position: absolute;
+      top: -35px;
+      right: 0;
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+    
+    .editable-element.edit-mode:hover .element-controls {
+      opacity: 1;
+    }
+    
+    .element-control-btn {
+      background: white;
+      border: 1px solid #667eea;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #667eea;
+      transition: all 0.2s ease;
+    }
+    
+    .element-control-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    /* ===== HERO SECTION ===== */
+    .hero-section {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    
+    .hero-title {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .app.dark .hero-title {
+      background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.5rem;
+      color: #666;
+      margin-bottom: 3rem;
+    }
+    
+    .app.dark .hero-subtitle {
+      color: #a5b4fc;
+    }
+    
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
+      border-radius: 20px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-10px);
+    }
+    
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+    
+    /* ===== FEATURES GRID ===== */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    
+    .feature-card {
+      background: white;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      position: relative;
+    }
+    
+    .app.dark .feature-card {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-10px);
+      border-color: #667eea;
+      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .feature-card.draggable {
+      cursor: move;
+    }
+    
+    .feature-card.dragging {
+      opacity: 0.5;
+      transform: rotate(2deg);
+    }
+    
+    .feature-card.drag-over {
+      border: 2px dashed #667eea;
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .card-controls {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.25rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+    
+    .feature-card:hover .card-controls {
+      opacity: 1;
+    }
+    
+    .card-control-btn {
+      background: white;
+      border: 1px solid #667eea;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #667eea;
+      transition: all 0.2s ease;
+    }
+    
+    .app.dark .card-control-btn {
+      background: rgba(30, 27, 75, 0.9);
+    }
+    
+    .card-control-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    .card-control-btn.delete {
+      border-color: #f5576c;
+      color: #f5576c;
+    }
+    
+    .card-control-btn.delete:hover {
+      background: #f5576c;
+      color: white;
+    }
+    
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    
+    .app.dark .card-link {
+      background: rgba(102, 126, 234, 0.2);
+      color: #a5b4fc;
+    }
+    
+    .card-link:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+    
+    .app.dark .feature-card h3 {
+      color: #a5b4fc;
+    }
+    
+    .feature-card p {
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .app.dark .feature-card p {
+      color: #cbd5e1;
+    }
+    
+    /* ===== PROJECTS ===== */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    
+    .project-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    
+    .app.dark .project-card {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .project-card:hover {
+      transform: translateY(-10px);
+      border-color: #667eea;
+      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+    
+    .project-image {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+    }
+    
+    .project-content {
+      padding: 1.5rem;
+    }
+    
+    .project-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #667eea;
+    }
+    
+    .app.dark .project-title {
+      color: #a5b4fc;
+    }
+    
+    .project-description {
+      color: #666;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    
+    .app.dark .project-description {
+      color: #cbd5e1;
+    }
+    
+    .project-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #999;
+      margin-bottom: 1rem;
+    }
+    
+    /* ===== BUTTONS ===== */
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(245, 87, 108, 0.4);
+    }
+    
+    .btn-icon {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #667eea;
+    }
+    
+    .btn-icon:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .edit-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin-left: 0.5rem;
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+    }
+    
+    .edit-btn:hover {
+      opacity: 1;
+    }
+    
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal {
+      background: white;
+      padding: 3rem;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    
+    .app.dark .modal {
+      background: #1e1b4b;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .modal h2 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .modal-input {
+      width: 100%;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .app.dark .modal-input {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .modal-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .app.dark .modal-label {
+      color: #a5b4fc;
+    }
+    
+    .modal-select {
+      width: 100%;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      background: white;
+      cursor: pointer;
+    }
+    
+    .app.dark .modal-select {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    /* ===== ADMIN PANEL ===== */
+    .admin-panel {
+      position: fixed;
+      right: -600px;
+      top: 0;
+      bottom: 0;
+      width: 600px;
+      background: white;
+      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+      transition: right 0.3s ease;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .app.dark .admin-panel {
+      background: #1e1b4b;
+      border-left: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .admin-panel.open {
+      right: 0;
+    }
+    
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .app.dark .admin-header {
+      border-bottom-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .admin-header h2 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .admin-tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e0e0;
+      overflow-x: auto;
+    }
+    
+    .app.dark .admin-tabs {
+      border-bottom-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .admin-tab {
+      padding: 1rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: #666;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+    
+    .app.dark .admin-tab {
+      color: #a5b4fc;
+    }
+    
+    .admin-tab:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .admin-tab.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .admin-content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    
+    .admin-overview {
+      text-align: center;
+    }
+    
+    .admin-overview h3 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+    
+    .app.dark .admin-overview h3 {
+      color: #a5b4fc;
+    }
+    
+    .admin-role {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #666;
+    }
+    
+    .app.dark .admin-role {
+      color: #cbd5e1;
+    }
+    
+    .admin-permissions {
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      color: #999;
+    }
+    
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1.5rem;
+      border-radius: 15px;
+      color: white;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    
+    /* ===== ELEMENT LIBRARY ===== */
+    .element-library {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .library-item {
+      background: rgba(102, 126, 234, 0.1);
+      padding: 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .library-item:hover {
+      background: rgba(102, 126, 234, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .library-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .library-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .app.dark .library-label {
+      color: #a5b4fc;
+    }
+    
+    /* ===== ACTIVITY LOG ===== */
+    .activity-log {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .activity-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 12px;
+      margin-bottom: 0.5rem;
+    }
+    
+    .activity-icon {
+      font-size: 1.5rem;
+    }
+    
+    .activity-content {
+      flex: 1;
+    }
+    
+    .activity-text {
+      font-size: 0.95rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    
+    .app.dark .activity-text {
+      color: #cbd5e1;
+    }
+    
+    .activity-time {
+      font-size: 0.8rem;
+      color: #999;
+    }
+    
+    /* ===== USER MANAGEMENT ===== */
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 12px;
+    }
+    
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    
+    .user-info {
+      flex: 1;
+    }
+    
+    .user-name {
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 0.25rem;
+    }
+    
+    .app.dark .user-name {
+      color: #a5b4fc;
+    }
+    
+    .user-rank {
+      font-size: 0.85rem;
+      color: #999;
+    }
+    
+    /* ===== CLOUD ===== */
+    .cloud-selector {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .cloud-btn {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      color: #667eea;
+    }
+    
+    .app.dark .cloud-btn {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: #a5b4fc;
+    }
+    
+    .cloud-btn:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+    }
+    
+    .cloud-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .files-list {
+      margin-top: 1rem;
+    }
+    
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .app.dark .file-item {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .file-item:hover {
+      border-color: #667eea;
+      transform: translateX(5px);
+    }
+    
+    .file-icon {
+      font-size: 2rem;
+    }
+    
+    .file-info {
+      flex: 1;
+    }
+    
+    .file-name {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 0.25rem;
+    }
+    
+    .app.dark .file-name {
+      color: #a5b4fc;
+    }
+    
+    .file-meta {
+      font-size: 0.85rem;
+      color: #999;
+    }
+    
+    .file-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .no-files {
+      text-align: center;
+      color: #999;
+      padding: 2rem;
+    }
+    
+    .cloud-prompt {
+      text-align: center;
+      padding: 3rem;
+      color: #999;
+    }
+    
+    /* ===== CHAT ===== */
+    .chat-messages {
+      height: 400px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 12px;
+    }
+    
+    .chat-message {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .chat-message.own-message {
+      flex-direction: row-reverse;
+    }
+    
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    
+    .message-content {
+      flex: 1;
+      max-width: 70%;
+    }
+    
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .message-header strong {
+      color: #667eea;
+    }
+    
+    .app.dark .message-header strong {
+      color: #a5b4fc;
+    }
+    
+    .message-time {
+      color: #999;
+    }
+    
+    .message-text {
+      background: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      color: #333;
+    }
+    
+    .app.dark .message-text {
+      background: rgba(30, 27, 75, 0.6);
+      color: #cbd5e1;
+    }
+    
+    .own-message .message-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .no-messages {
+      text-align: center;
+      color: #999;
+      padding: 2rem;
+    }
+    
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .chat-input {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .app.dark .chat-input {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    .call-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .call-btn {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .call-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .call-btn.active {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .control-btn {
+      padding: 0.75rem;
+      border: 2px solid #667eea;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+      color: #667eea;
+      transition: all 0.3s ease;
+    }
+    
+    .app.dark .control-btn {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: #a5b4fc;
+    }
+    
+    .control-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .control-btn.disabled {
+      opacity: 0.5;
+      background: #e0e0e0;
+      border-color: #e0e0e0;
+      color: #999;
+    }
+    
+    .control-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .call-status {
+      background: rgba(102, 126, 234, 0.1);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      color: #667eea;
+      font-weight: 600;
+    }
+    
+    .app.dark .call-status {
+      background: rgba(102, 126, 234, 0.2);
+      color: #a5b4fc;
+    }
+    
+    /* ===== SEARCH BAR ===== */
+    .search-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .search-input {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .app.dark .search-input {
+      background: rgba(30, 27, 75, 0.6);
+      border-color: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+    
+    /* ===== SUGGESTIONS SECTION ===== */
+    .suggestions-section {
+      margin-top: 4rem;
+      padding: 3rem;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 20px;
+    }
+    
+    .app.dark .suggestions-section {
+      background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .suggestions-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+    }
+    
+    .app.dark .suggestions-title {
+      background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .suggestions-description {
+      text-align: center;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    
+    .app.dark .suggestions-description {
+      color: #cbd5e1;
+    }
+    
+    .suggestion-form {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .suggestion-list {
+      margin-top: 2rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .suggestion-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .app.dark .suggestion-item {
+      background: rgba(30, 27, 75, 0.6);
+    }
+    
+    .suggestion-author {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 0.5rem;
+    }
+    
+    .app.dark .suggestion-author {
+      color: #a5b4fc;
+    }
+    
+    .suggestion-text {
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .app.dark .suggestion-text {
+      color: #cbd5e1;
+    }
+    
+    .suggestion-time {
+      font-size: 0.85rem;
+      color: #999;
+      margin-top: 0.5rem;
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .navbar-links {
+        display: none;
+      }
+      
+      .hero-title {
+        font-size: 2.5rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.2rem;
+      }
+      
+      .admin-panel {
+        width: 100%;
+        right: -100%;
+      }
+      
+      .features-grid,
+      .projects-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* ===== UTILITY ===== */
+    .hidden {
+      display: none;
+    }
+    
+    svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- NOTIFICATION CONTAINER -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <div class="navbar-brand" onclick="changePage('home')" style="cursor: pointer;">
+        <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAQABAADASIAAhEBAxEB/8QAGwABAQADAQEBAAAAAAAAAAAAAAECBAUDBgf/xABCEAEAAQMCBAIHBwQABAUFAQEAAQIDEQQhBRIxQVFxEzIzUmGBkRQiIzVCU3ICFSQ1Q1VicxY2VIKhJUSSscFFY//EABsBAQEAAwEBAQAAAAAAAAAAAAABAgMEBQYH/8QALxEBAAIBAwMFAAIBBQACAwAAAAECEQMEMRIhMgUTFEFRImEzBiNCUnEVgWKhsf/aAAwDAQACEQMRAD8A/DaLdFuMUUxCyTI9FzoABiAEFQUEFFyIAAAgAoIqKCAACgIAAABIqAKChsIsyAT8EUAQQFQAFQAAAAFQAURQRRAVAAUASUlUlRYD5AACAAAqKCCoAqAAAAKCAoBnZAAAAFBFQAUARUAAUEFAQAFMoqhIShkADIKBkEVEABQAAURAFQAUURREAAAUMgIoCCggqAKgorx1eno1FGKo3jpL1AFRQQBAABUFBAAVAAAWQAQVFQAVAAAAAFQAVBcCiAABkAEBUAF7IAAAAAogCoqAqAAAACgiooJKSqKCwACoICiAoigioAAAKgACggqAAAAAAACoAKIAAACgAgCoACoAqACgiiiKggAAAKgACiggKACACoAgCoAAAAAAACgogqAAAAqCAAAAAAAAAAAAAKACAAAAAAoAAAIAAAAAAAAAAAAAACoAKgAAAAAAAAAAAAAAAoKoioiAAKIoqCoIKirgQBAAUFIAQUBBUQAAAAAAFQBRAAAAAABQAQVAUAAAABUAAQAABUUAAFRUEIFhRAFAIVBAFABAAQAAAAAAAFgAwAAqCKgAAAKigAgCgIKgAKCAAAoIKAgAB8AAAABYBBUAFTuAAAAAoAIqAAAAoqAogAoIqIoAIAqgC4BiLMIAAAC4AMoAoIAKiAAAAAAAAoAGAAAAQWEUBAAAAAABQEFAQBQAQAAAUEAAWEVQDBIAAIAoAMQFARQAABAAA6gAouQNgQEVAAABRRFBAAUEAABAVFBFABFQAAFQUEUAAAQAAFBAUBFAEVAFQAUBQDuAAAAAIqgiiAAIQqGVFlJMk7ggpgEUUGKgCCogEqKICoAAACggAAAKBIAICKAgAAoCCgIogAICgKMkAEAUAVBFBAAWAMBAEoyQEVFQBFAOwAIAAACooACgHzEBAAVAAWQAPmAAnYFQAFRQRQAD5gCAAAAoAAAIqAAAKigQAKYDOwISEgqAqgAIAAAIoCKigALCQsdAPiSkiAAAgAAoAAAYFBFQAABewAAIAIAAACgAAAACAAACgAB81AAEAQAO4HdY6oAqLKKCoKACCiKACAAbKAAKIqSAggALgAAADAoAAgYAAAABUVABAVAUAAAEBQARUAAAAAABRAFQVcAIoIKgCoIKAKAAAAimDCgCCKCCipkQFCFQFARcGAERQVAEQBQRUUBFRYABQAAAQUEBUMgACAACiKAIAqAAAACqAgCoCAAoAICiAEdAABWQgKCCoAqALKAAAAAgAAAIBGAwoqSAACgCgioIAGAAAAEAAABQAAAAAAAQAwKAL8UEABUBYADCgAgAEgAgAAogKp2AFgmAERFkUECEUVFVFAQAAAAQXCYVUAEAUEVBAAUAwAAGRUBAAAAwoAIAAKIAAKAGEAAAAFQAAAAAAFAVDAAAAoIKAgCAAoAKAogIKgIAAABgUEFAARRYgmDKSAAoCiAAAioAAgGBQQUBFEAAUAEDAKCKAAIAAoGAUBXnqbtFi16SucRATLMaca+xO8VLOusx1k6ZYe5T9bZlpTxGxnrlP7hZOmT3KfrdIaka61M9XvZvW7vs6szHUxKxes8S9cB1ViyABTcyCoZRUAAABQIVBBSUyBhUFUEwogmBUlQRQEwAgAAYBQRQAQAAAMGBQRRAUABAAAABQQUABAAADAACgIoLAICgAgKigCAKgIAKAAoAIACiAKAKgAIBsCggAAoIoAAAAgACAqKAABsAAgAAAKICgAbAAIAAKoCALEZcnidcXNTEdYiMYdXPLE1Z7OHenn1FdUT3ZVju59e2KpyxHDqdWmK6ppomqekTL14lZjE368Rtiu3M7VfF5/e9zP7Pm+EuNSZzXDy1YzT9Of4Swu6W5RERd3ojx6p1aP1/pZSZ5h0TCdVh81QBQAQAF2NFqI09qaaomuOsNk9Xk31v05YfQw8r/iU/TG5pLl2mapnlp7w9K7fJZ0x1U/RH1XpfS+mbzNZ4cu7artzGuFBlXRVRVi5G0tVaTV2Md4h2+/Vhy/9b9O/wC2iE7sLhF2JtKdIUelO8LpvvRrx0z2lv8ADrEXLkVXN6afBo01cnE9nYpubXbVmmnh5+laM2/rDbnGHVt2aaLdVU9X0VrGnsTOOkONTTN6cUx3bGo1FdyrM/djpD1dG0VjFXxfqOi97V6p8ccPAJkO/wBzzVCBCKBU7FPV5Vc2EvDWZptVT4w9I6PnfV/Tb6lo1r5h1Noeb7LuYNzi+J3cN8NqVxMZh5axGYxLdoq23qaKYzzRP0bFNv70W/8AZz+FaKi1RN2qJ5+nR6Onweb/AMtrTfdmdP8AA96LX3px1eq9Pi53C9NTVFy7V+iJw1rN+q17Vnm+ztV23qmaa5xV2iWyMRw/PtbQtpXms+z0TEz3SfJQqb2CIAfOgAACKgyp3AAAFQAAVEABUABUFlARAFQABQAAAAAABQAAAAARkBCRUAAABQGVOyLkoqSqigLKAVUVBRUVBRRAAAAAFABAABUABQQAAAAXIKACIoAAogAAB8wVABQAAARRAAAFFBAAAURRAAAWIBQRUAERABQRAAABRRRAFQAFFEUAAFQBUBAAVNsAgGIqSAT0UBUFUAAAABQAAVAFAAFEUVAQAABQEF2AXAoAqAAAAKigAKAAgABgAoIAAoICCgigIAACCAKiACAAyAAAAKAAoAAKgCAAAqCAKACQGAVFQABQAAEURQAAAAABUEURRUQAFQFFQQABUEFBAUFQAAkgAqKAAgAAqAAiAKihkAEAAAAUAAAAAAABQQABREAAQAgAAyGYB8gQUEVFCQVYAAAAyQEFBAAABQBUUAAAAAAAABQAAQFABQBFQFAAACEVAUgElAVQQFQAAAAAAAAABQAFFQAAAABQAAAAAAUEAEABYAAEAAAABBUEBkAABQQFQFIBJQNgUBYUABUAAAAAAyqAAACoACoCwAoIACCKKAgqAqCoCbooABkVBUBQQBkCRQBfkAH/9k=" alt="Logo" class="brand-logo">
+        <span class="brand-text">Development Team</span>
+      </div>
+      
+      <div class="navbar-links" id="navbarLinks">
+        <!-- Navigation links will be rendered here -->
+      </div>
+      
+      <div class="navbar-actions">
+        <button class="settings-btn" onclick="toggleTheme()">
+          <svg><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+        <div class="dev-mode-toggle">
+          <span class="toggle-label">Dev Mode</span>
+          <button class="toggle-switch" id="devToggle" onclick="toggleDevMode()">
+            <div class="toggle-slider"></div>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <div id="pageContent" class="page-content">
+        <!-- Content will be rendered here -->
+      </div>
+    </main>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="admin-panel">
+      <div class="admin-header">
+        <h2>Admin Panel</h2>
+        <button class="btn-icon" onclick="closeAdminPanel()">
+          <svg><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="changeAdminSection('overview')">Overview</button>
+        <button class="admin-tab" onclick="changeAdminSection('navigation')">
+          <svg><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          Navigation
+        </button>
+        <button class="admin-tab" onclick="changeAdminSection('elements')">
+          <svg><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+          Elements
+        </button>
+        <button class="admin-tab" onclick="changeAdminSection('cloud')">
+          <svg><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+          Cloud
+        </button>
+        <button class="admin-tab" onclick="changeAdminSection('chat')">
+          <svg><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Chat
+        </button>
+        <button class="admin-tab" onclick="changeAdminSection('users')">
+          <svg><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Users
+        </button>
+        <button class="admin-tab" onclick="changeAdminSection('activity')">
+          <svg><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          Activity
+        </button>
+      </div>
+      
+      <div id="adminContent" class="admin-content">
+        <!-- Admin content will be rendered here -->
+      </div>
+    </div>
+
+    <!-- AUTH MODAL -->
+    <div id="authModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2 id="authTitle">Developer Authentication</h2>
+        <div id="authContent">
+          <!-- Auth form will be rendered here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ELEMENT EDITOR MODAL -->
+    <div id="elementModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2 id="elementModalTitle">Add Element</h2>
+        <div id="elementModalContent">
+          <!-- Element editor will be rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ STATE ============
+    let state = {
+      currentPage: 'home',
+      theme: 'light',
+      devModeActive: false,
+      showAuthModal: false,
+      authStep: 'code',
+      currentUser: null,
+      adminMenuOpen: false,
+      adminSection: 'overview',
+      editMode: false,
+      editHistory: [],
+      editHistoryIndex: -1,
+      cloudView: null,
+      personalFiles: [],
+      devCloudFiles: [],
+      chatMessages: [],
+      chatInput: '',
+      inCall: false,
+      micEnabled: true,
+      videoEnabled: true,
+      screenSharing: false,
+      projects: [
+        {
+          id: 1,
+          title: 'E-Commerce Platform',
+          description: 'Full-stack online shopping website with payment integration',
+          date: '2024-01-15',
+          image: '🛒',
+          link: '#',
+          poster: 'ThéoDevO'
+        },
+        {
+          id: 2,
+          title: 'Task Management App',
+          description: 'Collaborative task tracking with real-time updates',
+          date: '2024-01-10',
+          image: '📋',
+          link: '#',
+          poster: 'GabrielDevCoO'
+        }
+      ],
+      navigationLinks: [
+        {
+          id: 'nav_home',
+          label: 'Home',
+          page: 'home',
+          icon: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>',
+          enabled: true,
+          author: 'System'
+        },
+        {
+          id: 'nav_about',
+          label: 'About Us',
+          page: 'about',
+          icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>',
+          enabled: true,
+          author: 'System'
+        },
+        {
+          id: 'nav_contact',
+          label: 'Contact',
+          page: 'contact',
+          icon: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>',
+          enabled: true,
+          author: 'System'
+        },
+        {
+          id: 'nav_community',
+          label: 'Community',
+          page: 'community',
+          icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>',
+          enabled: true,
+          author: 'System'
+        },
+        {
+          id: 'nav_roblox',
+          label: 'Roblox',
+          page: 'roblox',
+          icon: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect>',
+          enabled: true,
+          author: 'System'
+        },
+        {
+          id: 'nav_creations',
+          label: 'Creations',
+          page: 'creations',
+          icon: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>',
+          enabled: true,
+          author: 'System'
+        }
+      ],
+      searchQuery: '',
+      customElements: [],
+      activityLog: [],
+      notifications: [],
+      suggestions: [],
+      featureCards: {
+        home: [
+          { id: 'card_home_1', icon: '🚀', title: 'Innovative Solutions', description: 'We create cutting-edge solutions that push the boundaries of technology', link: null, author: 'System', order: 0 },
+          { id: 'card_home_2', icon: '💡', title: 'Creative Design', description: 'Beautiful, user-friendly interfaces that engage and inspire', link: null, author: 'System', order: 1 },
+          { id: 'card_home_3', icon: '⚡', title: 'Fast Delivery', description: 'Quick turnaround times without compromising on quality', link: null, author: 'System', order: 2 }
+        ],
+        about: [
+          { id: 'card_about_1', icon: '👨‍💻', title: 'Expert Team', description: 'Our team consists of experienced developers, designers, and project managers', link: null, author: 'System', order: 0 },
+          { id: 'card_about_2', icon: '🎯', title: 'Mission Driven', description: 'We\'re committed to delivering excellence in every project we undertake', link: null, author: 'System', order: 1 },
+          { id: 'card_about_3', icon: '🌟', title: 'Quality First', description: 'We never compromise on quality and always strive for perfection', link: null, author: 'System', order: 2 }
+        ],
+        contact: [
+          { id: 'card_contact_1', icon: '📧', title: 'Email', description: 'contact@developmentteam.com', link: 'mailto:contact@developmentteam.com', author: 'System', order: 0 },
+          { id: 'card_contact_2', icon: '💬', title: 'Discord', description: 'Join our community server', link: null, author: 'System', order: 1 },
+          { id: 'card_contact_3', icon: '🐦', title: 'Twitter', description: '@DevTeamOfficial', link: 'https://twitter.com/DevTeamOfficial', author: 'System', order: 2 }
+        ],
+        community: [
+          { id: 'card_community_1', icon: '👥', title: 'Discord Server', description: 'Connect with other members, share ideas, and collaborate on projects', link: null, author: 'System', order: 0 },
+          { id: 'card_community_2', icon: '📚', title: 'Resources', description: 'Access tutorials, guides, and learning materials', link: null, author: 'System', order: 1 },
+          { id: 'card_community_3', icon: '🎉', title: 'Events', description: 'Participate in hackathons, workshops, and community events', link: null, author: 'System', order: 2 }
+        ],
+        roblox: [
+          { id: 'card_roblox_1', icon: '🎮', title: 'Game Development', description: 'Custom Roblox games with unique gameplay mechanics', link: null, author: 'System', order: 0 },
+          { id: 'card_roblox_2', icon: '🛠️', title: 'Scripting Services', description: 'Professional Lua scripting for your Roblox projects', link: null, author: 'System', order: 1 },
+          { id: 'card_roblox_3', icon: '🎨', title: 'UI/UX Design', description: 'Beautiful and intuitive interfaces for Roblox games', link: null, author: 'System', order: 2 }
+        ]
+      }
+    };
+
+    // ============ CONSTANTS ============
+    const SECURITY_CODE = '5839201746029184573206';
+    const USERS = {
+      'ThéoDevO': { password: '12345!O', rank: 'Owner', permissions: 'ALL' },
+      'GabrielDevCoO': { password: 'Dev0ppemenTeamAdminaccessCoO!?', rank: 'CoOwner', permissions: 'ALL' },
+      'NeuraXIDev': { password: '0987654!Dev?', rank: 'Developer', permissions: 'DEVELOPER' },
+      'AprenticeDev': { password: 'WTDT?AppD!', rank: 'Apprentice', permissions: 'APPRENTICE' }
+    };
+
+    // ============ NOTIFICATIONS ============
+    function showNotification(title, message, type = 'info') {
+      const id = Date.now();
+      state.notifications.push({ id, title, message, type });
+      
+      const container = document.getElementById('notificationContainer');
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <div class="notification-icon">
+          ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+        </div>
+        <div class="notification-content">
+          <div class="notification-title">${title}</div>
+          <div class="notification-message">${message}</div>
+        </div>
+      `;
+      
+      container.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideInRight 0.3s ease reverse';
+        setTimeout(() => {
+          container.removeChild(notification);
+          state.notifications = state.notifications.filter(n => n.id !== id);
+        }, 300);
+      }, 4000);
+    }
+
+    // ============ ACTIVITY LOG ============
+    function logActivity(action, details) {
+      const activity = {
+        id: Date.now(),
+        user: state.currentUser?.username || 'System',
+        action,
+        details,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      state.activityLog.unshift(activity);
+      
+      // Keep only last 50 activities
+      if (state.activityLog.length > 50) {
+        state.activityLog = state.activityLog.slice(0, 50);
+      }
+    }
+
+    // ============ PERMISSIONS ============
+    function canEditElement(elementAuthor) {
+      if (!state.currentUser) return false;
+      if (state.currentUser.username === elementAuthor) return true;
+      return ['Owner', 'CoOwner', 'Developer'].includes(state.currentUser.rank);
+    }
+
+    function canDeleteElement(elementAuthor) {
+      if (!state.currentUser) return false;
+      return ['Owner', 'CoOwner', 'Developer'].includes(state.currentUser.rank);
+    }
+
+    // ============ THEME ============
+    function toggleTheme() {
+      state.theme = state.theme === 'light' ? 'dark' : 'light';
+      document.getElementById('app').className = 'app ' + state.theme;
+      logActivity('Theme Changed', `Switched to ${state.theme} mode`);
+      
+      // Re-render everything to update colors
+      if (state.adminMenuOpen) {
+        renderAdminContent();
+      }
+      renderPage();
+    }
+
+    // ============ DEV MODE ============
+    function toggleDevMode() {
+      if (!state.devModeActive) {
+        showAuthModal();
+      } else {
+        handleLogout();
+      }
+    }
+
+    function showAuthModal() {
+      state.showAuthModal = true;
+      state.authStep = 'code';
+      renderAuthModal();
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      state.showAuthModal = false;
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function renderAuthModal() {
+      const title = document.getElementById('authTitle');
+      const content = document.getElementById('authContent');
+      
+      if (state.authStep === 'code') {
+        title.textContent = 'Developer Authentication';
+        content.innerHTML = `
+          <input type="password" id="securityCodeInput" class="modal-input" placeholder="Enter security code" />
+          <div class="modal-buttons">
+            <button class="btn-primary" onclick="handleAuthSubmit()">Next</button>
+            <button class="btn-danger" onclick="closeAuthModal()">Cancel</button>
+          </div>
+        `;
+      } else {
+        title.textContent = 'Enter Credentials';
+        content.innerHTML = `
+          <input type="text" id="usernameInput" class="modal-input" placeholder="Username" />
+          <input type="password" id="passwordInput" class="modal-input" placeholder="Password" />
+          <div class="modal-buttons">
+            <button class="btn-primary" onclick="handleAuthSubmit()">Login</button>
+            <button class="btn-danger" onclick="closeAuthModal()">Cancel</button>
+          </div>
+        `;
+      }
+    }
+
+    function handleAuthSubmit() {
+      if (state.authStep === 'code') {
+        const code = document.getElementById('securityCodeInput').value;
+        if (code === SECURITY_CODE) {
+          state.authStep = 'credentials';
+          renderAuthModal();
+        } else {
+          showNotification('Authentication Failed', 'Invalid security code', 'error');
+        }
+      } else {
+        const username = document.getElementById('usernameInput').value;
+        const password = document.getElementById('passwordInput').value;
+        const user = USERS[username];
+        
+        if (user && user.password === password) {
+          state.currentUser = { username, rank: user.rank, permissions: user.permissions };
+          state.devModeActive = true;
+          document.getElementById('devToggle').classList.add('active');
+          closeAuthModal();
+          showNotification('Welcome!', `Logged in as ${username} (${user.rank})`, 'success');
+          logActivity('User Login', `${username} logged in`);
+          renderPage();
+        } else {
+          showNotification('Authentication Failed', 'Invalid credentials', 'error');
+        }
+      }
+    }
+
+    function handleLogout() {
+      const username = state.currentUser?.username;
+      state.currentUser = null;
+      state.devModeActive = false;
+      state.adminMenuOpen = false;
+      state.editMode = false;
+      document.getElementById('devToggle').classList.remove('active');
+      closeAdminPanel();
+      showNotification('Logged Out', 'Successfully logged out', 'info');
+      logActivity('User Logout', `${username} logged out`);
+      renderPage();
+    }
+
+    // ============ NAVIGATION ============
+    function renderNavigation() {
+      const navLinks = document.getElementById('navbarLinks');
+      if (!navLinks) return;
+      
+      const enabledLinks = state.navigationLinks.filter(link => link.enabled);
+      
+      navLinks.innerHTML = enabledLinks.map(link => `
+        <button class="nav-link ${state.currentPage === link.page ? 'active' : ''}" onclick="changePage('${link.page}')">
+          <svg>${link.icon}</svg>
+          ${link.label}
+        </button>
+      `).join('');
+    }
+
+    function changePage(page) {
+      state.currentPage = page;
+      
+      renderNavigation();
+      logActivity('Page Navigation', `Navigated to ${page}`);
+      renderPage();
+    }
+
+    // ============ ADMIN PANEL ============
+    function openAdminPanel() {
+      if (!state.currentUser) {
+        showNotification('Access Denied', 'Please login first', 'error');
+        return;
+      }
+      state.adminMenuOpen = true;
+      document.getElementById('adminPanel').classList.add('open');
+      renderAdminContent();
+    }
+
+    function closeAdminPanel() {
+      state.adminMenuOpen = false;
+      document.getElementById('adminPanel').classList.remove('open');
+    }
+
+    function changeAdminSection(section) {
+      state.adminSection = section;
+      
+      document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.closest('.admin-tab').classList.add('active');
+      
+      renderAdminContent();
+    }
+
+    function renderAdminContent() {
+      const content = document.getElementById('adminContent');
+      
+      if (state.adminSection === 'overview') {
+        renderOverviewSection(content);
+      } else if (state.adminSection === 'navigation') {
+        renderNavigationSection(content);
+      } else if (state.adminSection === 'elements') {
+        renderElementsSection(content);
+      } else if (state.adminSection === 'cloud') {
+        renderCloudSection(content);
+      } else if (state.adminSection === 'chat') {
+        renderChatSection(content);
+      } else if (state.adminSection === 'users') {
+        renderUsersSection(content);
+      } else if (state.adminSection === 'activity') {
+        renderActivitySection(content);
+      }
+    }
+
+    function renderNavigationSection(content) {
+      const canManageNav = ['Owner', 'CoOwner', 'Developer'].includes(state.currentUser?.rank);
+      
+      if (!canManageNav) {
+        content.innerHTML = `
+          <div style="text-align: center; padding: 3rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h3 style="color: #667eea; margin-bottom: 1rem;">Access Restricted</h3>
+            <p style="color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'};">Developer+ rank required to manage navigation</p>
+          </div>
+        `;
+        return;
+      }
+      
+      content.innerHTML = `
+        <div class="admin-navigation">
+          <h3 style="color: #667eea; margin-bottom: 1.5rem;">Navigation Manager</h3>
+          
+          <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <button class="btn-primary" onclick="addNavigationLink()">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Nav Link
+            </button>
+          </div>
+          
+          <h4 style="color: #667eea; margin-bottom: 1rem;">Navigation Links (${state.navigationLinks.length})</h4>
+          <div style="max-height: 500px; overflow-y: auto;">
+            ${state.navigationLinks.map(link => `
+              <div style="background: rgba(102, 126, 234, 0.05); padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    <svg style="width: 24px; height: 24px; stroke: ${state.theme === 'dark' ? '#a5b4fc' : '#667eea'};">${link.icon}</svg>
+                    <div>
+                      <strong style="color: ${state.theme === 'dark' ? '#a5b4fc' : '#667eea'};">${link.label}</strong>
+                      <p style="font-size: 0.85rem; color: #999; margin: 0;">Page: ${link.page} • By ${link.author}</p>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                      <input type="checkbox" ${link.enabled ? 'checked' : ''} onchange="toggleNavLink('${link.id}')" />
+                      <span style="font-size: 0.9rem; color: ${state.theme === 'dark' ? '#a5b4fc' : '#667eea'};">Enabled</span>
+                    </label>
+                    <button class="btn-icon" onclick="editNavigationLink('${link.id}')" title="Edit">
+                      <svg><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    ${link.author !== 'System' ? `
+                      <button class="btn-icon btn-danger" onclick="deleteNavigationLink('${link.id}')" title="Delete">
+                        <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div style="background: rgba(102, 126, 234, 0.1); padding: 1.5rem; border-radius: 12px; margin-top: 2rem;">
+            <p style="color: #667eea; font-weight: 600; margin-bottom: 0.5rem;">💡 Tips</p>
+            <ul style="color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; font-size: 0.9rem; line-height: 1.8; margin: 0; padding-left: 1.5rem;">
+              <li>Toggle "Enabled" to show/hide links in navbar</li>
+              <li>Edit links to change label, icon, or target page</li>
+              <li>System links cannot be deleted</li>
+              <li>Changes appear immediately in navigation</li>
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderOverviewSection(content) {
+      const totalCards = Object.values(state.featureCards).reduce((sum, cards) => sum + cards.length, 0);
+      
+      content.innerHTML = `
+        <div class="admin-overview">
+          <h3>Welcome, ${state.currentUser.username}!</h3>
+          <p class="admin-role">Rank: <strong>${state.currentUser.rank}</strong></p>
+          <p class="admin-permissions">Permissions: <strong>${state.currentUser.permissions}</strong></p>
+          
+          <div class="admin-stats">
+            <div class="stat-box">
+              <div class="stat-value">${state.projects.length}</div>
+              <div class="stat-label">Projects</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${totalCards}</div>
+              <div class="stat-label">Feature Cards</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${state.navigationLinks.filter(l => l.enabled).length}</div>
+              <div class="stat-label">Nav Links</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${state.customElements.length}</div>
+              <div class="stat-label">Custom Elements</div>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button class="btn-primary" onclick="exportWebsiteState()">
+              <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Export Data
+            </button>
+            <button class="btn-primary" onclick="importWebsiteState()">
+              <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Import Data
+            </button>
+          </div>
+          
+          <button class="btn-danger" style="margin-top: 2rem;" onclick="handleLogout()">Logout</button>
+        </div>
+      `;
+    }
+
+    function renderElementsSection(content) {
+      content.innerHTML = `
+        <div class="admin-elements">
+          <h3 style="color: #667eea; margin-bottom: 1.5rem;">Element Manager</h3>
+          
+          <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+            <button class="btn-primary" onclick="state.editMode = !state.editMode; renderPage(); renderAdminContent();">
+              ${state.editMode ? '✓ Edit Mode Active' : 'Enable Edit Mode'}
+            </button>
+            <button class="btn-primary" onclick="showElementLibrary()">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Element
+            </button>
+          </div>
+          
+          ${state.editMode ? `
+            <div style="background: rgba(102, 126, 234, 0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+              <p style="color: #667eea; font-weight: 600; margin-bottom: 0.5rem;">✏️ Edit Mode Active</p>
+              <p style="color: #666; font-size: 0.9rem;">Click on elements in the page to edit, move, or delete them</p>
+            </div>
+          ` : ''}
+          
+          <h4 style="color: #667eea; margin-bottom: 1rem;">Custom Elements (${state.customElements.length})</h4>
+          <div style="max-height: 400px; overflow-y: auto;">
+            ${state.customElements.length === 0 ? 
+              '<p style="text-align: center; color: #999; padding: 2rem;">No custom elements yet</p>' :
+              state.customElements.map(el => `
+                <div style="background: rgba(102, 126, 234, 0.05); padding: 1rem; border-radius: 12px; margin-bottom: 0.5rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <strong style="color: #667eea;">${el.type}</strong>
+                      <p style="font-size: 0.85rem; color: #999;">By ${el.author} • Page: ${el.page}</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                      ${canEditElement(el.author) ? `
+                        <button class="btn-icon" onclick="editCustomElement('${el.id}')" title="Edit">
+                          <svg><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                      ` : ''}
+                      ${canDeleteElement(el.author) ? `
+                        <button class="btn-icon btn-danger" onclick="deleteCustomElement('${el.id}')" title="Delete">
+                          <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                </div>
+              `).join('')
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderUsersSection(content) {
+      const usersList = Object.entries(USERS).map(([username, data]) => ({
+        username,
+        ...data,
+        isOnline: state.currentUser?.username === username
+      }));
+      
+      content.innerHTML = `
+        <div class="admin-users">
+          <h3 style="color: #667eea; margin-bottom: 1.5rem;">User Management</h3>
+          
+          <div class="user-list">
+            ${usersList.map(user => `
+              <div class="user-item">
+                <div class="user-avatar">${user.username[0]}</div>
+                <div class="user-info">
+                  <div class="user-name">
+                    ${user.username}
+                    ${user.isOnline ? '<span style="color: #38ef7d;">●</span>' : ''}
+                  </div>
+                  <div class="user-rank">${user.rank} • ${user.permissions}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderActivitySection(content) {
+      content.innerHTML = `
+        <div class="admin-activity">
+          <h3 style="color: #667eea; margin-bottom: 1.5rem;">Activity Log</h3>
+          
+          <div class="activity-log">
+            ${state.activityLog.length === 0 ? 
+              '<p style="text-align: center; color: #999; padding: 2rem;">No activity yet</p>' :
+              state.activityLog.map(activity => `
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    ${activity.action.includes('Login') ? '🔓' : 
+                      activity.action.includes('Logout') ? '🔒' :
+                      activity.action.includes('Added') ? '➕' :
+                      activity.action.includes('Deleted') ? '🗑️' :
+                      activity.action.includes('Edited') ? '✏️' :
+                      '📝'}
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-text">
+                      <strong>${activity.user}</strong> ${activity.details}
+                    </div>
+                    <div class="activity-time">${activity.timestamp}</div>
+                  </div>
+                </div>
+              `).join('')
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCloudSection(content) {
+      const files = state.cloudView === 'personal' ? state.personalFiles : state.devCloudFiles;
+      
+      content.innerHTML = `
+        <div class="admin-cloud">
+          <div class="cloud-selector">
+            <button class="cloud-btn ${state.cloudView === 'personal' ? 'active' : ''}" onclick="setCloudView('personal')">
+              Personal Cloud
+            </button>
+            <button class="cloud-btn ${state.cloudView === 'devcloud' ? 'active' : ''}" onclick="setCloudView('devcloud')">
+              DevCloud (Shared)
+            </button>
+          </div>
+          
+          ${state.cloudView ? `
+            <div class="cloud-content">
+              <button class="btn-primary" onclick="uploadFile()">
+                <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Upload File
+              </button>
+              
+              <div class="files-list">
+                ${files.length === 0 ? '<p class="no-files">No files yet</p>' : files.map(file => `
+                  <div class="file-item">
+                    <div class="file-icon">📄</div>
+                    <div class="file-info">
+                      <div class="file-name">${file.name}</div>
+                      <div class="file-meta">${file.uploadedBy} • ${new Date(file.date).toLocaleDateString()} • ${file.size}</div>
+                    </div>
+                    <div class="file-actions">
+                      <button class="btn-icon" title="Download">
+                        <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                      </button>
+                      ${(state.cloudView === 'personal' || file.uploadedBy === state.currentUser.username) ? `
+                        <button class="btn-icon btn-danger" onclick="deleteFile(${file.id})" title="Delete">
+                          <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : '<div class="cloud-prompt"><p>Select a cloud to view files</p></div>'}
+        </div>
+      `;
+    }
+
+    function renderChatSection(content) {
+      content.innerHTML = `
+        <div class="admin-chat">
+          <div class="chat-messages" id="chatMessages">
+            ${state.chatMessages.length === 0 ? '<p class="no-messages">No messages yet. Start chatting!</p>' : state.chatMessages.map(msg => `
+              <div class="chat-message ${msg.sender === state.currentUser.username ? 'own-message' : ''}">
+                <div class="message-avatar">${msg.avatar}</div>
+                <div class="message-content">
+                  <div class="message-header">
+                    <strong>${msg.sender}</strong>
+                    <span class="message-time">${msg.timestamp}</span>
+                  </div>
+                  <div class="message-text">${msg.text}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="chat-input-area">
+            <input
+              type="text"
+              id="chatInput"
+              placeholder="Type a message..."
+              class="chat-input"
+              onkeypress="if(event.key==='Enter') sendMessage()"
+            />
+            <button class="btn-primary" onclick="sendMessage()">
+              <svg><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+          
+          <div class="call-controls">
+            <button class="call-btn ${state.inCall ? 'active' : ''}" onclick="toggleCall()">
+              ${state.inCall ? 'End Call' : 'Start Call'}
+            </button>
+            
+            ${state.inCall ? `
+              <button class="control-btn ${!state.micEnabled ? 'disabled' : ''}" onclick="toggleMic()">
+                <svg>${state.micEnabled ? '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line>' : '<line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line>'}</svg>
+              </button>
+              <button class="control-btn ${!state.videoEnabled ? 'disabled' : ''}" onclick="toggleVideo()">
+                <svg>${state.videoEnabled ? '<polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>' : '<path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path><line x1="1" y1="1" x2="23" y2="23"></line>'}</svg>
+              </button>
+              <button class="control-btn ${state.screenSharing ? 'active' : ''}" onclick="toggleScreenShare()">
+                <svg><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              </button>
+            ` : ''}
+          </div>
+          
+          ${state.inCall ? `
+            <div class="call-status">
+              <p>📞 In call with team</p>
+              ${state.screenSharing ? '<p>🖥️ Screen sharing active</p>' : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // ============ FEATURE CARD MANAGEMENT ============
+    function canManageCards() {
+      return state.currentUser && ['Owner', 'CoOwner'].includes(state.currentUser.rank);
+    }
+
+    function renderFeatureCard(card, page) {
+      const canManage = canManageCards();
+      
+      const cardContent = `
+        ${canManage ? `
+          <div class="card-controls">
+            <button class="card-control-btn" onclick="editFeatureCard('${card.id}', '${page}')" title="Edit">✏️</button>
+            <button class="card-control-btn delete" onclick="deleteFeatureCard('${card.id}', '${page}')" title="Delete">🗑️</button>
+          </div>
+        ` : ''}
+        <div class="feature-icon">${card.icon}</div>
+        <h3>${card.title}</h3>
+        <p>${card.description}</p>
+        ${card.link ? `<a href="${card.link}" class="card-link" target="_blank" rel="noopener noreferrer">🔗 Visit Link</a>` : ''}
+      `;
+      
+      if (card.link && !canManage) {
+        // If card has link and user can't manage, make whole card clickable
+        return `
+          <a href="${card.link}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+            <div class="feature-card">
+              ${cardContent}
+            </div>
+          </a>
+        `;
+      } else {
+        // Otherwise, draggable for managers or static for viewers
+        return `
+          <div class="feature-card ${canManage ? 'draggable' : ''}" 
+               draggable="${canManage}" 
+               data-card-id="${card.id}"
+               ${canManage ? `
+                 ondragstart="handleCardDragStart(event)"
+                 ondragend="handleCardDragEnd(event)"
+                 ondragover="handleCardDragOver(event)"
+                 ondrop="handleCardDrop(event, '${page}')"
+               ` : ''}>
+            ${cardContent}
+          </div>
+        `;
+      }
+    }
+
+    let draggedCard = null;
+
+    function handleCardDragStart(e) {
+      draggedCard = e.target.dataset.cardId;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', e.target.innerHTML);
+    }
+
+    function handleCardDragEnd(e) {
+      e.target.classList.remove('dragging');
+      document.querySelectorAll('.feature-card').forEach(card => {
+        card.classList.remove('drag-over');
+      });
+    }
+
+    function handleCardDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
+      e.dataTransfer.dropEffect = 'move';
+      
+      const target = e.target.closest('.feature-card');
+      if (target && target.dataset.cardId !== draggedCard) {
+        target.classList.add('drag-over');
+      }
+      
+      return false;
+    }
+
+    function handleCardDrop(e, page) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+      
+      const target = e.target.closest('.feature-card');
+      if (!target) return false;
+      
+      target.classList.remove('drag-over');
+      
+      const targetCardId = target.dataset.cardId;
+      
+      if (draggedCard !== targetCardId) {
+        const cards = state.featureCards[page];
+        const draggedIndex = cards.findIndex(c => c.id === draggedCard);
+        const targetIndex = cards.findIndex(c => c.id === targetCardId);
+        
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+          const [draggedItem] = cards.splice(draggedIndex, 1);
+          cards.splice(targetIndex, 0, draggedItem);
+          
+          // Update order
+          cards.forEach((card, index) => {
+            card.order = index;
+          });
+          
+          showNotification('Card Moved', 'Card position updated', 'success');
+          logActivity('Card Reordered', `Moved card on ${page} page`);
+          renderPage();
+        }
+      }
+      
+      return false;
+    }
+
+    function addFeatureCard(page) {
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = 'Add Feature Card';
+      content.innerHTML = `
+        <label class="modal-label">Icon (Emoji)</label>
+        <input type="text" id="cardIcon" class="modal-input" placeholder="🎯" maxlength="2" />
+        
+        <label class="modal-label">Title</label>
+        <input type="text" id="cardTitle" class="modal-input" placeholder="Feature Title" />
+        
+        <label class="modal-label">Description</label>
+        <textarea id="cardDescription" class="modal-input" rows="3" placeholder="Feature description..."></textarea>
+        
+        <label class="modal-label">Link (Optional)</label>
+        <input type="text" id="cardLink" class="modal-input" placeholder="https://example.com" />
+        <p style="font-size: 0.85rem; color: #999; margin: -0.5rem 0 1rem 0;">Leave empty if no link needed</p>
+        
+        <input type="hidden" id="cardPage" value="${page}" />
+        
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="saveFeatureCard()">Add Card</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function saveFeatureCard() {
+      const icon = document.getElementById('cardIcon').value.trim();
+      const title = document.getElementById('cardTitle').value.trim();
+      const description = document.getElementById('cardDescription').value.trim();
+      const link = document.getElementById('cardLink').value.trim();
+      const page = document.getElementById('cardPage').value;
+      
+      if (!icon || !title || !description) {
+        showNotification('Validation Error', 'Icon, title, and description are required', 'error');
+        return;
+      }
+      
+      const cards = state.featureCards[page];
+      const newCard = {
+        id: 'card_' + page + '_' + Date.now(),
+        icon,
+        title,
+        description,
+        link: link || null,
+        author: state.currentUser.username,
+        order: cards.length
+      };
+      
+      cards.push(newCard);
+      closeElementModal();
+      showNotification('Card Added', 'Feature card created successfully', 'success');
+      logActivity('Card Added', `Added card "${title}" to ${page}`);
+      renderPage();
+      if (state.adminMenuOpen) {
+        renderAdminContent();
+      }
+    }
+
+    function editFeatureCard(cardId, page) {
+      const card = state.featureCards[page].find(c => c.id === cardId);
+      if (!card) return;
+      
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = 'Edit Feature Card';
+      content.innerHTML = `
+        <label class="modal-label">Icon (Emoji)</label>
+        <input type="text" id="cardIcon" class="modal-input" value="${card.icon}" maxlength="2" />
+        
+        <label class="modal-label">Title</label>
+        <input type="text" id="cardTitle" class="modal-input" value="${card.title}" />
+        
+        <label class="modal-label">Description</label>
+        <textarea id="cardDescription" class="modal-input" rows="3">${card.description}</textarea>
+        
+        <label class="modal-label">Link (Optional)</label>
+        <input type="text" id="cardLink" class="modal-input" value="${card.link || ''}" placeholder="https://example.com" />
+        <p style="font-size: 0.85rem; color: #999; margin: -0.5rem 0 1rem 0;">Leave empty if no link needed</p>
+        
+        <input type="hidden" id="cardId" value="${cardId}" />
+        <input type="hidden" id="cardPage" value="${page}" />
+        
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="updateFeatureCard()">Update Card</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function updateFeatureCard() {
+      const cardId = document.getElementById('cardId').value;
+      const page = document.getElementById('cardPage').value;
+      const icon = document.getElementById('cardIcon').value.trim();
+      const title = document.getElementById('cardTitle').value.trim();
+      const description = document.getElementById('cardDescription').value.trim();
+      const link = document.getElementById('cardLink').value.trim();
+      
+      if (!icon || !title || !description) {
+        showNotification('Validation Error', 'Icon, title, and description are required', 'error');
+        return;
+      }
+      
+      const card = state.featureCards[page].find(c => c.id === cardId);
+      if (!card) return;
+      
+      card.icon = icon;
+      card.title = title;
+      card.description = description;
+      card.link = link || null;
+      
+      closeElementModal();
+      showNotification('Card Updated', 'Feature card updated successfully', 'success');
+      logActivity('Card Edited', `Updated card "${title}" on ${page}`);
+      renderPage();
+      if (state.adminMenuOpen) {
+        renderAdminContent();
+      }
+    }
+
+    function deleteFeatureCard(cardId, page) {
+      const card = state.featureCards[page].find(c => c.id === cardId);
+      if (!card) return;
+      
+      if (confirm(`Delete card "${card.title}"?`)) {
+        state.featureCards[page] = state.featureCards[page].filter(c => c.id !== cardId);
+        
+        // Reorder remaining cards
+        state.featureCards[page].forEach((c, index) => {
+          c.order = index;
+        });
+        
+        showNotification('Card Deleted', 'Feature card removed successfully', 'success');
+        logActivity('Card Deleted', `Deleted card "${card.title}" from ${page}`);
+        renderPage();
+        if (state.adminMenuOpen) {
+          renderAdminContent();
+        }
+      }
+    }
+
+    // ============ NAVIGATION LINK MANAGEMENT ============
+    function addNavigationLink() {
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = 'Add Navigation Link';
+      content.innerHTML = `
+        <label class="modal-label">Link Label</label>
+        <input type="text" id="navLabel" class="modal-input" placeholder="My Page" />
+        
+        <label class="modal-label">Target Page</label>
+        <input type="text" id="navPage" class="modal-input" placeholder="mypage" />
+        <p style="font-size: 0.85rem; color: #999; margin: -0.5rem 0 1rem 0;">This will be the page identifier (lowercase, no spaces)</p>
+        
+        <label class="modal-label">Icon SVG Path</label>
+        <textarea id="navIcon" class="modal-input" rows="3" placeholder='<path d="..."></path>'></textarea>
+        <p style="font-size: 0.85rem; color: #999; margin: -0.5rem 0 1rem 0;">Paste SVG path elements (e.g., from Feather Icons)</p>
+        
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="saveNavigationLink()">Add Link</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function saveNavigationLink() {
+      const label = document.getElementById('navLabel').value.trim();
+      const page = document.getElementById('navPage').value.trim().toLowerCase();
+      const icon = document.getElementById('navIcon').value.trim();
+      
+      if (!label || !page) {
+        showNotification('Validation Error', 'Label and page are required', 'error');
+        return;
+      }
+      
+      const newLink = {
+        id: 'nav_' + Date.now(),
+        label,
+        page,
+        icon: icon || '<circle cx="12" cy="12" r="10"></circle>',
+        enabled: true,
+        author: state.currentUser.username
+      };
+      
+      state.navigationLinks.push(newLink);
+      closeElementModal();
+      showNotification('Link Added', 'Navigation link created successfully', 'success');
+      logActivity('Navigation Added', `Added link: ${label}`);
+      renderNavigation();
+      renderAdminContent();
+    }
+
+    function editNavigationLink(id) {
+      const link = state.navigationLinks.find(l => l.id === id);
+      if (!link) return;
+      
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = 'Edit Navigation Link';
+      content.innerHTML = `
+        <label class="modal-label">Link Label</label>
+        <input type="text" id="navLabel" class="modal-input" value="${link.label}" />
+        
+        <label class="modal-label">Target Page</label>
+        <input type="text" id="navPage" class="modal-input" value="${link.page}" />
+        <p style="font-size: 0.85rem; color: #999; margin: -0.5rem 0 1rem 0;">This will be the page identifier (lowercase, no spaces)</p>
+        
+        <label class="modal-label">Icon SVG Path</label>
+        <textarea id="navIcon" class="modal-input" rows="3">${link.icon}</textarea>
+        <p style="font-size: 0.85rem; color: #999; margin: -0.5rem 0 1rem 0;">Paste SVG path elements (e.g., from Feather Icons)</p>
+        
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="updateNavigationLink('${id}')">Update Link</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function updateNavigationLink(id) {
+      const link = state.navigationLinks.find(l => l.id === id);
+      if (!link) return;
+      
+      const label = document.getElementById('navLabel').value.trim();
+      const page = document.getElementById('navPage').value.trim().toLowerCase();
+      const icon = document.getElementById('navIcon').value.trim();
+      
+      if (!label || !page) {
+        showNotification('Validation Error', 'Label and page are required', 'error');
+        return;
+      }
+      
+      link.label = label;
+      link.page = page;
+      link.icon = icon;
+      
+      closeElementModal();
+      showNotification('Link Updated', 'Navigation link updated successfully', 'success');
+      logActivity('Navigation Edited', `Updated link: ${label}`);
+      renderNavigation();
+      renderAdminContent();
+    }
+
+    function toggleNavLink(id) {
+      const link = state.navigationLinks.find(l => l.id === id);
+      if (!link) return;
+      
+      link.enabled = !link.enabled;
+      showNotification('Link Toggled', `${link.label} is now ${link.enabled ? 'enabled' : 'disabled'}`, 'info');
+      logActivity('Navigation Toggled', `${link.enabled ? 'Enabled' : 'Disabled'} link: ${link.label}`);
+      renderNavigation();
+      renderAdminContent();
+    }
+
+    function deleteNavigationLink(id) {
+      const link = state.navigationLinks.find(l => l.id === id);
+      if (!link) return;
+      
+      if (link.author === 'System') {
+        showNotification('Cannot Delete', 'System links cannot be deleted', 'error');
+        return;
+      }
+      
+      if (confirm(`Delete navigation link "${link.label}"?`)) {
+        state.navigationLinks = state.navigationLinks.filter(l => l.id !== id);
+        showNotification('Link Deleted', 'Navigation link removed successfully', 'success');
+        logActivity('Navigation Deleted', `Deleted link: ${link.label}`);
+        renderNavigation();
+        renderAdminContent();
+      }
+    }
+
+    // ============ ELEMENT MANAGEMENT ============
+    function showElementLibrary() {
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = 'Add Element';
+      content.innerHTML = `
+        <div class="element-library">
+          <div class="library-item" onclick="addElement('button')">
+            <div class="library-icon">🔘</div>
+            <div class="library-label">Button</div>
+          </div>
+          <div class="library-item" onclick="addElement('text')">
+            <div class="library-icon">📝</div>
+            <div class="library-label">Text</div>
+          </div>
+          <div class="library-item" onclick="addElement('heading')">
+            <div class="library-icon">🔤</div>
+            <div class="library-label">Heading</div>
+          </div>
+          <div class="library-item" onclick="addElement('card')">
+            <div class="library-icon">🎴</div>
+            <div class="library-label">Card</div>
+          </div>
+          <div class="library-item" onclick="addElement('image')">
+            <div class="library-icon">🖼️</div>
+            <div class="library-label">Image</div>
+          </div>
+          <div class="library-item" onclick="addElement('divider')">
+            <div class="library-icon">➖</div>
+            <div class="library-label">Divider</div>
+          </div>
+        </div>
+        <div class="modal-buttons" style="margin-top: 2rem;">
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function addElement(type) {
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+      
+      let formHTML = '';
+      
+      switch(type) {
+        case 'button':
+          formHTML = `
+            <label class="modal-label">Button Text</label>
+            <input type="text" id="elementText" class="modal-input" placeholder="Click me" value="Click me" />
+            
+            <label class="modal-label">Button Style</label>
+            <select id="elementStyle" class="modal-select">
+              <option value="primary">Primary</option>
+              <option value="danger">Danger</option>
+              <option value="outline">Outline</option>
+            </select>
+            
+            <label class="modal-label">Link (optional)</label>
+            <input type="text" id="elementLink" class="modal-input" placeholder="#" />
+          `;
+          break;
+          
+        case 'text':
+          formHTML = `
+            <label class="modal-label">Text Content</label>
+            <textarea id="elementText" class="modal-input" rows="4" placeholder="Enter your text here..."></textarea>
+            
+            <label class="modal-label">Text Align</label>
+            <select id="elementAlign" class="modal-select">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          `;
+          break;
+          
+        case 'heading':
+          formHTML = `
+            <label class="modal-label">Heading Text</label>
+            <input type="text" id="elementText" class="modal-input" placeholder="My Heading" />
+            
+            <label class="modal-label">Heading Level</label>
+            <select id="elementLevel" class="modal-select">
+              <option value="h1">H1 (Largest)</option>
+              <option value="h2">H2</option>
+              <option value="h3" selected>H3</option>
+              <option value="h4">H4</option>
+            </select>
+          `;
+          break;
+          
+        case 'card':
+          formHTML = `
+            <label class="modal-label">Card Title</label>
+            <input type="text" id="elementTitle" class="modal-input" placeholder="Card Title" />
+            
+            <label class="modal-label">Card Content</label>
+            <textarea id="elementText" class="modal-input" rows="4" placeholder="Card content..."></textarea>
+            
+            <label class="modal-label">Icon (Emoji)</label>
+            <input type="text" id="elementIcon" class="modal-input" placeholder="🎯" maxlength="2" />
+          `;
+          break;
+          
+        case 'image':
+          formHTML = `
+            <label class="modal-label">Image URL</label>
+            <input type="text" id="elementUrl" class="modal-input" placeholder="https://example.com/image.jpg" />
+            
+            <label class="modal-label">Alt Text</label>
+            <input type="text" id="elementAlt" class="modal-input" placeholder="Image description" />
+            
+            <label class="modal-label">Image Size</label>
+            <select id="elementSize" class="modal-select">
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+              <option value="full">Full Width</option>
+            </select>
+          `;
+          break;
+          
+        case 'divider':
+          formHTML = `
+            <label class="modal-label">Divider Style</label>
+            <select id="elementStyle" class="modal-select">
+              <option value="solid">Solid Line</option>
+              <option value="dashed">Dashed Line</option>
+              <option value="gradient">Gradient</option>
+            </select>
+            
+            <label class="modal-label">Spacing</label>
+            <select id="elementSpacing" class="modal-select">
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+            </select>
+          `;
+          break;
+      }
+      
+      content.innerHTML = `
+        ${formHTML}
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="saveElement('${type}')">Add Element</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+    }
+
+    function saveElement(type) {
+      const element = {
+        id: 'el_' + Date.now(),
+        type,
+        page: state.currentPage,
+        author: state.currentUser.username,
+        createdAt: new Date().toISOString()
+      };
+      
+      switch(type) {
+        case 'button':
+          element.text = document.getElementById('elementText').value;
+          element.style = document.getElementById('elementStyle').value;
+          element.link = document.getElementById('elementLink').value || '#';
+          break;
+          
+        case 'text':
+          element.text = document.getElementById('elementText').value;
+          element.align = document.getElementById('elementAlign').value;
+          break;
+          
+        case 'heading':
+          element.text = document.getElementById('elementText').value;
+          element.level = document.getElementById('elementLevel').value;
+          break;
+          
+        case 'card':
+          element.title = document.getElementById('elementTitle').value;
+          element.text = document.getElementById('elementText').value;
+          element.icon = document.getElementById('elementIcon').value;
+          break;
+          
+        case 'image':
+          element.url = document.getElementById('elementUrl').value;
+          element.alt = document.getElementById('elementAlt').value;
+          element.size = document.getElementById('elementSize').value;
+          break;
+          
+        case 'divider':
+          element.style = document.getElementById('elementStyle').value;
+          element.spacing = document.getElementById('elementSpacing').value;
+          break;
+      }
+      
+      state.customElements.push(element);
+      closeElementModal();
+      showNotification('Element Added', `${type} added successfully`, 'success');
+      logActivity('Element Added', `Added ${type} to ${state.currentPage}`);
+      renderPage();
+      renderAdminContent();
+    }
+
+    function editCustomElement(id) {
+      const element = state.customElements.find(el => el.id === id);
+      if (!element) return;
+      
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = `Edit ${element.type.charAt(0).toUpperCase() + element.type.slice(1)}`;
+      
+      let formHTML = '';
+      
+      switch(element.type) {
+        case 'button':
+          formHTML = `
+            <label class="modal-label">Button Text</label>
+            <input type="text" id="elementText" class="modal-input" value="${element.text}" />
+            
+            <label class="modal-label">Button Style</label>
+            <select id="elementStyle" class="modal-select">
+              <option value="primary" ${element.style === 'primary' ? 'selected' : ''}>Primary</option>
+              <option value="danger" ${element.style === 'danger' ? 'selected' : ''}>Danger</option>
+              <option value="outline" ${element.style === 'outline' ? 'selected' : ''}>Outline</option>
+            </select>
+            
+            <label class="modal-label">Link</label>
+            <input type="text" id="elementLink" class="modal-input" value="${element.link}" />
+          `;
+          break;
+          
+        case 'text':
+          formHTML = `
+            <label class="modal-label">Text Content</label>
+            <textarea id="elementText" class="modal-input" rows="4">${element.text}</textarea>
+            
+            <label class="modal-label">Text Align</label>
+            <select id="elementAlign" class="modal-select">
+              <option value="left" ${element.align === 'left' ? 'selected' : ''}>Left</option>
+              <option value="center" ${element.align === 'center' ? 'selected' : ''}>Center</option>
+              <option value="right" ${element.align === 'right' ? 'selected' : ''}>Right</option>
+            </select>
+          `;
+          break;
+          
+        case 'heading':
+          formHTML = `
+            <label class="modal-label">Heading Text</label>
+            <input type="text" id="elementText" class="modal-input" value="${element.text}" />
+            
+            <label class="modal-label">Heading Level</label>
+            <select id="elementLevel" class="modal-select">
+              <option value="h1" ${element.level === 'h1' ? 'selected' : ''}>H1 (Largest)</option>
+              <option value="h2" ${element.level === 'h2' ? 'selected' : ''}>H2</option>
+              <option value="h3" ${element.level === 'h3' ? 'selected' : ''}>H3</option>
+              <option value="h4" ${element.level === 'h4' ? 'selected' : ''}>H4</option>
+            </select>
+          `;
+          break;
+          
+        case 'card':
+          formHTML = `
+            <label class="modal-label">Card Title</label>
+            <input type="text" id="elementTitle" class="modal-input" value="${element.title}" />
+            
+            <label class="modal-label">Card Content</label>
+            <textarea id="elementText" class="modal-input" rows="4">${element.text}</textarea>
+            
+            <label class="modal-label">Icon (Emoji)</label>
+            <input type="text" id="elementIcon" class="modal-input" value="${element.icon}" maxlength="2" />
+          `;
+          break;
+          
+        case 'image':
+          formHTML = `
+            <label class="modal-label">Image URL</label>
+            <input type="text" id="elementUrl" class="modal-input" value="${element.url}" />
+            
+            <label class="modal-label">Alt Text</label>
+            <input type="text" id="elementAlt" class="modal-input" value="${element.alt}" />
+            
+            <label class="modal-label">Image Size</label>
+            <select id="elementSize" class="modal-select">
+              <option value="small" ${element.size === 'small' ? 'selected' : ''}>Small</option>
+              <option value="medium" ${element.size === 'medium' ? 'selected' : ''}>Medium</option>
+              <option value="large" ${element.size === 'large' ? 'selected' : ''}>Large</option>
+              <option value="full" ${element.size === 'full' ? 'selected' : ''}>Full Width</option>
+            </select>
+          `;
+          break;
+          
+        case 'divider':
+          formHTML = `
+            <label class="modal-label">Divider Style</label>
+            <select id="elementStyle" class="modal-select">
+              <option value="solid" ${element.style === 'solid' ? 'selected' : ''}>Solid Line</option>
+              <option value="dashed" ${element.style === 'dashed' ? 'selected' : ''}>Dashed Line</option>
+              <option value="gradient" ${element.style === 'gradient' ? 'selected' : ''}>Gradient</option>
+            </select>
+            
+            <label class="modal-label">Spacing</label>
+            <select id="elementSpacing" class="modal-select">
+              <option value="small" ${element.spacing === 'small' ? 'selected' : ''}>Small</option>
+              <option value="medium" ${element.spacing === 'medium' ? 'selected' : ''}>Medium</option>
+              <option value="large" ${element.spacing === 'large' ? 'selected' : ''}>Large</option>
+            </select>
+          `;
+          break;
+      }
+      
+      content.innerHTML = `
+        ${formHTML}
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="updateElement('${id}')">Update Element</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function updateElement(id) {
+      const element = state.customElements.find(el => el.id === id);
+      if (!element) return;
+      
+      switch(element.type) {
+        case 'button':
+          element.text = document.getElementById('elementText').value;
+          element.style = document.getElementById('elementStyle').value;
+          element.link = document.getElementById('elementLink').value;
+          break;
+          
+        case 'text':
+          element.text = document.getElementById('elementText').value;
+          element.align = document.getElementById('elementAlign').value;
+          break;
+          
+        case 'heading':
+          element.text = document.getElementById('elementText').value;
+          element.level = document.getElementById('elementLevel').value;
+          break;
+          
+        case 'card':
+          element.title = document.getElementById('elementTitle').value;
+          element.text = document.getElementById('elementText').value;
+          element.icon = document.getElementById('elementIcon').value;
+          break;
+          
+        case 'image':
+          element.url = document.getElementById('elementUrl').value;
+          element.alt = document.getElementById('elementAlt').value;
+          element.size = document.getElementById('elementSize').value;
+          break;
+          
+        case 'divider':
+          element.style = document.getElementById('elementStyle').value;
+          element.spacing = document.getElementById('elementSpacing').value;
+          break;
+      }
+      
+      closeElementModal();
+      showNotification('Element Updated', 'Changes saved successfully', 'success');
+      logActivity('Element Edited', `Updated ${element.type} on ${element.page}`);
+      renderPage();
+      renderAdminContent();
+    }
+
+    function deleteCustomElement(id) {
+      if (confirm('Delete this element?')) {
+        const element = state.customElements.find(el => el.id === id);
+        state.customElements = state.customElements.filter(el => el.id !== id);
+        showNotification('Element Deleted', 'Element removed successfully', 'success');
+        logActivity('Element Deleted', `Deleted ${element.type} from ${element.page}`);
+        renderPage();
+        renderAdminContent();
+      }
+    }
+
+    function closeElementModal() {
+      document.getElementById('elementModal').classList.add('hidden');
+    }
+
+    // ============ CLOUD FUNCTIONS ============
+    function setCloudView(view) {
+      state.cloudView = view;
+      renderAdminContent();
+    }
+
+    function uploadFile() {
+      const fileName = prompt('File name:');
+      if (fileName) {
+        const newFile = {
+          id: Date.now(),
+          name: fileName,
+          uploadedBy: state.currentUser.username,
+          date: new Date().toISOString(),
+          size: (Math.random() * 10).toFixed(2) + ' MB'
+        };
+        
+        if (state.cloudView === 'personal') {
+          state.personalFiles.push(newFile);
+        } else {
+          state.devCloudFiles.push(newFile);
+        }
+        
+        showNotification('File Uploaded', `Uploaded to ${state.cloudView === 'personal' ? 'Personal Cloud' : 'DevCloud'}`, 'success');
+        logActivity('File Uploaded', `Uploaded ${fileName} to ${state.cloudView}`);
+        renderAdminContent();
+      }
+    }
+
+    function deleteFile(fileId) {
+      if (confirm('Delete this file?')) {
+        if (state.cloudView === 'personal') {
+          state.personalFiles = state.personalFiles.filter(f => f.id !== fileId);
+        } else {
+          state.devCloudFiles = state.devCloudFiles.filter(f => f.id !== fileId);
+        }
+        showNotification('File Deleted', 'File removed successfully', 'success');
+        logActivity('File Deleted', 'Deleted file from cloud');
+        renderAdminContent();
+      }
+    }
+
+    // ============ CHAT FUNCTIONS ============
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      
+      if (text) {
+        state.chatMessages.push({
+          id: Date.now(),
+          sender: state.currentUser.username,
+          text: text,
+          timestamp: new Date().toLocaleTimeString(),
+          avatar: state.currentUser.username[0]
+        });
+        input.value = '';
+        logActivity('Message Sent', 'Sent a message in team chat');
+        renderAdminContent();
+        
+        setTimeout(() => {
+          const messages = document.getElementById('chatMessages');
+          messages.scrollTop = messages.scrollHeight;
+        }, 100);
+      }
+    }
+
+    function toggleCall() {
+      state.inCall = !state.inCall;
+      if (!state.inCall) {
+        state.micEnabled = true;
+        state.videoEnabled = true;
+        state.screenSharing = false;
+        logActivity('Call Ended', 'Ended team call');
+      } else {
+        logActivity('Call Started', 'Started team call');
+      }
+      renderAdminContent();
+    }
+
+    function toggleMic() {
+      state.micEnabled = !state.micEnabled;
+      renderAdminContent();
+    }
+
+    function toggleVideo() {
+      state.videoEnabled = !state.videoEnabled;
+      renderAdminContent();
+    }
+
+    function toggleScreenShare() {
+      state.screenSharing = !state.screenSharing;
+      renderAdminContent();
+    }
+
+    // ============ IMPORT/EXPORT ============
+    function exportWebsiteState() {
+      const exportData = {
+        projects: state.projects,
+        customElements: state.customElements,
+        navigationLinks: state.navigationLinks,
+        featureCards: state.featureCards,
+        suggestions: state.suggestions,
+        personalFiles: state.personalFiles,
+        devCloudFiles: state.devCloudFiles,
+        chatMessages: state.chatMessages,
+        activityLog: state.activityLog,
+        exportDate: new Date().toISOString()
+      };
+      
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `website-backup-${Date.now()}.json`;
+      link.click();
+      
+      URL.revokeObjectURL(url);
+      showNotification('Export Complete', 'Website data exported successfully', 'success');
+      logActivity('Data Exported', 'Exported website data');
+    }
+
+    function importWebsiteState() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          try {
+            const importData = JSON.parse(event.target.result);
+            
+            if (confirm('This will replace all current data. Continue?')) {
+              state.projects = importData.projects || [];
+              state.customElements = importData.customElements || [];
+              state.navigationLinks = importData.navigationLinks || state.navigationLinks;
+              state.featureCards = importData.featureCards || state.featureCards;
+              state.suggestions = importData.suggestions || [];
+              state.personalFiles = importData.personalFiles || [];
+              state.devCloudFiles = importData.devCloudFiles || [];
+              state.chatMessages = importData.chatMessages || [];
+              state.activityLog = importData.activityLog || [];
+              
+              showNotification('Import Complete', 'Website data imported successfully', 'success');
+              logActivity('Data Imported', 'Imported website data');
+              renderNavigation();
+              renderPage();
+              renderAdminContent();
+            }
+          } catch (error) {
+            showNotification('Import Failed', 'Invalid file format', 'error');
+          }
+        };
+        
+        reader.readAsText(file);
+      };
+      
+      input.click();
+    }
+
+    // ============ SUGGESTIONS ============
+    function submitSuggestion() {
+      const input = document.getElementById('suggestionInput');
+      const text = input.value.trim();
+      
+      if (!text) {
+        showNotification('Empty Suggestion', 'Please enter your suggestion', 'error');
+        return;
+      }
+      
+      const suggestion = {
+        id: Date.now(),
+        author: state.currentUser ? state.currentUser.username : 'Anonymous',
+        text,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      state.suggestions.unshift(suggestion);
+      input.value = '';
+      
+      showNotification('Thank You!', 'Your suggestion has been submitted', 'success');
+      logActivity('Suggestion Submitted', `New suggestion from ${suggestion.author}`);
+      renderPage();
+    }
+
+    // ============ PROJECT MANAGEMENT ============
+    function deleteProject(projectId) {
+      if (!canManageCards()) {
+        showNotification('Access Denied', 'CoOwner+ rank required', 'error');
+        return;
+      }
+      
+      if (confirm('Delete this project?')) {
+        const project = state.projects.find(p => p.id === projectId);
+        state.projects = state.projects.filter(p => p.id !== projectId);
+        showNotification('Project Deleted', 'Project removed successfully', 'success');
+        logActivity('Project Deleted', `Deleted project: ${project?.title}`);
+        renderPage();
+      }
+    }
+
+    function addProject() {
+      if (!canManageCards()) {
+        showNotification('Access Denied', 'CoOwner+ rank required', 'error');
+        return;
+      }
+      
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = 'Add Project';
+      content.innerHTML = `
+        <label class="modal-label">Project Title</label>
+        <input type="text" id="projectTitle" class="modal-input" placeholder="My Awesome Project" />
+        
+        <label class="modal-label">Description</label>
+        <textarea id="projectDescription" class="modal-input" rows="3" placeholder="Project description..."></textarea>
+        
+        <label class="modal-label">Icon (Emoji)</label>
+        <input type="text" id="projectImage" class="modal-input" placeholder="📦" maxlength="2" value="📦" />
+        
+        <label class="modal-label">Link (Optional)</label>
+        <input type="text" id="projectLink" class="modal-input" placeholder="https://github.com/..." value="#" />
+        
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="saveProject()">Add Project</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function saveProject() {
+      const title = document.getElementById('projectTitle').value.trim();
+      const description = document.getElementById('projectDescription').value.trim();
+      const image = document.getElementById('projectImage').value.trim();
+      const link = document.getElementById('projectLink').value.trim();
+      
+      if (!title || !description) {
+        showNotification('Validation Error', 'Title and description are required', 'error');
+        return;
+      }
+      
+      state.projects.push({
+        id: Date.now(),
+        title: title,
+        description: description,
+        date: new Date().toISOString().split('T')[0],
+        image: image || '📦',
+        link: link || '#',
+        poster: state.currentUser.username
+      });
+      
+      closeElementModal();
+      showNotification('Project Added', 'New project created successfully', 'success');
+      logActivity('Project Added', `Added project: ${title}`);
+      renderPage();
+    }
+
+    function editProject(projectId) {
+      if (!canManageCards()) {
+        showNotification('Access Denied', 'CoOwner+ rank required', 'error');
+        return;
+      }
+      
+      const project = state.projects.find(p => p.id === projectId);
+      if (!project) return;
+      
+      const modal = document.getElementById('elementModal');
+      const title = document.getElementById('elementModalTitle');
+      const content = document.getElementById('elementModalContent');
+      
+      title.textContent = 'Edit Project';
+      content.innerHTML = `
+        <label class="modal-label">Project Title</label>
+        <input type="text" id="projectTitle" class="modal-input" value="${project.title}" />
+        
+        <label class="modal-label">Description</label>
+        <textarea id="projectDescription" class="modal-input" rows="3">${project.description}</textarea>
+        
+        <label class="modal-label">Icon (Emoji)</label>
+        <input type="text" id="projectImage" class="modal-input" value="${project.image}" maxlength="2" />
+        
+        <label class="modal-label">Link</label>
+        <input type="text" id="projectLink" class="modal-input" value="${project.link}" />
+        
+        <input type="hidden" id="projectId" value="${projectId}" />
+        
+        <div class="modal-buttons">
+          <button class="btn-primary" onclick="updateProject()">Update Project</button>
+          <button class="btn-danger" onclick="closeElementModal()">Cancel</button>
+        </div>
+      `;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function updateProject() {
+      const projectId = parseInt(document.getElementById('projectId').value);
+      const title = document.getElementById('projectTitle').value.trim();
+      const description = document.getElementById('projectDescription').value.trim();
+      const image = document.getElementById('projectImage').value.trim();
+      const link = document.getElementById('projectLink').value.trim();
+      
+      if (!title || !description) {
+        showNotification('Validation Error', 'Title and description are required', 'error');
+        return;
+      }
+      
+      const project = state.projects.find(p => p.id === projectId);
+      if (!project) return;
+      
+      project.title = title;
+      project.description = description;
+      project.image = image;
+      project.link = link;
+      
+      closeElementModal();
+      showNotification('Project Updated', 'Project updated successfully', 'success');
+      logActivity('Project Edited', `Updated project: ${title}`);
+      renderPage();
+    }
+
+    // ============ RENDER ELEMENTS ============
+    function renderCustomElement(element) {
+      const editControls = state.editMode ? `
+        <div class="element-controls">
+          ${canEditElement(element.author) ? `
+            <button class="element-control-btn" onclick="editCustomElement('${element.id}')">✏️</button>
+          ` : ''}
+          ${canDeleteElement(element.author) ? `
+            <button class="element-control-btn" onclick="deleteCustomElement('${element.id}')">🗑️</button>
+          ` : ''}
+        </div>
+      ` : '';
+      
+      switch(element.type) {
+        case 'button':
+          return `
+            <div class="editable-element ${state.editMode ? 'edit-mode' : ''}" data-id="${element.id}">
+              ${editControls}
+              <a href="${element.link}" class="btn-${element.style}" style="text-decoration: none;">
+                ${element.text}
+              </a>
+            </div>
+          `;
+          
+        case 'text':
+          return `
+            <div class="editable-element ${state.editMode ? 'edit-mode' : ''}" data-id="${element.id}">
+              ${editControls}
+              <p style="text-align: ${element.align}; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; line-height: 1.6; margin: 1rem 0;">
+                ${element.text}
+              </p>
+            </div>
+          `;
+          
+        case 'heading':
+          const HeadingTag = element.level;
+          return `
+            <div class="editable-element ${state.editMode ? 'edit-mode' : ''}" data-id="${element.id}">
+              ${editControls}
+              <${HeadingTag} style="color: #667eea; margin: 1.5rem 0;">
+                ${element.text}
+              </${HeadingTag}>
+            </div>
+          `;
+          
+        case 'card':
+          return `
+            <div class="editable-element ${state.editMode ? 'edit-mode' : ''}" data-id="${element.id}">
+              ${editControls}
+              <div class="feature-card" style="margin: 2rem 0;">
+                <div class="feature-icon">${element.icon}</div>
+                <h3>${element.title}</h3>
+                <p>${element.text}</p>
+              </div>
+            </div>
+          `;
+          
+        case 'image':
+          const sizeMap = {
+            small: '200px',
+            medium: '400px',
+            large: '600px',
+            full: '100%'
+          };
+          return `
+            <div class="editable-element ${state.editMode ? 'edit-mode' : ''}" data-id="${element.id}">
+              ${editControls}
+              <img src="${element.url}" alt="${element.alt}" style="max-width: ${sizeMap[element.size]}; width: 100%; border-radius: 12px; margin: 2rem 0;" />
+            </div>
+          `;
+          
+        case 'divider':
+          const spacingMap = {
+            small: '1rem',
+            medium: '2rem',
+            large: '3rem'
+          };
+          let dividerStyle = '';
+          if (element.style === 'solid') {
+            dividerStyle = `border-top: 2px solid ${state.theme === 'dark' ? 'rgba(102, 126, 234, 0.3)' : '#e0e0e0'}`;
+          } else if (element.style === 'dashed') {
+            dividerStyle = `border-top: 2px dashed ${state.theme === 'dark' ? 'rgba(102, 126, 234, 0.3)' : '#e0e0e0'}`;
+          } else {
+            dividerStyle = 'height: 2px; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%)';
+          }
+          return `
+            <div class="editable-element ${state.editMode ? 'edit-mode' : ''}" data-id="${element.id}">
+              ${editControls}
+              <div style="${dividerStyle}; margin: ${spacingMap[element.spacing]} 0;"></div>
+            </div>
+          `;
+      }
+    }
+
+    // ============ RENDER PAGES ============
+    function renderPage() {
+      const content = document.getElementById('pageContent');
+      
+      switch (state.currentPage) {
+        case 'home':
+          content.innerHTML = renderHome();
+          break;
+        case 'about':
+          content.innerHTML = renderAbout();
+          break;
+        case 'contact':
+          content.innerHTML = renderContact();
+          break;
+        case 'community':
+          content.innerHTML = renderCommunity();
+          break;
+        case 'roblox':
+          content.innerHTML = renderRoblox();
+          break;
+        case 'creations':
+          content.innerHTML = renderCreations();
+          break;
+      }
+    }
+
+    function renderHome() {
+      const customElements = state.customElements
+        .filter(el => el.page === 'home')
+        .map(el => renderCustomElement(el))
+        .join('');
+      
+      const cards = state.featureCards.home.sort((a, b) => a.order - b.order);
+      const canManage = canManageCards();
+      
+      return `
+        <div class="hero-section">
+          <h1 class="hero-title">Welcome to Development Team</h1>
+          <p class="hero-subtitle">Building the future, one project at a time</p>
+          <div class="hero-stats">
+            <div class="stat-card">
+              <div class="stat-number">50+</div>
+              <div class="stat-label">Projects Completed</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">15+</div>
+              <div class="stat-label">Team Members</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">100%</div>
+              <div class="stat-label">Dedication</div>
+            </div>
+          </div>
+        </div>
+        
+        ${customElements}
+        
+        ${canManage ? `
+          <div style="text-align: center; margin: 2rem 0;">
+            <button class="btn-primary" onclick="addFeatureCard('home')">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Feature Card
+            </button>
+          </div>
+        ` : ''}
+        
+        <div class="features-grid">
+          ${cards.map(card => renderFeatureCard(card, 'home')).join('')}
+        </div>
+        
+        ${state.currentUser ? `
+          <div style="text-align: center; margin-top: 3rem;">
+            <button class="btn-primary" onclick="openAdminPanel()">
+              <svg><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6"></path></svg>
+              Open Admin Panel
+            </button>
+          </div>
+        ` : ''}
+        
+        <!-- Suggestions Section -->
+        <div class="suggestions-section">
+          <h2 class="suggestions-title">💡 Share Your Suggestions</h2>
+          <p class="suggestions-description">
+            We value your feedback! Help us improve by sharing your ideas and suggestions.
+          </p>
+          
+          <div class="suggestion-form">
+            <textarea 
+              id="suggestionInput" 
+              class="modal-input" 
+              rows="4" 
+              placeholder="Tell us your ideas, feature requests, or feedback..."
+            ></textarea>
+            <button class="btn-primary" style="width: 100%; margin-top: 1rem;" onclick="submitSuggestion()">
+              <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Submit Suggestion
+            </button>
+          </div>
+          
+          ${state.suggestions.length > 0 ? `
+            <div class="suggestion-list">
+              <h3 style="text-align: center; color: #667eea; margin-bottom: 1rem;">Recent Suggestions</h3>
+              ${state.suggestions.slice(0, 5).map(s => `
+                <div class="suggestion-item">
+                  <div class="suggestion-author">${s.author}</div>
+                  <div class="suggestion-text">${s.text}</div>
+                  <div class="suggestion-time">${s.timestamp}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderAbout() {
+      const customElements = state.customElements
+        .filter(el => el.page === 'about')
+        .map(el => renderCustomElement(el))
+        .join('');
+      
+      const cards = state.featureCards.about.sort((a, b) => a.order - b.order);
+      const canManage = canManageCards();
+      
+      return `
+        <h1 class="page-title">About Us</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
+          Development Team is a passionate group of developers, designers, and creators dedicated to building exceptional digital experiences.
+        </p>
+        
+        ${customElements}
+        
+        ${canManage ? `
+          <div style="text-align: center; margin: 2rem 0;">
+            <button class="btn-primary" onclick="addFeatureCard('about')">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Feature Card
+            </button>
+          </div>
+        ` : ''}
+        
+        <div class="features-grid">
+          ${cards.map(card => renderFeatureCard(card, 'about')).join('')}
+        </div>
+      `;
+    }
+
+    function renderContact() {
+      const customElements = state.customElements
+        .filter(el => el.page === 'contact')
+        .map(el => renderCustomElement(el))
+        .join('');
+      
+      const cards = state.featureCards.contact.sort((a, b) => a.order - b.order);
+      const canManage = canManageCards();
+      
+      return `
+        <h1 class="page-title">Contact Us</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
+          Get in touch with us for collaborations, inquiries, or just to say hello!
+        </p>
+        
+        ${customElements}
+        
+        ${canManage ? `
+          <div style="text-align: center; margin: 2rem 0;">
+            <button class="btn-primary" onclick="addFeatureCard('contact')">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Contact Card
+            </button>
+          </div>
+        ` : ''}
+        
+        <div class="features-grid">
+          ${cards.map(card => renderFeatureCard(card, 'contact')).join('')}
+        </div>
+      `;
+    }
+
+    function renderCommunity() {
+      const customElements = state.customElements
+        .filter(el => el.page === 'community')
+        .map(el => renderCustomElement(el))
+        .join('');
+      
+      const cards = state.featureCards.community.sort((a, b) => a.order - b.order);
+      const canManage = canManageCards();
+      
+      return `
+        <h1 class="page-title">Community</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
+          Join our growing community of developers, designers, and creators!
+        </p>
+        
+        ${customElements}
+        
+        ${canManage ? `
+          <div style="text-align: center; margin: 2rem 0;">
+            <button class="btn-primary" onclick="addFeatureCard('community')">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Community Card
+            </button>
+          </div>
+        ` : ''}
+        
+        <div class="features-grid">
+          ${cards.map(card => renderFeatureCard(card, 'community')).join('')}
+        </div>
+      `;
+    }
+
+    function renderRoblox() {
+      const customElements = state.customElements
+        .filter(el => el.page === 'roblox')
+        .map(el => renderCustomElement(el))
+        .join('');
+      
+      const cards = state.featureCards.roblox.sort((a, b) => a.order - b.order);
+      const canManage = canManageCards();
+      
+      return `
+        <h1 class="page-title">Roblox Projects</h1>
+        <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
+          Explore our Roblox game development projects and creations
+        </p>
+        
+        ${customElements}
+        
+        ${canManage ? `
+          <div style="text-align: center; margin: 2rem 0;">
+            <button class="btn-primary" onclick="addFeatureCard('roblox')">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Roblox Card
+            </button>
+          </div>
+        ` : ''}
+        
+        <div class="features-grid">
+          ${cards.map(card => renderFeatureCard(card, 'roblox')).join('')}
+        </div>
+      `;
+    }
+
+    function renderCreations() {
+      const filteredProjects = state.projects.filter(p => 
+        p.title.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(state.searchQuery.toLowerCase())
+      );
+      
+      const customElements = state.customElements
+        .filter(el => el.page === 'creations')
+        .map(el => renderCustomElement(el))
+        .join('');
+      
+      const canManage = canManageCards();
+      
+      return `
+        <h1 class="page-title">Our Creations</h1>
+        
+        <div class="search-bar">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search projects..."
+            value="${state.searchQuery}"
+            oninput="state.searchQuery = this.value; renderPage();"
+          />
+          ${canManage ? `
+            <button class="btn-primary" onclick="addProject()">
+              <svg><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Project
+            </button>
+          ` : ''}
+        </div>
+        
+        ${customElements}
+        
+        <div class="projects-grid">
+          ${filteredProjects.map(p => `
+            <div class="project-card">
+              <div class="project-image">${p.image}</div>
+              <div class="project-content">
+                ${canManage ? `
+                  <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <button class="btn-icon" onclick="editProject(${p.id})" title="Edit">
+                      <svg><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    <button class="btn-icon btn-danger" onclick="deleteProject(${p.id})" title="Delete">
+                      <svg><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                ` : ''}
+                <h3 class="project-title">${p.title}</h3>
+                <p class="project-description">${p.description}</p>
+                <div class="project-meta">
+                  <span>📅 ${p.date}</span>
+                  <span>👤 ${p.poster}</span>
+                </div>
+                ${p.link && p.link !== '#' ? `
+                  <a href="${p.link}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="margin-top: 1rem; width: 100%; justify-content: center;">
+                    <svg><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    View Project
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // ============ INITIALIZE ============
+    renderNavigation();
+    renderPage();
+    logActivity('System Started', 'Website initialized');
+  </script>
+</body>
+</html>
