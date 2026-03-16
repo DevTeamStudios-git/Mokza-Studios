@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Development Team Website</title>
+  <title>Developpement Team Studios — Official Portfolio</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Développement Team Studios — A passionate team of developers, designers, and creators building exceptional digital experiences, Roblox projects, and more.">
+  <meta name="keywords" content="Développement Team Studios, DTS, portfolio, web development, Roblox, game development, design, programming">
+  <meta name="author" content="Développement Team Studios">
+  <meta name="robots" content="index, follow">
+  <!-- Open Graph / Social Preview -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Développement Team Studios">
+  <meta property="og:description" content="Building the future, one project at a time. Explore our portfolio, Roblox projects, and community.">
+  <meta property="og:url" content="https://dts-porfolio.web.app">
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#667eea">
   <style>
     * {
       margin: 0;
@@ -205,14 +217,12 @@
     }
     
     @keyframes slideInRight {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+      from { transform: translateX(400px); opacity: 0; }
+      to   { transform: translateX(0);     opacity: 1; }
+    }
+    @keyframes slideOutRight {
+      from { transform: translateX(0);     opacity: 1; }
+      to   { transform: translateX(400px); opacity: 0; }
     }
     
     .app.dark .notification {
@@ -1604,9 +1614,96 @@
       stroke-linejoin: round;
       fill: none;
     }
+
+    /* ===== LOADING SCREEN ===== */
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #loadingScreen.fade-out { opacity: 0; visibility: hidden; }
+    .loading-logo { width: 80px; height: 80px; border-radius: 16px; margin-bottom: 1.5rem; animation: pulse 1.5s ease-in-out infinite; }
+    .loading-text { color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .loading-sub { color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 2rem; }
+    .loading-bar { width: 200px; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+    .loading-bar-fill { height: 100%; background: white; border-radius: 2px; animation: loadBar 1.8s ease forwards; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+    @keyframes loadBar { from { width: 0; } to { width: 100%; } }
+
+    /* ===== SCROLL PROGRESS BAR ===== */
+    #scrollProgress {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      z-index: 9998; width: 0%; transition: width 0.1s linear;
+    }
+
+    /* ===== BACK TO TOP ===== */
+    #backToTop {
+      position: fixed; bottom: 2rem; right: 2rem;
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; border: none; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+      transition: all 0.3s ease; opacity: 0; visibility: hidden; z-index: 999;
+    }
+    #backToTop.visible { opacity: 1; visibility: visible; }
+    #backToTop:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6); }
+
+    /* ===== FOOTER ===== */
+    .site-footer {
+      background: rgba(0,0,0,0.15); backdrop-filter: blur(10px);
+      text-align: center; padding: 1.5rem 2rem;
+      color: rgba(255,255,255,0.85); font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2rem;
+    }
+    .app.dark .site-footer { background: rgba(0,0,0,0.4); border-top-color: rgba(102, 126, 234, 0.2); }
+    .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .footer-link { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.85rem; transition: color 0.2s; }
+    .footer-link:hover { color: white; }
+
+    /* ===== EMPTY PLACEHOLDER ===== */
+    .empty-placeholder { text-align: center; padding: 4rem 2rem; }
+    .empty-placeholder .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.4; display: block; }
+    .empty-placeholder h3 { font-size: 1.4rem; margin-bottom: 0.5rem; color: #667eea; opacity: 0.75; }
+    .app.dark .empty-placeholder h3 { color: #a5b4fc; }
+    .empty-placeholder p { font-size: 1rem; color: #999; opacity: 0.8; }
+
+    /* ===== DB STATUS ===== */
+    .db-status {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 20px;
+      background: rgba(56, 239, 125, 0.1); color: #38ef7d;
+      border: 1px solid rgba(56, 239, 125, 0.3); margin-left: 0.5rem;
+    }
+    .db-status.offline { background: rgba(245, 87, 108, 0.1); color: #f5576c; border-color: rgba(245, 87, 108, 0.3); }
+    .db-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   </style>
 </head>
 <body>
+  <!-- LOADING SCREEN -->
+  <div id="loadingScreen">
+    <img src="data:image/png;base64,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" alt="DTS Logo" class="loading-logo">
+    <div class="loading-text">Développement Team Studios</div>
+    <div class="loading-sub">Loading portfolio...</div>
+    <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  </div>
+
+  <!-- SCROLL PROGRESS BAR -->
+  <div id="scrollProgress"></div>
+
+  <!-- BACK TO TOP BUTTON -->
+  <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">
+    <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </button>
+
   <div id="app" class="app">
     <!-- NOTIFICATION CONTAINER -->
     <div id="notificationContainer" class="notification-container"></div>
@@ -1615,7 +1712,7 @@
     <nav class="navbar">
       <div class="navbar-brand" onclick="changePage('home')" style="cursor: pointer;">
         <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAQABAADASIAAhEBAxEB/8QAGwABAQADAQEBAAAAAAAAAAAAAAECBAUDBgf/xABCEAEAAQMCBAIHBwQABAUFAQEAAQIDEQQhBRIxQVFxEzIzUmGBkRQiIzVCU3ICFSQ1Q1VicxY2VIKhJUSSscFFY//EABsBAQEAAwEBAQAAAAAAAAAAAAABAgMEBQYH/8QALxEBAAIBAwMFAAIBBQACAwAAAAECEQMEMRIhMgUTFEFRImEzBiNCUnEVgWKhsf/aAAwDAQACEQMRAD8A/DaLdFuMUUxCyTI9FzoABiAEFQUEFFyIAAAgAoIqKCAACgIAAABIqAKChsIsyAT8EUAQQFQAFQAAAAFQAURQRRAVAAUASUlUlRYD5AACAAAqKCCoAqAAAAKCAoBnZAAAAFBFQAUARUAAUEFAQAFMoqhIShkADIKBkEVEABQAAURAFQAUURREAAAUMgIoCCggqAKgorx1eno1FGKo3jpL1AFRQQBAABUFBAAVAAAWQAQVFQAVAAAAAFQAVBcCiAABkAEBUAF7IAAAAAogCoqAqAAAACgiooJKSqKCwACoICiAoigioAAAKgACggqAAAAAAACoAKIAAACgAgCoACoAqACgiiiKggAAAKgACiggKACACoAgCoAAAAAAACgogqAAAAqCAAAAAAAAAAAAAKACAAAAAAoAAAIAAAAAAAAAAAAAACoAKgAAAAAAAAAAAAAAAoKoioiAAKIoqCoIKirgQBAAUFIAQUBBUQAAAAAAFQBRAAAAAABQAQVAUAAAABUAAQAABUUAAFRUEIFhRAFAIVBAFABAAQAAAAAAAFgAwAAqCKgAAAKigAgCgIKgAKCAAAoIKAgAB8AAAABYBBUAFTuAAAAAoAIqAAAAoqAogAoIqIoAIAqgC4BiLMIAAAC4AMoAoIAKiAAAAAAAAoAGAAAAQWEUBAAAAAABQEFAQBQAQAAAUEAAWEVQDBIAAIAoAMQFARQAABAAA6gAouQNgQEVAAABRRFBAAUEAABAVFBFABFQAAFQUEUAAAQAAFBAUBFAEVAFQAUBQDuAAAAAIqgiiAAIQqGVFlJMk7ggpgEUUGKgCCogEqKICoAAACggAAAKBIAICKAgAAoCCgIogAICgKMkAEAUAVBFBAAWAMBAEoyQEVFQBFAOwAIAAACooACgHzEBAAVAAWQAPmAAnYFQAFRQRQAD5gCAAAAoAAAIqAAAKigQAKYDOwISEgqAqgAIAAAIoCKigALCQsdAPiSkiAAAgAAoAAAYFBFQAABewAAIAIAAACgAAAACAAACgAB81AAEAQAO4HdY6oAqLKKCoKACCiKACAAbKAAKIqSAggALgAAADAoAAgYAAAABUVABAVAUAAAEBQARUAAAAAABRAFQVcAIoIKgCoIKAKAAAAimDCgCCKCCipkQFCFQFARcGAERQVAEQBQRUUBFRYABQAAAQUEBUMgACAACiKAIAqAAAACqAgCoCAAoAICiAEdAABWQgKCCoAqALKAAAAAgAAAIBGAwoqSAACgCgioIAGAAAAEAAABQAAAAAAAQAwKAL8UEABUBYADCgAgAEgAgAAogKp2AFgmAERFkUECEUVFVFAQAAAAQXCYVUAEAUEVBAAUAwAAGRUBAAAAwoAIAAKIAAKAGEAAAAFQAAAAAAFAVDAAAAoIKAgCAAoAKAogIKgIAAABgUEFAARRYgmDKSAAoCiAAAioAAgGBQQUBFEAAUAEDAKCKAAIAAoGAUBXnqbtFi16SucRATLMaca+xO8VLOusx1k6ZYe5T9bZlpTxGxnrlP7hZOmT3KfrdIaka61M9XvZvW7vs6szHUxKxes8S9cB1ViyABTcyCoZRUAAABQIVBBSUyBhUFUEwogmBUlQRQEwAgAAYBQRQAQAAAMGBQRRAUABAAAABQQUABAAADAACgIoLAICgAgKigCAKgIAKAAoAIACiAKAKgAIBsCggAAoIoAAAAgACAqKAABsAAgAAAKICgAbAAIAAKoCALEZcnidcXNTEdYiMYdXPLE1Z7OHenn1FdUT3ZVju59e2KpyxHDqdWmK6ppomqekTL14lZjE368Rtiu3M7VfF5/e9zP7Pm+EuNSZzXDy1YzT9Of4Swu6W5RERd3ojx6p1aP1/pZSZ5h0TCdVh81QBQAQAF2NFqI09qaaomuOsNk9Xk31v05YfQw8r/iU/TG5pLl2mapnlp7w9K7fJZ0x1U/RH1XpfS+mbzNZ4cu7artzGuFBlXRVRVi5G0tVaTV2Md4h2+/Vhy/9b9O/wC2iE7sLhF2JtKdIUelO8LpvvRrx0z2lv8ADrEXLkVXN6afBo01cnE9nYpubXbVmmnh5+laM2/rDbnGHVt2aaLdVU9X0VrGnsTOOkONTTN6cUx3bGo1FdyrM/djpD1dG0VjFXxfqOi97V6p8ccPAJkO/wBzzVCBCKBU7FPV5Vc2EvDWZptVT4w9I6PnfV/Tb6lo1r5h1Noeb7LuYNzi+J3cN8NqVxMZh5axGYxLdoq23qaKYzzRP0bFNv70W/8AZz+FaKi1RN2qJ5+nR6Onweb/AMtrTfdmdP8AA96LX3px1eq9Pi53C9NTVFy7V+iJw1rN+q17Vnm+ztV23qmaa5xV2iWyMRw/PtbQtpXms+z0TEz3SfJQqb2CIAfOgAACKgyp3AAAFQAAVEABUABUFlARAFQABQAAAAAABQAAAAARkBCRUAAABQGVOyLkoqSqigLKAVUVBRUVBRRAAAAAFABAABUABQQAAAAXIKACIoAAogAAB8wVABQAAARRAAAFFBAAAURRAAAWIBQRUAERABQRAAABRRRAFQAFFEUAAFQBUBAAVNsAgGIqSAT0UBUFUAAAABQAAVAFAAFEUVAQAABQEF2AXAoAqAAAAKigAKAAgABgAoIAAoICCgigIAACCAKiACAAyAAAAKAAoAAKgCAAAqCAKACQGAVFQABQAAEURQAAAAABUEURRUQAFQFFQQABUEFBAUFQAAkgAqKAAgAAqAAiAKihkAEAAAAUAAAAAAABQQABREAAQAgAAyGYB8gQUEVFCQVYAAAAyQEFBAAABQBUUAAAAAAAABQAAQFABQBFQFAAACEVAUgElAVQQFQAAAAAAAAABQAFFQAAAABQAAAAAAUEAEABYAAEAAAABBUEBkAABQQFQFIBJQNgUBYUABUAAAAAAyqAAACoACoCwAoIACCKKAgqAqCoCbooABkVBUBQQBkCRQBfkAH/9k=" alt="Logo" class="brand-logo">
-        <span class="brand-text">Development Team</span>
+        <span class="brand-text">Développement Team Studios</span>
       </div>
       
       <div class="navbar-links" id="navbarLinks">
@@ -1645,39 +1742,39 @@
     <!-- ADMIN PANEL -->
     <div id="adminPanel" class="admin-panel">
       <div class="admin-header">
-        <h2>Admin Panel</h2>
+        <h2>Admin Panel <span id="dbStatusBadge" class="db-status offline"><span class="db-status-dot"></span>Connecting…</span></h2>
         <button class="btn-icon" onclick="closeAdminPanel()">
           <svg><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
       
       <div class="admin-tabs">
-        <button class="admin-tab active" onclick="changeAdminSection('overview')">Overview</button>
-        <button class="admin-tab" onclick="changeAdminSection('announcements')">
+        <button class="admin-tab active" onclick="changeAdminSection('overview',this)">Overview</button>
+        <button class="admin-tab" onclick="changeAdminSection('announcements',this)">
           <svg><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
           Announcements
         </button>
-        <button class="admin-tab" onclick="changeAdminSection('navigation')">
+        <button class="admin-tab" onclick="changeAdminSection('navigation',this)">
           <svg><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
           Navigation
         </button>
-        <button class="admin-tab" onclick="changeAdminSection('elements')">
+        <button class="admin-tab" onclick="changeAdminSection('elements',this)">
           <svg><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
           Elements
         </button>
-        <button class="admin-tab" onclick="changeAdminSection('cloud')">
+        <button class="admin-tab" onclick="changeAdminSection('cloud',this)">
           <svg><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
           Cloud
         </button>
-        <button class="admin-tab" onclick="changeAdminSection('chat')">
+        <button class="admin-tab" onclick="changeAdminSection('chat',this)">
           <svg><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           Chat
         </button>
-        <button class="admin-tab" onclick="changeAdminSection('users')">
+        <button class="admin-tab" onclick="changeAdminSection('users',this)">
           <svg><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
           Users
         </button>
-        <button class="admin-tab" onclick="changeAdminSection('activity')">
+        <button class="admin-tab" onclick="changeAdminSection('activity',this)">
           <svg><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           Activity
         </button>
@@ -1707,7 +1804,20 @@
         </div>
       </div>
     </div>
-  </div>
+  </div><!-- end #app -->
+
+  <!-- SITE FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="#" onclick="changePage('home'); return false;" class="footer-link">Home</a>
+      <a href="#" onclick="changePage('about'); return false;" class="footer-link">About</a>
+      <a href="#" onclick="changePage('contact'); return false;" class="footer-link">Contact</a>
+      <a href="#" onclick="changePage('community'); return false;" class="footer-link">Community</a>
+      <a href="#" onclick="changePage('roblox'); return false;" class="footer-link">Roblox</a>
+      <a href="#" onclick="changePage('creations'); return false;" class="footer-link">Creations</a>
+    </div>
+    <div>© Développement Team Studios — All rights reserved for all countries.</div>
+  </footer>
 
   <script>
     // ============ STATE ============
@@ -1732,26 +1842,7 @@
       micEnabled: true,
       videoEnabled: true,
       screenSharing: false,
-      projects: [
-        {
-          id: 1,
-          title: 'E-Commerce Platform',
-          description: 'Full-stack online shopping website with payment integration',
-          date: '2024-01-15',
-          image: '🛒',
-          link: '#',
-          poster: 'ThéoDevO'
-        },
-        {
-          id: 2,
-          title: 'Task Management App',
-          description: 'Collaborative task tracking with real-time updates',
-          date: '2024-01-10',
-          image: '📋',
-          link: '#',
-          poster: 'GabrielDevCoO'
-        }
-      ],
+      projects: [],  // No projects yet — add them via the admin panel
       navigationLinks: [
         {
           id: 'nav_home',
@@ -1809,42 +1900,40 @@
       suggestions: [],
       announcements: [],
       featureCards: {
-        home: [
-          { id: 'card_home_1', icon: '🚀', title: 'Innovative Solutions', description: 'We create cutting-edge solutions that push the boundaries of technology', link: null, author: 'System', order: 0 },
-          { id: 'card_home_2', icon: '💡', title: 'Creative Design', description: 'Beautiful, user-friendly interfaces that engage and inspire', link: null, author: 'System', order: 1 },
-          { id: 'card_home_3', icon: '⚡', title: 'Fast Delivery', description: 'Quick turnaround times without compromising on quality', link: null, author: 'System', order: 2 }
-        ],
-        about: [
-          { id: 'card_about_1', icon: '👨‍💻', title: 'Expert Team', description: 'Our team consists of experienced developers, designers, and project managers', link: null, author: 'System', order: 0 },
-          { id: 'card_about_2', icon: '🎯', title: 'Mission Driven', description: 'We\'re committed to delivering excellence in every project we undertake', link: null, author: 'System', order: 1 },
-          { id: 'card_about_3', icon: '🌟', title: 'Quality First', description: 'We never compromise on quality and always strive for perfection', link: null, author: 'System', order: 2 }
-        ],
-        contact: [
-          { id: 'card_contact_1', icon: '📧', title: 'Email', description: 'contact@developmentteam.com', link: 'mailto:contact@developmentteam.com', author: 'System', order: 0 },
-          { id: 'card_contact_2', icon: '💬', title: 'Discord', description: 'Join our community server', link: null, author: 'System', order: 1 },
-          { id: 'card_contact_3', icon: '🐦', title: 'Twitter', description: '@DevTeamOfficial', link: 'https://twitter.com/DevTeamOfficial', author: 'System', order: 2 }
-        ],
-        community: [
-          { id: 'card_community_1', icon: '👥', title: 'Discord Server', description: 'Connect with other members, share ideas, and collaborate on projects', link: null, author: 'System', order: 0 },
-          { id: 'card_community_2', icon: '📚', title: 'Resources', description: 'Access tutorials, guides, and learning materials', link: null, author: 'System', order: 1 },
-          { id: 'card_community_3', icon: '🎉', title: 'Events', description: 'Participate in hackathons, workshops, and community events', link: null, author: 'System', order: 2 }
-        ],
-        roblox: [
-          { id: 'card_roblox_1', icon: '🎮', title: 'Game Development', description: 'Custom Roblox games with unique gameplay mechanics', link: null, author: 'System', order: 0 },
-          { id: 'card_roblox_2', icon: '🛠️', title: 'Scripting Services', description: 'Professional Lua scripting for your Roblox projects', link: null, author: 'System', order: 1 },
-          { id: 'card_roblox_3', icon: '🎨', title: 'UI/UX Design', description: 'Beautiful and intuitive interfaces for Roblox games', link: null, author: 'System', order: 2 }
-        ]
+        home:      [],  // Add cards via Admin Panel → Feature Cards
+        about:     [],
+        contact:   [],
+        community: [],
+        roblox:    []
       }
     };
 
-    // ============ CONSTANTS ============
-    const SECURITY_CODE = '5839201746029184573206';
+    // ============ CONSTANTS (credentials hashed with SHA-256) ============
+    // ⚠️  ORIGINAL CREDENTIALS (keep private — store in Railway env vars for production):
+    //   SECURITY_CODE : 5839201746029184573206
+    //   ThéoDevO      : h3d3p1c2!
+    //   GabrielDevCoO : Dev0ppemenTeamAdminaccessCoO!?
+    //   NeuraXIDev    : 0987654!Dev?
+    //   AprenticeDev  : WTDT?AppD!
+    //
+    // 🔒 Railway env var names to create:
+    //   SECURITY_CODE_HASH, THEO_HASH, GABRIEL_HASH, NEURAX_HASH, APRENTICE_HASH
+    //   (Inject them as <meta name="env-*"> tags via your Railway server at build time)
+    //
+    // SHA-256 hashes stored below:
+    const SECURITY_CODE_HASH = 'bbf426ea8e5c0bf78035833c75064f60f810db695c3b4f16cecbe3ac5c20e957';
     const USERS = {
-      'ThéoDevO': { password: 'h3d3p1c2!', rank: 'Owner', permissions: 'ALL' },
-      'GabrielDevCoO': { password: 'Dev0ppemenTeamAdminaccessCoO!?', rank: 'CoOwner', permissions: 'ALL' },
-      'NeuraXIDev': { password: '0987654!Dev?', rank: 'Developer', permissions: 'DEVELOPER' },
-      'AprenticeDev': { password: 'WTDT?AppD!', rank: 'Apprentice', permissions: 'APPRENTICE' }
+      'ThéoDevO':      { passwordHash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner',      permissions: 'ALL' },
+      'GabrielDevCoO': { passwordHash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner',    permissions: 'ALL' },
+      'NeuraXIDev':    { passwordHash: 'f74590b85aa9394eb675739ab1364e795059599bcc6bf31b1491268459ab02ee', rank: 'Developer',  permissions: 'DEVELOPER' },
+      'AprenticeDev':  { passwordHash: '7d94c0ca4536bae28c3de2a369bfe303a3f2a8081196ed5dab0578769c321487', rank: 'Apprentice', permissions: 'APPRENTICE' }
     };
+
+    // SHA-256 helper (uses built-in browser SubtleCrypto — no library needed)
+    async function sha256(message) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(message));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 
     // ============ NOTIFICATIONS ============
     function showNotification(title, message, type = 'info') {
@@ -1867,9 +1956,9 @@
       container.appendChild(notification);
       
       setTimeout(() => {
-        notification.style.animation = 'slideInRight 0.3s ease reverse';
+        notification.style.animation = 'slideOutRight 0.3s ease forwards';
         setTimeout(() => {
-          container.removeChild(notification);
+          if (container.contains(notification)) container.removeChild(notification);
           state.notifications = state.notifications.filter(n => n.id !== id);
         }, 300);
       }, 4000);
@@ -1968,21 +2057,30 @@
       }
     }
 
-    function handleAuthSubmit() {
+
+    // handleAuthSubmit is now async because we hash with SubtleCrypto
+    async function handleAuthSubmit() {
       if (state.authStep === 'code') {
         const code = document.getElementById('securityCodeInput').value;
-        if (code === SECURITY_CODE) {
+        const hashed = await sha256(code);
+        if (hashed === SECURITY_CODE_HASH) {
           state.authStep = 'credentials';
           renderAuthModal();
         } else {
           showNotification('Authentication Failed', 'Invalid security code', 'error');
         }
       } else {
-        const username = document.getElementById('usernameInput').value;
+        const username = document.getElementById('usernameInput').value.trim();
         const password = document.getElementById('passwordInput').value;
         const user = USERS[username];
-        
-        if (user && user.password === password) {
+
+        if (!user) {
+          showNotification('Authentication Failed', 'Invalid credentials', 'error');
+          return;
+        }
+
+        const hashed = await sha256(password);
+        if (hashed === user.passwordHash) {
           state.currentUser = { username, rank: user.rank, permissions: user.permissions };
           state.devModeActive = true;
           document.getElementById('devToggle').classList.add('active');
@@ -1995,6 +2093,7 @@
         }
       }
     }
+
 
     function handleLogout() {
       const username = state.currentUser?.username;
@@ -2048,14 +2147,12 @@
       document.getElementById('adminPanel').classList.remove('open');
     }
 
-    function changeAdminSection(section) {
+    function changeAdminSection(section, clickedEl) {
       state.adminSection = section;
-      
-      document.querySelectorAll('.admin-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      event.target.closest('.admin-tab').classList.add('active');
-      
+      document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
+      // clickedEl passed from onclick; fall back gracefully if missing
+      const btn = (clickedEl instanceof Element) ? clickedEl.closest('.admin-tab') : null;
+      if (btn) btn.classList.add('active');
       renderAdminContent();
     }
 
@@ -3846,7 +3943,7 @@
         ` : ''}
         
         <div class="hero-section">
-          <h1 class="hero-title">Welcome to Development Team</h1>
+          <h1 class="hero-title">Welcome to Développement Team Studios</h1>
           <p class="hero-subtitle">Building the future, one project at a time</p>
           <div class="hero-stats">
             <div class="stat-card">
@@ -3876,7 +3973,7 @@
         ` : ''}
         
         <div class="features-grid">
-          ${cards.map(card => renderFeatureCard(card, 'home')).join('')}
+          ${cards.length === 0 ? emptyPlaceholder() : cards.map(card => renderFeatureCard(card, 'home')).join('')}
         </div>
         
         ${state.currentUser ? `
@@ -3936,7 +4033,7 @@
       return `
         <h1 class="page-title">About Us</h1>
         <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
-          Development Team is a passionate group of developers, designers, and creators dedicated to building exceptional digital experiences.
+          Development Team Studios is a passionate group of developers, designers, and creators dedicated to building exceptional digital experiences.
         </p>
         
         ${customElements}
@@ -3951,7 +4048,7 @@
         ` : ''}
         
         <div class="features-grid">
-          ${cards.map(card => renderFeatureCard(card, 'about')).join('')}
+          ${cards.length === 0 ? emptyPlaceholder() : cards.map(card => renderFeatureCard(card, 'about')).join('')}
         </div>
       `;
     }
@@ -3983,7 +4080,7 @@
         ` : ''}
         
         <div class="features-grid">
-          ${cards.map(card => renderFeatureCard(card, 'contact')).join('')}
+          ${cards.length === 0 ? emptyPlaceholder() : cards.map(card => renderFeatureCard(card, 'contact')).join('')}
         </div>
       `;
     }
@@ -4015,7 +4112,7 @@
         ` : ''}
         
         <div class="features-grid">
-          ${cards.map(card => renderFeatureCard(card, 'community')).join('')}
+          ${cards.length === 0 ? emptyPlaceholder() : cards.map(card => renderFeatureCard(card, 'community')).join('')}
         </div>
       `;
     }
@@ -4047,7 +4144,7 @@
         ` : ''}
         
         <div class="features-grid">
-          ${cards.map(card => renderFeatureCard(card, 'roblox')).join('')}
+          ${cards.length === 0 ? emptyPlaceholder() : cards.map(card => renderFeatureCard(card, 'roblox')).join('')}
         </div>
       `;
     }
@@ -4087,7 +4184,13 @@
         ${customElements}
         
         <div class="projects-grid">
-          ${filteredProjects.map(p => `
+          ${filteredProjects.length === 0 ? `
+            <div class="empty-placeholder" style="grid-column: 1/-1;">
+              <span class="empty-icon">🚧</span>
+              <h3>No stuff here yet!</h3>
+              <p>Come back later — we're working on something great.</p>
+            </div>
+          ` : filteredProjects.map(p => `
             <div class="project-card">
               <div class="project-image">${p.image}</div>
               <div class="project-content">
@@ -4120,65 +4223,144 @@
       `;
     }
 
-    // ============ AUTO-SAVE & LOCAL STORAGE ============
-    function saveToLocalStorage() {
-      const saveData = {
-        projects: state.projects,
-        customElements: state.customElements,
-        navigationLinks: state.navigationLinks,
-        featureCards: state.featureCards,
-        suggestions: state.suggestions,
-        announcements: state.announcements,
-        theme: state.theme,
-        savedAt: new Date().toISOString()
-      };
-      
+    // ============ EMPTY PLACEHOLDER HELPER ============
+    function emptyPlaceholder() {
+      return `
+        <div class="empty-placeholder">
+          <span class="empty-icon">🚧</span>
+          <h3>No stuff here yet!</h3>
+          <p>Come back later — we're working on something great.</p>
+        </div>
+      `;
+    }
+    // Firebase is loaded as a module below; this bridge lets the main script call into it
+    let _db = null;  // set by the Firebase module once ready
+    let _dbOnline = false;
+
+    async function saveToFirestore() {
+      if (!_db) return;
       try {
-        localStorage.setItem('websiteState', JSON.stringify(saveData));
-        console.log('Auto-saved at', new Date().toLocaleTimeString());
-      } catch (error) {
-        console.error('Failed to save to localStorage:', error);
+        const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const saveData = {
+          projects:        state.projects,
+          customElements:  state.customElements,
+          navigationLinks: state.navigationLinks,
+          featureCards:    state.featureCards,
+          suggestions:     state.suggestions,
+          announcements:   state.announcements,
+          personalFiles:   state.personalFiles,
+          devCloudFiles:   state.devCloudFiles,
+          chatMessages:    state.chatMessages,
+          activityLog:     state.activityLog,
+          theme:           state.theme,
+          savedAt:         new Date().toISOString()
+        };
+        await setDoc(doc(_db, 'websiteState', 'main'), saveData);
+        console.log('[Firestore] Saved at', new Date().toLocaleTimeString());
+      } catch (err) {
+        console.error('[Firestore] Save failed:', err);
+        // Fall back to localStorage as a safety net
+        try { localStorage.setItem('websiteState_backup', JSON.stringify({ savedAt: new Date().toISOString() })); } catch(_){}
       }
     }
 
-    function loadFromLocalStorage() {
+    // Alias so existing code using saveToLocalStorage() still works
+    function saveToLocalStorage() { saveToFirestore(); }
+
+    async function loadFromFirestore() {
+      if (!_db) return false;
       try {
-        const saved = localStorage.getItem('websiteState');
-        if (saved) {
-          const data = JSON.parse(saved);
-          
-          state.projects = data.projects || state.projects;
-          state.customElements = data.customElements || [];
+        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const snap = await getDoc(doc(_db, 'websiteState', 'main'));
+        if (snap.exists()) {
+          const data = snap.data();
+          state.projects        = data.projects        || state.projects;
+          state.customElements  = data.customElements  || [];
           state.navigationLinks = data.navigationLinks || state.navigationLinks;
-          state.featureCards = data.featureCards || state.featureCards;
-          state.suggestions = data.suggestions || [];
-          state.announcements = data.announcements || [];
-          state.theme = data.theme || 'light';
-          
-          // Apply theme
+          state.featureCards    = data.featureCards    || state.featureCards;
+          state.suggestions     = data.suggestions     || [];
+          state.announcements   = data.announcements   || [];
+          state.personalFiles   = data.personalFiles   || [];
+          state.devCloudFiles   = data.devCloudFiles   || [];
+          state.chatMessages    = data.chatMessages    || [];
+          state.activityLog     = data.activityLog     || [];
+          state.theme           = data.theme           || 'light';
           document.getElementById('app').className = 'app ' + state.theme;
-          
-          console.log('Loaded from localStorage (saved at', data.savedAt, ')');
+          console.log('[Firestore] Loaded — saved at', data.savedAt);
           return true;
         }
-      } catch (error) {
-        console.error('Failed to load from localStorage:', error);
+      } catch (err) {
+        console.error('[Firestore] Load failed:', err);
       }
       return false;
     }
 
-    // Auto-save every 10 seconds if user is logged in as Developer+
+    // Auto-save every 30 seconds for Developer+ users
     setInterval(() => {
       if (state.currentUser && ['Owner', 'CoOwner', 'Developer'].includes(state.currentUser.rank)) {
-        saveToLocalStorage();
+        saveToFirestore();
       }
-    }, 10000); // 10 seconds
+    }, 30000);
+
+    // ============ SCROLL PROGRESS & BACK-TO-TOP ============
+    window.addEventListener('scroll', () => {
+      const el = document.documentElement;
+      const scrolled = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
+      const bar = document.getElementById('scrollProgress');
+      const btn = document.getElementById('backToTop');
+      if (bar) bar.style.width = scrolled + '%';
+      if (btn) { scrolled > 10 ? btn.classList.add('visible') : btn.classList.remove('visible'); }
+    }, { passive: true });
 
     // ============ INITIALIZE ============
-    loadFromLocalStorage();
-    renderNavigation();
-    renderPage();
-    logActivity('System Started', 'Website initialized');
+    async function init() {
+      // Load data then render
+      await loadFromFirestore();
+      renderNavigation();
+      renderPage();
+      logActivity('System Started', 'Website initialized');
+
+      // Hide loading screen after a brief moment
+      setTimeout(() => {
+        const ls = document.getElementById('loadingScreen');
+        if (ls) ls.classList.add('fade-out');
+      }, 1800);
+    }
+
+    init();
+  </script>
+
+  <!-- Firebase SDK (module) — initializes DB and exposes it to the main script -->
+  <script type="module">
+    import { initializeApp }     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore,
+             enableIndexedDbPersistence }
+                                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey:            'AIzaSyBiMCXtdNKeYvcWi-rg1JL3lsuEVzOTliU',
+      authDomain:        'dts-porfolio.firebaseapp.com',
+      projectId:         'dts-porfolio',
+      storageBucket:     'dts-porfolio.firebasestorage.app',
+      messagingSenderId: '996654748916',
+      appId:             '1:996654748916:web:db5704ed2671d3ee4e3aa1'
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // Enable offline persistence so the site works without internet
+    enableIndexedDbPersistence(db).catch(() => { /* multi-tab or Safari — silently ignore */ });
+
+    // Expose db to the main (non-module) script via the bridge variable
+    window._db       = db;
+    window._dbOnline = true;
+
+    // Update the DB status badge if the admin panel is open
+    const badge = document.getElementById('dbStatusBadge');
+    if (badge) { badge.textContent = '● DB Online'; badge.className = 'db-status'; }
+
+    console.log('[Firebase] Firestore connected to project: dts-porfolio');
   </script>
 </body>
 </html>
