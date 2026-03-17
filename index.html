@@ -4530,12 +4530,14 @@
     };
 
     // ============ FIRESTORE SAVE / LOAD ============
+    // All actual Firestore calls live in the module script below.
+    // The module exposes window.__firestoreOps = { save, load } once ready.
+
     async function saveToFirestore() {
-      if (!_db) { console.warn('[Firestore] No DB'); return; }
+      if (!window.__firestoreOps) { console.warn('[Firestore] ops not ready'); return; }
       showSaveIndicator('saving');
       try {
-        const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        await setDoc(doc(_db, 'websiteState', 'main'), {
+        await window.__firestoreOps.save({
           projects:        state.projects,
           customElements:  state.customElements,
           navigationLinks: state.navigationLinks,
@@ -4546,9 +4548,9 @@
           devCloudFiles:   state.devCloudFiles,
           chatMessages:    state.chatMessages,
           activityLog:     state.activityLog,
-          tasks:           state.tasks           || [],
-          raidMode:        state.raidMode        || false,
-          pageViews:       state.pageViews       || {},
+          tasks:           state.tasks      || [],
+          raidMode:        state.raidMode   || false,
+          pageViews:       state.pageViews  || {},
           theme:           state.theme,
           savedAt:         new Date().toISOString()
         });
@@ -4563,33 +4565,32 @@
     function saveToLocalStorage() { saveToFirestore(); }
 
     async function loadFromFirestore() {
-      if (!_db) return false;
+      if (!window.__firestoreOps) return false;
       try {
-        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        const snap = await getDoc(doc(_db, 'websiteState', 'main'));
-        if (snap.exists()) {
-          const d = snap.data();
-          state.projects        = d.projects        || [];
-          state.customElements  = d.customElements  || [];
-          state.navigationLinks = d.navigationLinks || state.navigationLinks;
-          state.featureCards    = d.featureCards    || state.featureCards;
-          state.suggestions     = d.suggestions     || [];
-          state.announcements   = d.announcements   || [];
-          state.personalFiles   = d.personalFiles   || [];
-          state.devCloudFiles   = d.devCloudFiles   || [];
-          state.chatMessages    = d.chatMessages    || [];
-          state.activityLog     = d.activityLog     || [];
-          state.tasks           = d.tasks           || [];
-          state.raidMode        = d.raidMode        || false;
-          state.pageViews       = d.pageViews       || {};
-          state.theme           = d.theme           || 'light';
-          document.getElementById('app').className = 'app ' + state.theme;
-          if (state.raidMode) applyRaidMode(true);
-          console.log('[Firestore] Loaded \u2713 (saved', d.savedAt, ')');
-          return true;
-        }
-      } catch (err) { console.error('[Firestore] Load failed:', err); }
-      return false;
+        const d = await window.__firestoreOps.load();
+        if (!d) return false;
+        state.projects        = d.projects        || [];
+        state.customElements  = d.customElements  || [];
+        state.navigationLinks = d.navigationLinks || state.navigationLinks;
+        state.featureCards    = d.featureCards    || state.featureCards;
+        state.suggestions     = d.suggestions     || [];
+        state.announcements   = d.announcements   || [];
+        state.personalFiles   = d.personalFiles   || [];
+        state.devCloudFiles   = d.devCloudFiles   || [];
+        state.chatMessages    = d.chatMessages    || [];
+        state.activityLog     = d.activityLog     || [];
+        state.tasks           = d.tasks           || [];
+        state.raidMode        = d.raidMode        || false;
+        state.pageViews       = d.pageViews       || {};
+        state.theme           = d.theme           || 'light';
+        document.getElementById('app').className = 'app ' + state.theme;
+        if (state.raidMode) applyRaidMode(true);
+        console.log('[Firestore] Loaded \u2713 (saved', d.savedAt, ')');
+        return true;
+      } catch (err) {
+        console.error('[Firestore] Load failed:', err);
+        return false;
+      }
     }
 
     setInterval(() => {
@@ -4899,52 +4900,72 @@
     }
 
     // ============ INITIALIZE ============
+    function dismissLoadingScreen() {
+      const ls = document.getElementById('loadingScreen');
+      if (ls) ls.classList.add('fade-out');
+    }
+
     async function init() {
-      applySystemThemeIfNeeded();
+      // HARD FAILSAFE — loading screen always dismissed within 8s no matter what
+      const hardTimeout = setTimeout(dismissLoadingScreen, 8000);
 
-      // Show skeleton while waiting for Firebase
-      const pc = document.getElementById('pageContent');
-      if (pc) pc.innerHTML = `
-        <div class="skeleton skeleton-card"></div>
-        <div class="skeleton skeleton-line"></div>
-        <div class="skeleton skeleton-line short"></div>
-        <div class="skeleton skeleton-card"></div>
-      `;
+      try {
+        applySystemThemeIfNeeded();
 
-      // Wait for Firebase (max 6s before going offline)
-      await Promise.race([
-        _firebaseReadyPromise,
-        new Promise(res => setTimeout(res, 6000))
-      ]);
+        // Show skeleton while waiting for Firebase
+        const pc = document.getElementById('pageContent');
+        if (pc) pc.innerHTML = `
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line short"></div>
+          <div class="skeleton skeleton-card"></div>
+        `;
 
-      if (_dbOnline) {
-        await loadFromFirestore();
-      } else {
-        console.warn('[Firebase] Timed out — running offline');
-        const badge = document.getElementById('dbStatusBadge');
-        if (badge) { badge.innerHTML = '<span class="db-status-dot"></span>DB Offline'; badge.className = 'db-status offline'; }
+        // Wait for Firebase module (max 6s before going offline)
+        await Promise.race([
+          _firebaseReadyPromise,
+          new Promise(res => setTimeout(res, 6000))
+        ]);
+
+        if (_dbOnline) {
+          await loadFromFirestore();
+        } else {
+          console.warn('[Firebase] Timed out — running offline');
+          const badge = document.getElementById('dbStatusBadge');
+          if (badge) { badge.innerHTML = '<span class="db-status-dot"></span>DB Offline'; badge.className = 'db-status offline'; }
+        }
+
+        trackPageView(state.currentPage);
+        renderNavigation();
+        renderMobileNav();
+        renderPage();
+        logActivity('System', 'Website initialized');
+      } catch (err) {
+        // Something crashed — still render the page in a clean default state
+        console.error('[init] Startup error:', err);
+        try { renderNavigation(); renderMobileNav(); renderPage(); } catch(_) {}
+      } finally {
+        // Always dismiss the loading screen after a short visual pause
+        clearTimeout(hardTimeout);
+        setTimeout(dismissLoadingScreen, 800);
       }
-
-      trackPageView(state.currentPage);
-      renderNavigation();
-      renderMobileNav();
-      renderPage();
-      logActivity('System', 'Website initialized');
-
-      setTimeout(() => {
-        const ls = document.getElementById('loadingScreen');
-        if (ls) ls.classList.add('fade-out');
-      }, 1600);
     }
 
     init();
   </script>
 
-  <!-- FIREBASE MODULE — runs after main script, fires __onFirebaseReady to resolve the promise -->
+  <!-- FIREBASE MODULE -->
+  <!-- All Firestore operations live here (module scope = safe dynamic imports). -->
+  <!-- Exposes window.__firestoreOps.save() and .load() to the main script.     -->
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, enableIndexedDbPersistence }
-      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { initializeApp }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import {
+      initializeFirestore,
+      persistentLocalCache,
+      persistentMultipleTabManager,
+      doc, setDoc, getDoc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey:            'AIzaSyBiMCXtdNKeYvcWi-rg1JL3lsuEVzOTliU',
@@ -4957,14 +4978,43 @@
 
     try {
       const app = initializeApp(firebaseConfig);
-      const db  = getFirestore(app);
-      enableIndexedDbPersistence(db).catch(err => {
-        if (err.code !== 'failed-precondition' && err.code !== 'unimplemented')
-          console.warn('[Firebase] Persistence:', err.code);
-      });
-      window.__onFirebaseReady(db);
+
+      // Use new persistence API — supports multiple tabs without lock errors.
+      // persistentMultipleTabManager allows multiple tabs without the lock error.
+      let db;
+      try {
+        db = initializeFirestore(app, {
+          localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+        });
+        console.log('[Firebase] Persistent multi-tab cache enabled');
+      } catch (persistErr) {
+        // Fallback: plain Firestore without persistence (works everywhere)
+        console.warn('[Firebase] Persistence unavailable, using memory cache:', persistErr.code);
+        const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        db = getFirestore(app);
+      }
+
+      const DOC_REF = doc(db, 'websiteState', 'main');
+
+      // Expose save/load to main script
+      window.__firestoreOps = {
+        save: async (data) => { await setDoc(DOC_REF, data); },
+        load: async () => {
+          const snap = await getDoc(DOC_REF);
+          return snap.exists() ? snap.data() : null;
+        }
+      };
+
+      // Signal main script that Firebase is ready
+      if (typeof window.__onFirebaseReady === 'function') {
+        window.__onFirebaseReady(db);
+      }
+
+      console.log('[Firebase] Ready \u2713 (project: dts-porfolio)');
+
     } catch (err) {
-      console.error('[Firebase] Init error:', err);
+      console.error('[Firebase] Init failed:', err);
+      // __onFirebaseReady is never called → Promise.race 6s timeout fires → site runs offline
     }
   </script>
 </body>
