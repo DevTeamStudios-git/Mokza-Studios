@@ -124,6 +124,40 @@
       color: white;
       box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
+
+    /* Nav tab inline editing (Co-Owner+) */
+    .nav-link.editable-nav {
+      position: relative;
+    }
+    .nav-link.editable-nav::after {
+      content: '✏️';
+      font-size: 0.6rem;
+      position: absolute;
+      top: 3px;
+      right: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .nav-link.editable-nav:hover::after { opacity: 0.7; }
+    .nav-link.editable-nav:hover {
+      outline: 2px dashed rgba(102,126,234,0.5);
+      outline-offset: 2px;
+    }
+    .nav-label-edit {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid rgba(255,255,255,0.8);
+      color: inherit;
+      font: inherit;
+      font-weight: 600;
+      min-width: 30px;
+      max-width: 120px;
+      outline: none;
+      text-align: center;
+      padding: 0 2px;
+    }
+    .app.dark .nav-label-edit { border-bottom-color: rgba(165,180,252,0.8); }
     
     .navbar-actions {
       display: flex;
@@ -1868,7 +1902,53 @@
       }
     }
 
-    /* ===== INPUT SANITIZATION VISUAL ===== */
+    /* ===== INLINE PAGE TEXT EDITING (Co-Owner+) ===== */
+    .et-wrap {
+      display: inline;
+      position: relative;
+      border-radius: 4px;
+      transition: background 0.2s, outline 0.2s;
+    }
+    .et-wrap.et-editable {
+      cursor: text;
+    }
+    .et-wrap.et-editable:hover {
+      background: rgba(102,126,234,0.1);
+      outline: 2px dashed rgba(102,126,234,0.45);
+      outline-offset: 3px;
+    }
+    .et-wrap.et-editable:hover::after {
+      content: '✏️';
+      font-size: 0.6rem;
+      vertical-align: super;
+      margin-left: 3px;
+      pointer-events: none;
+    }
+    .et-field {
+      display: inline;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid currentColor;
+      color: inherit;
+      font: inherit;
+      width: auto;
+      min-width: 40px;
+      outline: none;
+      padding: 0 2px;
+    }
+    /* Block-level variant for titles and descriptions */
+    .et-block { display: block; }
+    .et-block.et-editable:hover { display: block; }
+    textarea.et-field {
+      display: block;
+      width: 100%;
+      min-height: 3em;
+      resize: vertical;
+      border: 2px solid rgba(102,126,234,0.5);
+      border-radius: 8px;
+      padding: 0.5rem;
+      background: rgba(102,126,234,0.05);
+    }
     .input-warn { border-color: #fbbf24 !important; }
     .input-error { border-color: #f5576c !important; }
   </style>
@@ -2056,6 +2136,31 @@
       tasks: [],
       raidMode: false,
       pageViews: {},
+      pageTexts: {
+        // Home
+        home_hero_title:    'Welcome to Developpement Team Studios',
+        home_hero_subtitle: 'Building the future, one project at a time',
+        home_stat1_num:  '50+',  home_stat1_lbl:  'Projects Completed',
+        home_stat2_num:  '15+',  home_stat2_lbl:  'Team Members',
+        home_stat3_num:  '100%', home_stat3_lbl:  'Dedication',
+        // About
+        about_title: 'About Us',
+        about_desc:  'Development Team Studios is a passionate group of developers, designers, and creators dedicated to building exceptional digital experiences.',
+        // Contact
+        contact_title: 'Contact Us',
+        contact_desc:  'Get in touch with us for collaborations, inquiries, or just to say hello!',
+        // Community
+        community_title: 'Community',
+        community_desc:  'Join our growing community of developers, designers, and creators!',
+        // Roblox
+        roblox_title: 'Roblox Projects',
+        roblox_desc:  'Explore our Roblox game development projects and creations',
+        // Creations
+        creations_title: 'Our Creations',
+        // Suggestions section (on Home)
+        suggestions_title: '💡 Share Your Suggestions',
+        suggestions_desc:  'We value your feedback! Help us improve by sharing your ideas and suggestions.'
+      },
       projects: [],  // No projects yet — add them via the admin panel
       navigationLinks: [
         {
@@ -2345,18 +2450,127 @@
     }
 
     // ============ NAVIGATION ============
+    function canEditNav() {
+      return state.currentUser && ['Owner', 'CoOwner'].includes(state.currentUser.rank);
+    }
+
+    // ============ INLINE PAGE TEXT EDITING ============
+    // et(key, tag, extraClass, extraStyle)
+    // Renders a span/element with the text from state.pageTexts[key].
+    // Co-Owner+ gets a double-click handler to edit it inline.
+    function et(key, tag = 'span', extraClass = '', extraStyle = '') {
+      const text    = (state.pageTexts && state.pageTexts[key]) || '';
+      const isBlock = ['h1','h2','h3','h4','p','div'].includes(tag);
+      const editable = canEditNav();
+      const blockClass = isBlock ? ' et-block' : '';
+      const editAttr   = editable
+        ? ` class="et-wrap et-editable${blockClass}${extraClass ? ' '+extraClass : ''}" ondblclick="startInlineTextEdit(event,'${key}')" title="Double-click to edit"${extraStyle ? ' style="'+extraStyle+'"' : ''}`
+        : `${extraClass ? ' class="'+extraClass+'"' : ''}${extraStyle ? ' style="'+extraStyle+'"' : ''}`;
+      return `<${tag}${editAttr}>${sanitize(text)}</${tag}>`;
+    }
+
+    function startInlineTextEdit(e, key) {
+      e.stopPropagation();
+      const wrapper = e.currentTarget;
+      if (wrapper.querySelector('input,textarea')) return; // already editing
+
+      const currentText = (state.pageTexts && state.pageTexts[key]) || '';
+      const isLong = currentText.length > 60;
+      wrapper.textContent = ''; // clear
+
+      const field = document.createElement(isLong ? 'textarea' : 'input');
+      field.className = 'et-field';
+      field.value = currentText;
+      if (!isLong) {
+        field.type = 'text';
+        field.size = Math.max(currentText.length + 2, 8);
+      }
+      wrapper.appendChild(field);
+      field.focus();
+      if (!isLong) field.select();
+
+      function commit() {
+        const newText = field.value.trim();
+        if (newText && newText !== currentText) {
+          if (!state.pageTexts) state.pageTexts = {};
+          state.pageTexts[key] = newText;
+          showNotification('Text Saved', 'Page text updated', 'success');
+          logActivity('Text Edited', key + ': "' + currentText.substring(0,30) + '" → "' + newText.substring(0,30) + '"');
+          saveToFirestore();
+        }
+        renderPage(); // re-render to show new text / restore markup
+      }
+
+      field.addEventListener('blur', commit, { once: true });
+      field.addEventListener('keydown', (ev) => {
+        if (!isLong && ev.key === 'Enter')  { ev.preventDefault(); field.blur(); }
+        if (ev.key === 'Escape') { field.value = currentText; field.blur(); }
+        if (!isLong) field.size = Math.max(field.value.length + 2, 8);
+      });
+    }
+
     function renderNavigation() {
       const navLinks = document.getElementById('navbarLinks');
       if (!navLinks) return;
-      
+
       const enabledLinks = state.navigationLinks.filter(link => link.enabled);
-      
+      const editable = canEditNav();
+
       navLinks.innerHTML = enabledLinks.map(link => `
-        <button class="nav-link ${state.currentPage === link.page ? 'active' : ''}" onclick="changePage('${link.page}')">
+        <button class="nav-link ${state.currentPage === link.page ? 'active' : ''} ${editable ? 'editable-nav' : ''}"
+                onclick="handleNavClick(event, '${link.page}')"
+                ${editable ? `ondblclick="startNavLabelEdit(event, '${link.id}')" title="Double-click to rename"` : ''}>
           <svg>${link.icon}</svg>
-          ${link.label}
+          <span class="nav-label-text" data-link-id="${link.id}">${sanitize(link.label)}</span>
         </button>
       `).join('');
+    }
+
+    // Click: only navigate if NOT currently editing a label
+    function handleNavClick(e, page) {
+      if (e.target.classList.contains('nav-label-edit')) return; // ignore clicks on input
+      changePage(page);
+    }
+
+    function startNavLabelEdit(e, linkId) {
+      e.stopPropagation();
+      const span = e.currentTarget.querySelector('.nav-label-text[data-link-id="' + linkId + '"]');
+      if (!span || span.querySelector('input')) return; // already editing
+
+      const link = state.navigationLinks.find(l => l.id === linkId);
+      if (!link) return;
+
+      const currentText = link.label;
+      span.innerHTML = ''; // clear span content
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'nav-label-edit';
+      input.value = currentText;
+      input.size = Math.max(currentText.length, 4);
+      span.appendChild(input);
+      input.focus();
+      input.select();
+
+      function commit() {
+        const newLabel = input.value.trim();
+        if (newLabel && newLabel !== currentText) {
+          link.label = newLabel;
+          logActivity('Nav Renamed', `"${currentText}" → "${newLabel}"`);
+          showNotification('Tab Renamed', `"${newLabel}" saved`, 'success');
+          saveToFirestore();
+        }
+        renderNavigation();
+        renderMobileNav();
+      }
+
+      input.addEventListener('blur', commit, { once: true });
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter')  { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.value = currentText; input.blur(); }
+        // Resize input dynamically
+        input.size = Math.max(input.value.length + 1, 4);
+      });
     }
 
     function changePage(page) {
@@ -4197,20 +4411,20 @@
         ` : ''}
         
         <div class="hero-section">
-          <h1 class="hero-title">Welcome to Developpement Team Studios</h1>
-          <p class="hero-subtitle">Building the future, one project at a time</p>
+          ${et('home_hero_title', 'h1', 'hero-title')}
+          ${et('home_hero_subtitle', 'p', 'hero-subtitle')}
           <div class="hero-stats">
             <div class="stat-card">
-              <div class="stat-number">50+</div>
-              <div class="stat-label">Projects Completed</div>
+              <div class="stat-number">${et('home_stat1_num')}</div>
+              <div class="stat-label">${et('home_stat1_lbl')}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number">15+</div>
-              <div class="stat-label">Team Members</div>
+              <div class="stat-number">${et('home_stat2_num')}</div>
+              <div class="stat-label">${et('home_stat2_lbl')}</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number">100%</div>
-              <div class="stat-label">Dedication</div>
+              <div class="stat-number">${et('home_stat3_num')}</div>
+              <div class="stat-label">${et('home_stat3_lbl')}</div>
             </div>
           </div>
         </div>
@@ -4241,10 +4455,8 @@
         
         <!-- Suggestions Section -->
         <div class="suggestions-section">
-          <h2 class="suggestions-title">💡 Share Your Suggestions</h2>
-          <p class="suggestions-description">
-            We value your feedback! Help us improve by sharing your ideas and suggestions.
-          </p>
+          <h2 class="suggestions-title">${et('suggestions_title')}</h2>
+          <p class="suggestions-description">${et('suggestions_desc')}</p>
           
           <div class="suggestion-form">
             <textarea 
@@ -4285,9 +4497,9 @@
       const canManage = canManageCards();
       
       return `
-        <h1 class="page-title">About Us</h1>
+        ${et('about_title', 'h1', 'page-title')}
         <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
-          Development Team Studios is a passionate group of developers, designers, and creators dedicated to building exceptional digital experiences.
+          ${et('about_desc')}
         </p>
         
         ${customElements}
@@ -4317,9 +4529,9 @@
       const canManage = canManageCards();
       
       return `
-        <h1 class="page-title">Contact Us</h1>
+        ${et('contact_title', 'h1', 'page-title')}
         <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
-          Get in touch with us for collaborations, inquiries, or just to say hello!
+          ${et('contact_desc')}
         </p>
         
         ${customElements}
@@ -4349,9 +4561,9 @@
       const canManage = canManageCards();
       
       return `
-        <h1 class="page-title">Community</h1>
+        ${et('community_title', 'h1', 'page-title')}
         <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
-          Join our growing community of developers, designers, and creators!
+          ${et('community_desc')}
         </p>
         
         ${customElements}
@@ -4381,9 +4593,9 @@
       const canManage = canManageCards();
       
       return `
-        <h1 class="page-title">Roblox Projects</h1>
+        ${et('roblox_title', 'h1', 'page-title')}
         <p style="font-size: 1.2rem; line-height: 1.8; color: ${state.theme === 'dark' ? '#cbd5e1' : '#666'}; margin-bottom: 2rem;">
-          Explore our Roblox game development projects and creations
+          ${et('roblox_desc')}
         </p>
         
         ${customElements}
@@ -4417,7 +4629,7 @@
       const canManage = canManageCards();
       
       return `
-        <h1 class="page-title">Our Creations</h1>
+        ${et('creations_title', 'h1', 'page-title')}
         
         <div class="search-bar">
           <input
@@ -4551,6 +4763,7 @@
         tasks:           state.tasks     || [],
         raidMode:        state.raidMode  || false,
         pageViews:       state.pageViews || {},
+        pageTexts:       state.pageTexts || {},
         theme:           state.theme,
         savedAt:         new Date().toISOString()
       };
@@ -4571,6 +4784,8 @@
       state.tasks           = d.tasks           || [];
       state.raidMode        = d.raidMode        || false;
       state.pageViews       = d.pageViews       || {};
+      // Merge saved pageTexts over defaults so new keys added in code aren't wiped
+      state.pageTexts       = Object.assign({}, state.pageTexts, d.pageTexts || {});
       state.theme           = d.theme           || 'light';
       document.getElementById('app').className = 'app ' + state.theme;
       if (state.raidMode) applyRaidMode(true);
