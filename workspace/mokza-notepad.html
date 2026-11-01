@@ -638,15 +638,18 @@ body.light-theme select{background:#f5f5f5;color:#1a1a1a}
 <input type="file" id="fileInput" style="display:none" accept=".html,.txt" onchange="handleFileOpen(event)">
 <input type="file" id="imageFileInput" style="display:none" accept="image/*" onchange="handleImageUpload(event)">
 <input type="file" id="noteImageFileInput" style="display:none" accept="image/*" onchange="handleNoteImageUpload(event)">
-<script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,updateProfile}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import{getDatabase,ref,set,get,onValue,push,update,remove,serverTimestamp,off}from"https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-const firebaseConfig={apiKey:"AIzaSyA_oaH79_yNsRKCXtV2jtbOQU3YFUcR7y0",authDomain:"notepad-fb309.firebaseapp.com",databaseURL:"https://notepad-fb309-default-rtdb.firebaseio.com/",projectId:"notepad-fb309",storageBucket:"notepad-fb309.firebasestorage.app",messagingSenderId:"111883002230",appId:"1:111883002230:web:ab5ab1b3d9834bf187da57"};
-const app=initializeApp(firebaseConfig);const auth=getAuth(app);const db=getDatabase(app);const googleProvider=new GoogleAuthProvider();
-window._FB={auth,db,ref,set,get,onValue,push,update,remove,serverTimestamp,off,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,googleProvider,signInWithPopup,updateProfile};
-onAuthStateChanged(auth,(user)=>{window._currentUser=user;document.dispatchEvent(new CustomEvent('auth-changed',{detail:user}));});
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="mokza-supabase.js"></script>
+<script>
+(function(){
+const M=window.MokzaDB.modular,R=window.MokzaDB.rtdb,auth=M.getAuth();
+window._FB={auth,db:R.db,ref:R.ref,set:R.set,get:R.get,onValue:R.onValue,push:R.push,update:R.update,remove:R.remove,serverTimestamp:R.serverTimestamp,off:R.off,createUserWithEmailAndPassword:M.createUserWithEmailAndPassword,signInWithEmailAndPassword:M.signInWithEmailAndPassword,signOut:M.signOut,onAuthStateChanged:M.onAuthStateChanged,googleProvider:new M.GoogleAuthProvider(),signInWithPopup:M.signInWithPopup,updateProfile:M.updateProfile};
+const start=()=>{
+M.onAuthStateChanged(auth,(user)=>{window._currentUser=user;document.dispatchEvent(new CustomEvent('auth-changed',{detail:user}));});
 window._firebaseReady=true;document.dispatchEvent(new CustomEvent('firebase-ready'));
+};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,0));else setTimeout(start,0);
+})();
 </script>
 <script>
 /* ── MOKZA NEXUS INTEGRATION BRIDGE ── */
@@ -672,7 +675,7 @@ window._firebaseReady=true;document.dispatchEvent(new CustomEvent('firebase-read
     // If notepad not yet signed in, attempt Google sign-in trigger
     if(!window._currentUser && window._FB) {
       try {
-        await window._FB.signInWithPopup(window._FB.auth, new (await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js')).GoogleAuthProvider());
+        await window._FB.signInWithPopup(window._FB.auth, window._FB.googleProvider);
       } catch(_){}
     }
     // Update displayed name in top bar if user chip visible
@@ -757,7 +760,7 @@ async function doLogin(){
   const pass=document.getElementById('loginPassword').value;
   if(!email||!pass){showLoginError('Please fill in all fields.');return;}
   try{await window._FB.signInWithEmailAndPassword(window._FB.auth,email,pass);closeLoginModal();}
-  catch(e){showLoginError(e.message.replace('Firebase: ','').replace(/\s*\(.*\)/,''));}
+  catch(e){showLoginError(e.message.replace('AuthApiError: ','').replace(/\s*\(.*\)/,''));}
 }
 async function doRegister(){
   clearLoginError();
@@ -770,12 +773,12 @@ async function doRegister(){
     const cred=await window._FB.createUserWithEmailAndPassword(window._FB.auth,email,pass);
     await window._FB.updateProfile(cred.user,{displayName:name});
     window._currentUser=cred.user;closeLoginModal();
-  }catch(e){showLoginError(e.message.replace('Firebase: ','').replace(/\s*\(.*\)/,''));}
+  }catch(e){showLoginError(e.message.replace('AuthApiError: ','').replace(/\s*\(.*\)/,''));}
 }
 async function doGoogleLogin(){
   clearLoginError();
   try{await window._FB.signInWithPopup(window._FB.auth,window._FB.googleProvider);closeLoginModal();}
-  catch(e){showLoginError(e.message.replace('Firebase: ','').replace(/\s*\(.*\)/,''));}
+  catch(e){showLoginError(e.message.replace('AuthApiError: ','').replace(/\s*\(.*\)/,''));}
 }
 async function logoutUser(){
   closeUserMenu();
@@ -1279,7 +1282,7 @@ function toggleSpellCheck(){const e=document.getElementById('spellCheckEnabled')
 function togglePageNumbers(){const e=document.getElementById('showPageNumbers').checked;document.querySelectorAll('.page-number').forEach(n=>n.style.display=e?'block':'none');}
 function toggleAutoCreatePages(){localStorage.setItem('autoCreatePages',document.getElementById('autoCreatePages').checked);}
 function changeThemeFromSettings(){const t=document.getElementById('themeSelect').value;if(t==='light')document.body.classList.add('light-theme');else document.body.classList.remove('light-theme');localStorage.setItem('theme',t);}
-function showAbout(){alert('NotePad Pro v5.0 🔥\n\nNew features:\n• Firebase Auth (Email + Google)\n• Real-time collaboration\n• Quick Notes Trash bin\n• Labels/Tags system\n• Sort notes\n• Reminders with notifications\n• Editable folder cards\n• Word goal tracker\n• File System Access API (custom save)\n• Note duplication & image attachments\n• Keyboard shortcuts modal\n\nPress ? to view keyboard shortcuts');}
+function showAbout(){alert('NotePad Pro v5.0 🔥\n\nNew features:\n• Supabase Auth (Email + Google)\n• Real-time collaboration\n• Quick Notes Trash bin\n• Labels/Tags system\n• Sort notes\n• Reminders with notifications\n• Editable folder cards\n• Word goal tracker\n• File System Access API (custom save)\n• Note duplication & image attachments\n• Keyboard shortcuts modal\n\nPress ? to view keyboard shortcuts');}
 
 // VIEW
 function toggleTheme(){document.body.classList.toggle('light-theme');localStorage.setItem('theme',document.body.classList.contains('light-theme')?'light':'dark');}
@@ -1584,7 +1587,7 @@ async function loadQuickNotes(){
     window._FB.onValue(window._FB.ref(window._FB.db,`users/${uid}/quickNotes`),(snap)=>{if(snap.exists()){quickNotes=Object.values(snap.val()).sort((a,b)=>b.updatedAt-a.updatedAt);localStorage.setItem('np-quick-notes',JSON.stringify(quickNotes));quickNotes.forEach(n=>{if(n.reminder&&!n.reminderFired)scheduleReminder(n);});renderQuickNotes();}});
     window._FB.onValue(window._FB.ref(window._FB.db,`users/${uid}/quickFolders`),(snap)=>{if(snap.exists()){quickFolders=Object.values(snap.val());localStorage.setItem('np-quick-folders',JSON.stringify(quickFolders));renderSidebarFolders();}});
     window._FB.onValue(window._FB.ref(window._FB.db,`users/${uid}/quickLabels`),(snap)=>{if(snap.exists()){quickLabels=Object.values(snap.val());localStorage.setItem('np-quick-labels',JSON.stringify(quickLabels));renderSidebarLabels();}});
-  }catch(e){console.error('Firebase load error:',e);renderQuickNotes();}
+  }catch(e){console.error('Cloud load error:',e);renderQuickNotes();}
 }
 async function syncNoteToCloud(note){if(!window._currentUser||!window._FB)return;try{const uid=window._currentUser.uid;await window._FB.set(window._FB.ref(window._FB.db,`users/${uid}/quickNotes/${note.id}`),{...note,ownerId:uid});}catch(e){}}
 async function syncFoldersToCloud(){if(!window._currentUser||!window._FB)return;try{const uid=window._currentUser.uid;const obj={};quickFolders.forEach(f=>obj[f.id]=f);await window._FB.set(window._FB.ref(window._FB.db,`users/${uid}/quickFolders`),obj);}catch(e){}}

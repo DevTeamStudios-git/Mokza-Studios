@@ -706,28 +706,17 @@ nav{flex:1;padding:8px;display:flex;flex-direction:column;gap:2px;overflow-y:aut
 <div id="modal-slot"></div>
 <input type="file" id="drive-file-input" multiple style="display:none" onchange="handleDriveUpload(event)">
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="mokza-supabase.js"></script>
 <script>
-if (typeof firebase === 'undefined') {
-  document.getElementById('loading').innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:36px;margin-bottom:16px;">⚠️</div><div style="color:#FB7185;font-size:14px;margin-bottom:10px;">Firebase failed to load.</div><div style="color:#6A8099;font-size:12px;max-width:320px;">Open this file using a local server (e.g. <code style="background:#162032;padding:2px 6px;border-radius:3px;">python -m http.server</code>) instead of directly from the file system.</div></div>';
-  throw new Error('Firebase CDN blocked — serve via HTTP server.');
+if (typeof MokzaDB === 'undefined') {
+  document.getElementById('loading').innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:36px;margin-bottom:16px;">⚠️</div><div style="color:#FB7185;font-size:14px;margin-bottom:10px;">Supabase failed to load.</div><div style="color:#6A8099;font-size:12px;max-width:320px;">Open this file using a local server (e.g. <code style="background:#162032;padding:2px 6px;border-radius:3px;">python -m http.server</code>) instead of directly from the file system.</div></div>';
+  throw new Error('Supabase CDN blocked — serve via HTTP server.');
 }
 
-const FB = {
-  apiKey:"AIzaSyBL1wtqD2PGwyN7uqXLEBtBTkL_KsWD6jY",
-  authDomain:"mokza-workspace.firebaseapp.com",
-  projectId:"mokza-workspace",
-  storageBucket:"mokza-workspace.firebasestorage.app",
-  messagingSenderId:"703578091967",
-  appId:"1:703578091967:web:91238f997c723984d4b10a"
-};
-firebase.initializeApp(FB);
-const auth    = firebase.auth();
-const db      = firebase.firestore();
-const storage = firebase.storage();
+const auth    = MokzaDB.auth();
+const db      = MokzaDB.firestore();
+const storage = MokzaDB.storage();
 
 /* ══ STATE ══════════════════════════════════════════════════ */
 const S = {
@@ -737,7 +726,6 @@ const S = {
   sidebarCollapsed:false, aiOpen:false, aiMsgs:[],
   groqKey: localStorage.getItem('nexus_groq_key')||'',
   discordClientId: localStorage.getItem('nexus_discord_cid')||'',
-  discordCfUrl: localStorage.getItem('nexus_discord_cf')||'',
   calcUrl: localStorage.getItem('nexus_calc_url')||'',
   files:[], filesPath:'',
   calDate: new Date(),
@@ -803,9 +791,7 @@ auth.onAuthStateChanged(user => {
   document.getElementById('loading').classList.add('hidden');
   if (user) { S.user = user; showApp(); }
   else {
-    const p = new URLSearchParams(window.location.search);
-    if (p.has('code') && p.has('discord')) handleDiscordCallback(p.get('code'));
-    else showLogin();
+    showLogin();
   }
 });
 
@@ -823,26 +809,12 @@ function showApp() {
 
 /* ══ AUTH ═══════════════════════════════════════════════════ */
 async function loginGoogle() {
-  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  try { await auth.signInWithPopup(new MokzaDB.GoogleAuthProvider()); }
   catch(e) { showLoginError(e.message); }
 }
-function loginDiscord() {
-  const cid = S.discordClientId || prompt('Enter your Discord Client ID:');
-  if (!cid) return;
-  S.discordClientId = cid;
-  localStorage.setItem('nexus_discord_cid', cid);
-  const redirect = window.location.origin + window.location.pathname;
-  window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${cid}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=identify%20email&state=discord`;
-}
-async function handleDiscordCallback(code) {
-  const cfUrl = S.discordCfUrl;
-  if (!cfUrl) { showLogin(); showLoginError('Discord Cloud Function URL not set in Settings.'); return; }
-  try {
-    const res = await fetch(cfUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,redirect:window.location.origin+window.location.pathname})});
-    const {firebaseToken} = await res.json();
-    await auth.signInWithCustomToken(firebaseToken);
-    window.history.replaceState({}, '', window.location.pathname);
-  } catch(e) { showLogin(); showLoginError('Discord auth failed: ' + e.message); }
+async function loginDiscord() {
+  try { await auth.signInWithDiscord(); }
+  catch(e) { showLoginError('Discord sign-in failed: ' + e.message); }
 }
 function showLoginError(msg) {
   const el = document.getElementById('login-error');
@@ -908,7 +880,7 @@ function setupFirestoreListeners() {
     if (S.view === 'calendar') renderView();
   });
   document.getElementById('fb-indicator').innerHTML =
-    `<div class="fb-dot" style="background:var(--mint);animation:blink 3s ease-in-out infinite;"></div><span style="color:var(--mint);font-size:11px;">Firebase</span>`;
+    `<div class="fb-dot" style="background:var(--mint);animation:blink 3s ease-in-out infinite;"></div><span style="color:var(--mint);font-size:11px;">Supabase</span>`;
   S.listeners = [u1,u2,u3,u4];
 }
 
@@ -1042,7 +1014,7 @@ async function sendChatMsg() {
   const inp=document.getElementById('chat-input'), text=inp?.value?.trim();
   if(!text)return; inp.value='';
   const u=S.user;
-  await db.collection('workspace_chat').add({text,senderId:u.uid,senderName:u.displayName||u.email||'Anonymous',color:'#5E6AD2',sentAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.collection('workspace_chat').add({text,senderId:u.uid,senderName:u.displayName||u.email||'Anonymous',color:'#5E6AD2',sentAt:MokzaDB.serverTimestamp()});
 }
 
 /* ══ TASKS ══════════════════════════════════════════════════ */
@@ -1070,7 +1042,7 @@ function taskRow(t) {
 async function addTask() {
   const inp=document.getElementById('task-input'), prio=document.getElementById('task-prio');
   const text=inp?.value?.trim(); if(!text)return; inp.value='';
-  await col('tasks').add({text,priority:prio?.value||'medium',done:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await col('tasks').add({text,priority:prio?.value||'medium',done:false,createdAt:MokzaDB.serverTimestamp()});
 }
 async function toggleTask(id,done) { await col('tasks').doc(id).update({done:!done}); }
 async function deleteTask(id) { await col('tasks').doc(id).delete(); }
@@ -1129,7 +1101,7 @@ function closeAddForm(colId) { const f=document.getElementById(`add-form-${colId
 async function quickAddCard(colId) {
   const inp=document.getElementById(`add-inp-${colId}`), title=inp?.value?.trim();
   if(!title)return; inp.value=''; closeAddForm(colId);
-  await col('kanban').add({title,col:colId,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await col('kanban').add({title,col:colId,createdAt:MokzaDB.serverTimestamp()});
 }
 
 let _kmCardId=null, _kmColId=null;
@@ -1151,9 +1123,9 @@ function closeKanbanModal() { document.getElementById('kanban-modal-bg').classLi
 async function saveKanbanCard() {
   const title=document.getElementById('km-title').value.trim();
   if(!title){document.getElementById('km-title').focus();return;}
-  const data={title,desc:document.getElementById('km-desc').value.trim(),priority:document.getElementById('km-priority').value,col:document.getElementById('km-col').value,tag:document.getElementById('km-tag').value,due:document.getElementById('km-due').value,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  const data={title,desc:document.getElementById('km-desc').value.trim(),priority:document.getElementById('km-priority').value,col:document.getElementById('km-col').value,tag:document.getElementById('km-tag').value,due:document.getElementById('km-due').value,updatedAt:MokzaDB.serverTimestamp()};
   if(_kmCardId){await col('kanban').doc(_kmCardId).update(data);pushNotification(`Card updated: "${title}"`,'kanban');}
-  else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await col('kanban').add(data);pushNotification(`Card created: "${title}"`,'kanban');}
+  else{data.createdAt=MokzaDB.serverTimestamp();await col('kanban').add(data);pushNotification(`Card created: "${title}"`,'kanban');}
   closeKanbanModal();
 }
 async function deleteKanbanCard() {
@@ -1209,7 +1181,7 @@ async function saveEvent(y,m,day){
   const title=document.getElementById('ev-title')?.value?.trim(); if(!title)return;
   const time=document.getElementById('ev-time')?.value||'', tag=document.getElementById('ev-tag')?.value||'dev';
   const start=new Date(y,m,day,...(time?time.split(':').map(Number):[0,0]));
-  await col('events').add({title,time,tag,start:firebase.firestore.Timestamp.fromDate(start)});
+  await col('events').add({title,time,tag,start:MokzaDB.Timestamp.fromDate(start)});
   closeModal();
 }
 function closeModal(){document.getElementById('modal-slot').innerHTML='';}
@@ -1254,7 +1226,7 @@ function renderFilesView(el){
   el.style.padding='0';el.style.overflow='hidden';el.style.height='100%';el.style.display='flex';el.style.flexDirection='column';
   el.innerHTML=`<div style="padding:18px;overflow-y:auto;flex:1;">
   <div class="page-header" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-    <div style="flex:1;"><div class="page-title">Studio Drive</div><div class="page-sub">Firebase Storage — your team's cloud file system</div></div>
+    <div style="flex:1;"><div class="page-title">Studio Drive</div><div class="page-sub">Supabase Storage — your team's cloud file system</div></div>
     <div style="display:flex;gap:8px;flex-shrink:0;"><button class="btn secondary" onclick="document.getElementById('drive-file-input').click()">⬆ Upload Files</button><button class="btn secondary" onclick="createDriveFolder()">📁 New Folder</button></div>
   </div>
   <div class="card" style="padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:20px;">
@@ -1300,7 +1272,7 @@ async function uploadDriveFile(file){
     const ref=storage.ref(path),task=ref.put(file);
     task.on('state_changed',snap=>{const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*100);if(pp)pp.textContent=`${pct}%`;if(pb)pb.style.width=`${pct}%`;});
     const snap=await task;const downloadURL=await snap.ref.getDownloadURL();
-    await db.collection(`users/${uid()}/files`).add({name:file.name,size:file.size,type:file.type||'application/octet-stream',storagePath:path,downloadURL,folder:S.filesPath,uploadedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection(`users/${uid()}/files`).add({name:file.name,size:file.size,type:file.type||'application/octet-stream',storagePath:path,downloadURL,folder:S.filesPath,uploadedAt:MokzaDB.serverTimestamp()});
     pushNotification(`Uploaded "${file.name}"`,'task');loadDriveFolder(S.filesPath);
   }catch(e){pushNotification(`Upload failed: ${e.message}`,'info');}
   finally{if(prog)setTimeout(()=>prog.classList.remove('show'),1200);}
@@ -1351,56 +1323,11 @@ function renderSettings(){return`
   </div>
 
   <div class="settings-section">
-    <div class="settings-section-title">Firebase Firestore Rules</div>
-    <div style="background:var(--raised);border-radius:8px;padding:14px;font-family:'Fira Code',monospace;font-size:11.5px;color:var(--mint);line-height:1.8;overflow-x:auto;margin-bottom:10px;">
-      <pre style="white-space:pre-wrap;margin:0;">rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /workspaces/{userId}/{collection}/{docId} {
-      allow read, write: if request.auth != null
-        &amp;&amp; request.auth.uid == userId;
-    }
-    match /snippets/{userId}/{collection}/{docId} {
-      allow read, write: if request.auth != null
-        &amp;&amp; request.auth.uid == userId;
-    }
-    match /users/{userId}/files/{fileId} {
-      allow read, write: if request.auth != null
-        &amp;&amp; request.auth.uid == userId;
-    }
-    match /workspace_chat/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-        &amp;&amp; request.resource.data.senderId == request.auth.uid
-        &amp;&amp; request.resource.data.text is string
-        &amp;&amp; request.resource.data.text.size() &lt; 2000;
-      allow delete: if request.auth != null
-        &amp;&amp; resource.data.senderId == request.auth.uid;
-    }
-    match /presence/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        &amp;&amp; request.auth.uid == userId;
-    }
-    match /notifications/{userId}/items/{notifId} {
-      allow read, delete: if request.auth != null
-        &amp;&amp; request.auth.uid == userId;
-      allow create: if request.auth != null;
-    }
-  }
-}</pre>
-    </div>
-    <div style="font-size:12px;color:var(--muted);">Copy these rules → Firebase Console → Firestore → Rules → Publish. This fixes Snippets sync and Studio Drive saving.</div>
-  </div>
-
-  <div class="settings-section">
-    <div class="settings-section-title">Discord OAuth</div>
-    <div class="settings-row"><div class="settings-label"><div class="settings-label-title">Discord Client ID</div><div class="settings-label-desc">From Discord Developer Portal → Your App → OAuth2</div></div><div style="display:flex;gap:8px;flex-shrink:0;"><input class="inp" id="discord-cid" value="${S.discordClientId}" placeholder="000000000000000000" style="width:200px;"><button class="btn" onclick="saveDiscordSettings()">Save</button></div></div>
-    <div class="settings-row"><div class="settings-label"><div class="settings-label-title">Cloud Function URL</div><div class="settings-label-desc">Your deployed Firebase CF for Discord token exchange</div></div><input class="inp" id="discord-cf" value="${S.discordCfUrl}" placeholder="https://us-central1-....cloudfunctions.net/discordAuth" style="width:100%;"></div>
+    <div class="settings-section-title">Supabase Backend</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;">Workspace data (tasks, kanban, calendar, chat, presence, Studio Drive, Snippets, NotePad, Nexus Mail) is stored in Supabase with Row Level Security.<br>Schema &amp; policies: <code>supabase/migrations/20261101000000_workspace.sql</code> → Supabase Dashboard → SQL Editor → Run.<br>Sign-in providers (Google, Discord, Email) are enabled in Supabase Dashboard → Authentication → Providers.</div>
   </div>`;}
 function saveCalcUrl(){const url=document.getElementById('calc-url-input')?.value?.trim();S.calcUrl=url;localStorage.setItem('nexus_calc_url',url);alert('Calculator URL saved!');}
 function saveGroqKey(){const key=document.getElementById('groq-key-input')?.value?.trim();S.groqKey=key;localStorage.setItem('nexus_groq_key',key);alert('Groq API key saved!');}
-function saveDiscordSettings(){S.discordClientId=document.getElementById('discord-cid')?.value?.trim()||'';S.discordCfUrl=document.getElementById('discord-cf')?.value?.trim()||'';localStorage.setItem('nexus_discord_cid',S.discordClientId);localStorage.setItem('nexus_discord_cf',S.discordCfUrl);alert('Discord settings saved!');}
 async function updateDisplayName(){const name=prompt('New display name:',S.user?.displayName||'');if(!name?.trim())return;await S.user.updateProfile({displayName:name.trim()});S.user=auth.currentUser;updateTopbar();}
 
 /* ══ SPRINT ROOM ════════════════════════════════════════════ */
@@ -1570,7 +1497,7 @@ async function submitStandup() {
     senderId: S.user.uid,
     senderName: S.user.displayName||'Team',
     color:'#5E6AD2',
-    sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+    sentAt: MokzaDB.serverTimestamp(),
   });
   pushNotification('Standup posted to #general!', 'info');
   navigate('sprint');
@@ -1600,7 +1527,7 @@ Write 3 short bullet points: Yesterday / Today / Blockers. Be specific and conci
 S.wikiPages = S.wikiPages || [
   {id:'home', title:'🏠 Home', content:`# Mokza Nexus Wiki\n\nWelcome to the Mokza team knowledge base.\n\nUse this space to document:\n- **SOPs** — Standard Operating Procedures\n- **Architecture decisions** — ADRs\n- **Onboarding guides** — for new team members\n- **Runbooks** — incident response\n- **API docs** — internal services\n\n---\n\n## Quick Links\n- [Getting Started](#getting-started)\n- [Tech Stack](#tech-stack)\n- [Deployment Guide](#deployment)\n\n## Team Conventions\n> Always write tests before merging. PRs require 1 approval.`},
   {id:'sop',  title:'📋 SOPs', content:`# Standard Operating Procedures\n\n## Code Review SOP\n1. Open PR with description\n2. Assign reviewer\n3. Address comments within 24h\n4. Merge only after approval\n\n## Deploy SOP\n1. Run test suite: \`npm test\`\n2. Check staging environment\n3. Create release tag\n4. Deploy to production\n5. Monitor logs for 15 minutes\n\n## Incident Response\n- **P0**: Page on-call immediately\n- **P1**: Notify in #incidents channel\n- **P2**: Create Jira ticket`},
-  {id:'arch', title:'🏗 Architecture', content:`# Architecture Decisions\n\n## ADR-001: Firebase as backend\n\n**Status**: Accepted  \n**Date**: 2026-01\n\n### Context\nWe need a real-time backend that scales.\n\n### Decision\nUse Firebase (Firestore + Auth + Storage).\n\n### Consequences\n- Real-time sync out of the box\n- No backend servers to maintain\n- Vendor lock-in risk`},
+  {id:'arch', title:'🏗 Architecture', content:`# Architecture Decisions\n\n## ADR-001: Supabase as backend\n\n**Status**: Accepted  \n**Date**: 2026-01\n\n### Context\nWe need a real-time backend that scales.\n\n### Decision\nUse Supabase (Postgres + Auth + Storage + Realtime).\n\n### Consequences\n- Real-time sync via Postgres changes\n- Row Level Security enforced in the database\n- Open-source, self-hostable`},
 ];
 S.wikiActiveId = S.wikiActiveId || 'home';
 S.wikiEditMode = S.wikiEditMode || false;
@@ -2155,7 +2082,7 @@ function renderAdmin(){return`
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
     <div class="card" style="padding:16px;"><div class="card-header"><span class="card-title">Team Members</span></div><div id="admin-user-list"><div class="empty" style="padding:24px 8px;"><div class="empty-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="empty-title">Loading members...</div></div></div></div>
-    <div class="card" style="padding:16px;"><div class="card-header"><span class="card-title">Security</span></div>${[['Firebase Auth','Google + Discord OAuth active','var(--mint)'],['Firestore Rules','Production rules active','var(--mint)'],['Data Encryption','TLS in transit, AES at rest','var(--mint)'],['Rate Limiting','Firestore quotas enforced','var(--mint)'],['2FA / MFA','Handled by Google/Discord','var(--amber)']].map(([k,v,c])=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></div><div><div style="font-size:13px;font-weight:600;">${k}</div><div style="font-size:11.5px;color:var(--muted);">${v}</div></div></div>`).join('')}</div>
+    <div class="card" style="padding:16px;"><div class="card-header"><span class="card-title">Security</span></div>${[['Supabase Auth','Google + Discord OAuth active','var(--mint)'],['Row Level Security','Postgres RLS policies active','var(--mint)'],['Data Encryption','TLS in transit, AES at rest','var(--mint)'],['Rate Limiting','Supabase API limits enforced','var(--mint)'],['2FA / MFA','Handled by Google/Discord','var(--amber)']].map(([k,v,c])=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></div><div><div style="font-size:13px;font-weight:600;">${k}</div><div style="font-size:11.5px;color:var(--muted);">${v}</div></div></div>`).join('')}</div>
   </div>
   <div class="card" style="padding:16px;margin-top:14px;"><div class="card-header"><span class="card-title">Workspace Actions</span></div><div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="btn secondary" onclick="pushNotifToAll()">📣 Broadcast Notification</button><button class="btn secondary" onclick="navigate('settings')">⚙ Workspace Settings</button><button class="btn" style="background:var(--rose);border:none;" onclick="if(confirm('Delete ALL shared chat messages? Cannot be undone.'))nukeChat()">🗑 Clear Chat History</button></div></div>`;}
 function initAdmin(){
@@ -2167,7 +2094,7 @@ function initAdmin(){
   }).catch(()=>{});
 }
 async function nukeChat(){const snap=await db.collection('workspace_chat').limit(500).get();const batch=db.batch();snap.docs.forEach(d=>batch.delete(d.ref));await batch.commit();pushNotification('Chat history cleared by admin.','admin');}
-async function pushNotifToAll(){const msg=prompt('Broadcast message:');if(!msg?.trim())return;await db.collection('workspace_chat').add({text:`📣 [ADMIN] ${msg.trim()}`,senderId:S.user.uid,senderName:S.user.displayName||'Admin',color:'#F59E0B',sentAt:firebase.firestore.FieldValue.serverTimestamp()});pushNotification(`Admin broadcast: "${msg.trim()}"`,'admin');alert('Broadcast sent!');}
+async function pushNotifToAll(){const msg=prompt('Broadcast message:');if(!msg?.trim())return;await db.collection('workspace_chat').add({text:`📣 [ADMIN] ${msg.trim()}`,senderId:S.user.uid,senderName:S.user.displayName||'Admin',color:'#F59E0B',sentAt:MokzaDB.serverTimestamp()});pushNotification(`Admin broadcast: "${msg.trim()}"`,'admin');alert('Broadcast sent!');}
 
 /* ══ NOTIFICATIONS ══════════════════════════════════════════ */
 function toggleNotifPanel(){const panel=document.getElementById('notif-panel'),isOpen=panel.classList.contains('open');panel.classList.toggle('open',!isOpen);if(!isOpen){S.notifications.forEach(n=>n.unread=false);document.getElementById('notif-dot').style.display='none';renderNotifList();}}
@@ -2238,9 +2165,9 @@ function initKanban(){
 function startPresence(){
   const u=S.user;if(!u)return;
   const ref=db.collection('presence').doc(u.uid);
-  ref.set({name:u.displayName||u.email?.split('@')[0]||'Anonymous',online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-  setInterval(()=>ref.set({lastSeen:firebase.firestore.FieldValue.serverTimestamp(),online:true},{merge:true}),60000);
-  window.addEventListener('beforeunload',()=>ref.set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));
+  ref.set({name:u.displayName||u.email?.split('@')[0]||'Anonymous',online:true,lastSeen:MokzaDB.serverTimestamp()},{merge:true});
+  setInterval(()=>ref.set({lastSeen:MokzaDB.serverTimestamp(),online:true},{merge:true}),60000);
+  window.addEventListener('beforeunload',()=>ref.set({online:false,lastSeen:MokzaDB.serverTimestamp()},{merge:true}));
   db.collection('presence').where('online','==',true).onSnapshot(snap=>{
     const list=document.getElementById('presence-list');if(!list)return;
     const users=snap.docs.map(d=>d.data()).filter(u2=>u2.name);

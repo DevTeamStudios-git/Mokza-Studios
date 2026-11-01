@@ -1154,24 +1154,15 @@
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toast-container"></div>
 
-<!-- FIREBASE + APP JS -->
+<!-- SUPABASE + APP JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="mokza-supabase.js"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, updateProfile } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+const { getFirestore, collection, doc, addDoc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, setDoc,
+        getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, updateProfile } = window.MokzaDB.modular;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBy7_8PHwKIYfw9s72AMDhgfI26Xe2ux1I",
-  authDomain: "mokza-eedf0.firebaseapp.com",
-  projectId: "mokza-eedf0",
-  storageBucket: "mokza-eedf0.firebasestorage.app",
-  messagingSenderId: "416552102227",
-  appId: "1:416552102227:web:4bf54a87acbe27acce59a6"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+const db = getFirestore();
+const auth = getAuth();
 const googleProvider = new GoogleAuthProvider();
 
 // ── GLOBAL STATE ──
@@ -1257,7 +1248,7 @@ async function doLogin() {
   const pw = document.getElementById('login-password').value;
   if(!email||!pw) return showAuthError('Please fill in all fields.');
   try { await signInWithEmailAndPassword(auth, email, pw); }
-  catch(e) { showAuthError(firebaseErrorMsg(e)); }
+  catch(e) { showAuthError(authErrorMsg(e)); }
 }
 async function doRegister() {
   const name = document.getElementById('reg-name').value;
@@ -1267,9 +1258,10 @@ async function doRegister() {
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pw);
     await updateProfile(cred.user, { displayName: name });
+    if(cred.needsEmailConfirmation) return showAuthError('Check your inbox to confirm your email, then sign in.');
     await setDoc(doc(db,'users',cred.user.uid),{ name, email, createdAt: serverTimestamp(), settings:{ theme:'dark', notifications:true } });
     await seedDemoEmails(cred.user);
-  } catch(e) { showAuthError(firebaseErrorMsg(e)); }
+  } catch(e) { showAuthError(authErrorMsg(e)); }
 }
 async function doGoogleLogin() {
   try {
@@ -1280,7 +1272,7 @@ async function doGoogleLogin() {
       await setDoc(uRef,{ name: cred.user.displayName||'User', email: cred.user.email, createdAt: serverTimestamp(), settings:{ theme:'dark', notifications:true } });
       await seedDemoEmails(cred.user);
     }
-  } catch(e) { showAuthError(firebaseErrorMsg(e)); }
+  } catch(e) { showAuthError(authErrorMsg(e)); }
 }
 async function doLogout() {
   if(emailsUnsubscribe) emailsUnsubscribe();
@@ -1294,7 +1286,7 @@ function showAuthError(msg) {
   const el = document.getElementById('auth-error');
   el.textContent = msg; el.style.display = 'block';
 }
-function firebaseErrorMsg(e) {
+function authErrorMsg(e) {
   const map = { 'auth/user-not-found':'User not found.','auth/wrong-password':'Wrong password.','auth/email-already-in-use':'Email already registered.','auth/weak-password':'Password must be at least 6 chars.','auth/invalid-email':'Invalid email address.','auth/popup-closed-by-user':'Sign-in popup closed.' };
   return map[e.code] || e.message || 'An error occurred.';
 }
@@ -1380,11 +1372,20 @@ Cheers`, labels:['sent'], isRead:true, isStarred:false, isImportant:false, prior
   }
 }
 
+async function ensureUserProfile(user) {
+  const uRef = doc(db,'users',user.uid);
+  const uSnap = await getDoc(uRef);
+  if(uSnap.exists()) return;
+  await setDoc(uRef,{ name: user.displayName||'User', email: user.email, createdAt: serverTimestamp(), settings:{ theme:'dark', notifications:true } });
+  await seedDemoEmails(user);
+}
+
 // ── AUTH STATE LISTENER ──
 onAuthStateChanged(auth, async (user) => {
   document.getElementById('app-loading').style.display = 'none';
   if(user) {
     currentUser = user;
+    ensureUserProfile(user).catch(e => console.warn('[Mail] profile init failed:', e.message));
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
     updateUserUI(user);

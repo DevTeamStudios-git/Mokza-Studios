@@ -7,9 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="mokza-supabase.js"></script>
 <style>
 :root {
   --bg:#060A14;--surface:#0C1220;--card:#101828;--raised:#162032;
@@ -188,7 +187,7 @@ select.inp{cursor:pointer;}
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.07 0-3.83-1.4-4.46-3.29H1.86v2.07A8 8 0 008.98 17z"/><path fill="#FBBC05" d="M4.52 10.52A4.77 4.77 0 014.27 9c0-.52.09-1.03.25-1.52V5.41H1.86A8 8 0 001 9c0 1.29.31 2.51.86 3.59l2.66-2.07z"/><path fill="#EA4335" d="M8.98 4.19c1.17 0 2.22.4 3.04 1.2l2.27-2.27A8 8 0 001.86 5.41l2.66 2.07c.63-1.9 2.39-3.3 4.46-3.3z"/></svg>
       Continue with Google
     </button>
-    <div class="login-note">Your snippets are private — only you can see them.<br>Using Mokza Nexus Firebase project.</div>
+    <div class="login-note">Your snippets are private — only you can see them.<br>Powered by Mokza Supabase.</div>
   </div>
 </div>
 
@@ -447,19 +446,10 @@ select.inp{cursor:pointer;}
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   FIREBASE + STATE
+   SUPABASE + STATE
 ══════════════════════════════════════════════════════════════ */
-const FB_CONFIG = {
-  apiKey:"AIzaSyBL1wtqD2PGwyN7uqXLEBtBTkL_KsWD6jY",
-  authDomain:"mokza-workspace.firebaseapp.com",
-  projectId:"mokza-workspace",
-  storageBucket:"mokza-workspace.firebasestorage.app",
-  messagingSenderId:"703578091967",
-  appId:"1:703578091967:web:91238f997c723984d4b10a"
-};
-firebase.initializeApp(FB_CONFIG);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+const auth = MokzaDB.auth();
+const db   = MokzaDB.firestore();
 
 const S = {
   user: null,
@@ -499,7 +489,7 @@ auth.onAuthStateChanged(user => {
 
 async function loginGoogle() {
   try {
-    await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    await auth.signInWithPopup(new MokzaDB.GoogleAuthProvider());
   } catch(e) { toast('Sign-in failed: ' + e.message, 'error'); }
 }
 async function signOutUser() {
@@ -768,7 +758,7 @@ async function saveSnippet() {
     tags:        S.editTags,
     pinned:      document.getElementById('e-pinned').checked,
     public:      document.getElementById('e-public').checked,
-    updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt:   MokzaDB.serverTimestamp(),
   };
 
   try {
@@ -776,7 +766,7 @@ async function saveSnippet() {
       await col().doc(S.editingId).update(data);
       toast('Snippet updated ✓', 'success');
     } else {
-      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      data.createdAt = MokzaDB.serverTimestamp();
       data.version   = 1;
       await col().add(data);
       toast('Snippet saved ✓', 'success');
@@ -790,7 +780,7 @@ async function deleteSnippet() {
   const s = S.snippets.find(s=>s.id===S.editingId);
   if (!s) return;
   try {
-    await trashCol().doc(S.editingId).set({ ...s, deletedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await trashCol().doc(S.editingId).set({ ...s, deletedAt: MokzaDB.serverTimestamp() });
     await col().doc(S.editingId).delete();
     closeEditor();
     toast('Moved to trash', 'success');
@@ -802,7 +792,7 @@ async function restoreSnippet(id) {
   if (!s) return;
   try {
     const { deletedAt, ...rest } = s;
-    await col().doc(id).set({ ...rest, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await col().doc(id).set({ ...rest, createdAt: MokzaDB.serverTimestamp() });
     await trashCol().doc(id).delete();
     toast('Snippet restored ✓', 'success');
   } catch(e) { toast('Restore failed', 'error'); }
@@ -929,7 +919,7 @@ async function loadSharedSnippet(id) {
 
 async function forkSnippet(s) {
   const { id, ...data } = s;
-  await col().add({ ...data, title:`${data.title} (fork)`, public:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  await col().add({ ...data, title:`${data.title} (fork)`, public:false, createdAt: MokzaDB.serverTimestamp() });
   toast('Snippet forked to your library ✓', 'success');
   window.history.replaceState({}, '', window.location.pathname);
   loadSnippets();
@@ -1118,7 +1108,7 @@ async function handleImport(e) {
     let count = 0;
     for (const s of snippets) {
       if (!s.title || !s.code) continue;
-      await col().add({ ...s, importedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await col().add({ ...s, importedAt: MokzaDB.serverTimestamp(), createdAt: MokzaDB.serverTimestamp() });
       count++;
     }
     toast(`Imported ${count} snippets ✓`, 'success');
@@ -1155,7 +1145,7 @@ function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
   window.addEventListener('message', e => {
     if (e.data?.type !== 'mokza-auth') return;
     const loginBtn = document.getElementById('login-screen');
-    // If already logged in via Firebase, hide login
+    // If already logged in via Supabase, hide login
   });
   window.parent.postMessage({ type:'snippets-ready' }, '*');
 })();
