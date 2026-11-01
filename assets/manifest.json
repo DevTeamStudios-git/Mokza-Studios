@@ -1,0 +1,61 @@
+{
+  "schema": "1.0",
+  "generatedFor": "Mokza Studios Website",
+  "assetsUrl": "/assets/",
+  "brandColors": {
+    "primary": "#667eea",
+    "secondary": "#764ba2",
+    "darkBg1": "#0f0c29",
+    "darkBg2": "#302b63",
+    "darkBg3": "#24243e",
+    "lightBg": "#f0f2ff",
+    "success": "#38ef7d",
+    "warning": "#fbbf24",
+    "error": "#f5576c"
+  },
+  "images": {
+    "logo": {
+      "name": "Mokza Studios Logo",
+      "png": "/assets/logo.png",
+      "svg": "/assets/logo.svg",
+      "width": 716,
+      "height": 716
+    },
+    "badgeBlue": {
+      "name": "Blue Verification Badge",
+      "png": "/assets/badge-blue.png",
+      "svg": "/assets/badge-blue.svg",
+      "width": 716,
+      "height": 716
+    },
+    "badgeGold": {
+      "name": "Gold Verification Badge",
+      "png": "/assets/badge-gold.png",
+      "svg": "/assets/badge-gold.svg",
+      "width": 716,
+      "height": 716
+    }
+  },
+  "verifiedBadges": {
+    "developer": {
+      "image": "/assets/badge-blue.svg",
+      "label": "Developer",
+      "color": "#667eea"
+    },
+    "coOwner": {
+      "image": "/assets/badge-gold.svg",
+      "label": "Co-Owner",
+      "color": "#fbbf24"
+    },
+    "owner": {
+      "image": "/assets/badge-gold.svg",
+      "label": "Owner",
+      "color": "#fbbf24"
+    },
+    "bot": {
+      "image": "/assets/badge-gold.svg",
+      "label": "Bot",
+      "color": "#fbbf24"
+    }
+  }
+}
