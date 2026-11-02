@@ -211,12 +211,118 @@ This draft is a starting point for review, not a guarantee of enforceability or 
       navRoblox: 'Roblox',
       navCreations: 'Creations',
       navTOS: 'Terms of Service',
+      navTos: 'Terms of Service',
+      'Terms of Service': 'Terms of Service',
       navWorkspace: 'Workspace',
+      languageLabel: 'Language',
+      devMode: 'Dev Mode',
+      adminPanel: 'Admin Panel',
+      editTexts: 'Edit Texts',
+      editBanner: 'Text edit mode — click any text to edit it. Changes save automatically. Click “Edit Texts” again to finish.',
+      heroBadge: 'Mokza Studios',
+      heroTitle: 'Building the Future',
+      heroSubtitle: 'Independent game studio creating exceptional digital experiences, Roblox projects, and more.',
+      viewProjects: 'View Projects',
+      joinCommunity: 'Join Community',
+      statProjects: 'Projects',
+      statOpenTasks: 'Open Tasks',
+      statAnnouncements: 'Announcements',
       suggestionTitle: 'Share Your Suggestions',
       suggestionDesc: 'We value your feedback! Help us improve by sharing your ideas.',
       suggestionSubmit: 'Submit Suggestion',
       suggestionPlaceholder: 'Tell us your ideas, feature requests, or feedback...',
-      suggestionEmail: 'Email (optional) - receive notifications when your suggestion is reviewed'
+      suggestionEmail: 'Email (optional) - receive notifications when your suggestion is reviewed',
+      suggestionApproved: 'Approved',
+      suggestionDenied: 'Denied',
+      suggestionApprove: 'Approve',
+      suggestionDeny: 'Deny',
+      emptySuggestion: 'Please enter your suggestion',
+      suggestionSubmitted: 'Your suggestion has been submitted',
+      thankYou: 'Thank You!',
+      emailNotificationNote: '. You will receive email notifications.',
+      aboutTitle: 'About Us',
+      aboutSubtitle: 'Mokza Studios is an independent game studio focused on creating original, engaging, and memorable gaming experiences.',
+      contactTitle: 'Contact Us',
+      contactSubtitle: 'Get in touch with us for collaborations, inquiries, or just to say hello!',
+      contactNameLabel: 'Name',
+      contactNamePlaceholder: 'Your name',
+      contactEmailLabel: 'Email',
+      contactEmailPlaceholder: 'you@example.com',
+      contactMsgLabel: 'Message',
+      contactMsgPlaceholder: 'Your message...',
+      contactSend: 'Send Message',
+      contactDirect: 'Or email us directly:',
+      contactMissingInfo: 'Please enter your name and a message.',
+      contactInvalidEmail: 'Please check your email address.',
+      contactSuccess: 'Message sent',
+      contactSuccessDesc: 'Thanks {name} — we will get back to you soon.',
+      communityTitle: 'Community',
+      communitySubtitle: 'Join our growing community of developers, designers, and creators!',
+      communityCardText: 'Join our Discord server to connect with the team and other community members.',
+      communityJoinDiscord: 'Join Discord',
+      robloxTitle: 'Roblox Projects',
+      robloxSubtitle: 'Explore our Roblox game development projects and creations.',
+      creationsTitle: 'Our Creations',
+      searchProjects: 'Search projects...',
+      addProject: 'Add Project',
+      noMatchingProjects: 'No matching projects',
+      noCreationsYet: 'No creations yet!',
+      tryDifferentSearch: 'Try a different search.',
+      comeBackLater: 'Come back later — we\'re working on something great.',
+      viewProject: 'View Project',
+      tosTitle: 'Terms of Service',
+      tosSubtitle: 'Please read our terms carefully before using our services.',
+      editTOS: 'Edit Terms of Service',
+      lastUpdated: 'Last updated:',
+      workspaceStaffTitle: 'Staff Workspace',
+      workspaceStaffDesc: 'Mokza Nexus is our internal workspace — chat, tasks, project boards, notes, and more. It\'s restricted to signed-in team members.',
+      signIn: 'Sign In',
+      workspaceTitle: 'Mokza Nexus Workspace',
+      workspaceSubtitle: 'Our internal team workspace — chat, tasks, project boards, notes, and the Software Center.',
+      openOfficeHub: 'Open Office Hub',
+      teamChat: 'Team Chat',
+      taskBoard: 'Task Board',
+      authTitle: 'Sign In',
+      authTabOAuth: 'Sign In',
+      authTabDev: 'Dev Team',
+      authOAuthDesc: 'Sign in with your preferred account to track your suggestions and receive notifications.',
+      authDiscord: 'Sign in with Discord',
+      authGoogle: 'Sign in with Google',
+      authTOSNotice: 'By signing in, you agree to our',
+      authSecurityCode: 'Security Code',
+      authSecurityCodePlaceholder: 'Enter security code',
+      authCredentials: 'Credentials',
+      authUsernamePlaceholder: 'Username',
+      authPasswordPlaceholder: 'Password',
+      authLogin: 'Login',
+      authCancel: 'Cancel',
+      addCard: 'Add Card',
+      addFeatureCard: 'Add Feature Card',
+      addContactCard: 'Add Contact Card',
+      addCommunityCard: 'Add Community Card',
+      addRobloxCard: 'Add Roblox Card',
+      visitLink: 'Visit link →',
+      announcementStaff: 'STAFF',
+      announcementPublic: 'ANNOUNCEMENT',
+      postedBy: 'Posted by',
+      raidModeTitle: '🚨 Raid mode is active',
+      raidModeDesc: 'Public submissions are temporarily disabled.',
+      allRightsReserved: '© Mokza Studios — All rights reserved.',
+      langChangedTitle: 'Language Changed',
+      langChangedMsg: 'Language set to {lang}',
+      loginRequired: 'Login required',
+      'Game Development': 'Game Development',
+      'Creating original, engaging, and memorable gaming experiences.': 'Creating original, engaging, and memorable gaming experiences.',
+      'Roblox Projects': 'Roblox Projects',
+      'Building immersive Roblox experiences for millions of players.': 'Building immersive Roblox experiences for millions of players.',
+      'Software Development': 'Software Development',
+      'Designing, building, and deploying software solutions.': 'Designing, building, and deploying software solutions.',
+      'Our Mission': 'Our Mission',
+      'To create original games that entertain players, inspire creativity, and leave a lasting impression.': 'To create original games that entertain players, inspire creativity, and leave a lasting impression.',
+      'Our Values': 'Our Values',
+      'Creativity, Quality, Originality, Community, Growth.': 'Creativity, Quality, Originality, Community, Growth.',
+      'Mokza Adventure': 'Mokza Adventure',
+      'An immersive adventure game built in Roblox Studio.': 'An immersive adventure game built in Roblox Studio.'
     },
     es: {
       navHome: 'Inicio',
@@ -226,12 +332,118 @@ This draft is a starting point for review, not a guarantee of enforceability or 
       navRoblox: 'Roblox',
       navCreations: 'Creaciones',
       navTOS: 'Términos de Servicio',
+      navTos: 'Términos de Servicio',
+      'Terms of Service': 'Términos de Servicio',
       navWorkspace: 'Espacio de Trabajo',
+      languageLabel: 'Idioma',
+      devMode: 'Modo Dev',
+      adminPanel: 'Panel de Admin',
+      editTexts: 'Editar Textos',
+      editBanner: 'Modo de edición de texto — haz clic en cualquier texto para editarlo. Se guarda automáticamente. Haz clic en “Editar Textos” para terminar.',
+      heroBadge: 'Mokza Studios',
+      heroTitle: 'Construyendo el Futuro',
+      heroSubtitle: 'Estudio de juegos independiente creando experiencias digitales excepcionales, proyectos de Roblox y más.',
+      viewProjects: 'Ver Proyectos',
+      joinCommunity: 'Unirse a la Comunidad',
+      statProjects: 'Proyectos',
+      statOpenTasks: 'Tareas Abiertas',
+      statAnnouncements: 'Anuncios',
       suggestionTitle: 'Comparte tus Sugerencias',
       suggestionDesc: '¡Valoramos tus comentarios! Ayúdanos a mejorar compartiendo tus ideas.',
       suggestionSubmit: 'Enviar Sugerencia',
       suggestionPlaceholder: 'Cuéntanos tus ideas, solicitudes de funciones o comentarios...',
-      suggestionEmail: 'Correo electrónico (opcional) - recibe notificaciones cuando se revise tu sugerencia'
+      suggestionEmail: 'Correo electrónico (opcional) - recibe notificaciones cuando se revise tu sugerencia',
+      suggestionApproved: 'Aprobada',
+      suggestionDenied: 'Rechazada',
+      suggestionApprove: 'Aprobar',
+      suggestionDeny: 'Rechazar',
+      emptySuggestion: 'Por favor introduce tu sugerencia',
+      suggestionSubmitted: 'Tu sugerencia ha sido enviada',
+      thankYou: '¡Muchas Gracias!',
+      emailNotificationNote: '. Recibirás notificaciones por correo electrónico.',
+      aboutTitle: 'Sobre Nosotros',
+      aboutSubtitle: 'Mokza Studios es un estudio de juegos independiente enfocado en crear experiencias de juego originales, atractivas y memorables.',
+      contactTitle: 'Contáctanos',
+      contactSubtitle: '¡Ponte en contacto con nosotros para colaboraciones, consultas o simplemente para saludar!',
+      contactNameLabel: 'Nombre',
+      contactNamePlaceholder: 'Tu nombre',
+      contactEmailLabel: 'Correo electrónico',
+      contactEmailPlaceholder: 'tu@ejemplo.com',
+      contactMsgLabel: 'Mensaje',
+      contactMsgPlaceholder: 'Tu mensaje...',
+      contactSend: 'Enviar Mensaje',
+      contactDirect: 'O envíanos un correo directamente:',
+      contactMissingInfo: 'Por favor introduce tu nombre y un mensaje.',
+      contactInvalidEmail: 'Por favor revisa tu dirección de correo electrónico.',
+      contactSuccess: 'Mensaje enviado',
+      contactSuccessDesc: 'Gracias {name} — te responderemos pronto.',
+      communityTitle: 'Comunidad',
+      communitySubtitle: '¡Únete a nuestra creciente comunidad de desarrolladores, diseñadores y creadores!',
+      communityCardText: 'Únete a nuestro servidor de Discord para conectarte con el equipo y otros miembros.',
+      communityJoinDiscord: 'Unirse a Discord',
+      robloxTitle: 'Proyectos de Roblox',
+      robloxSubtitle: 'Explora nuestros proyectos y creaciones de desarrollo de juegos en Roblox.',
+      creationsTitle: 'Nuestras Creaciones',
+      searchProjects: 'Buscar proyectos...',
+      addProject: 'Añadir Proyecto',
+      noMatchingProjects: 'No hay proyectos que coincidan',
+      noCreationsYet: '¡Aún no hay creaciones!',
+      tryDifferentSearch: 'Prueba con otra búsqueda.',
+      comeBackLater: 'Vuelve más tarde — estamos trabajando en algo genial.',
+      viewProject: 'Ver Proyecto',
+      tosTitle: 'Términos de Servicio',
+      tosSubtitle: 'Por favor lee nuestros términos cuidadosamente antes de usar nuestros servicios.',
+      editTOS: 'Editar Términos de Servicio',
+      lastUpdated: 'Última actualización:',
+      workspaceStaffTitle: 'Espacio de Trabajo del Equipo',
+      workspaceStaffDesc: 'Mokza Nexus es nuestro espacio de trabajo interno — chat, tareas, tableros de proyectos, notas y más. Está restringido a miembros del equipo.',
+      signIn: 'Iniciar Sesión',
+      workspaceTitle: 'Espacio de Trabajo Mokza Nexus',
+      workspaceSubtitle: 'Nuestro espacio de trabajo interno — chat, tareas, tableros de proyectos, notas y el Centro de Software.',
+      openOfficeHub: 'Abrir Office Hub',
+      teamChat: 'Chat de Equipo',
+      taskBoard: 'Tablero de Tareas',
+      authTitle: 'Iniciar Sesión',
+      authTabOAuth: 'Iniciar Sesión',
+      authTabDev: 'Equipo Dev',
+      authOAuthDesc: 'Inicia sesión con tu cuenta preferida para seguir tus sugerencias y recibir notificaciones.',
+      authDiscord: 'Iniciar sesión con Discord',
+      authGoogle: 'Iniciar sesión con Google',
+      authTOSNotice: 'Al iniciar sesión, aceptas nuestros',
+      authSecurityCode: 'Código de Seguridad',
+      authSecurityCodePlaceholder: 'Introduce el código de seguridad',
+      authCredentials: 'Credenciales',
+      authUsernamePlaceholder: 'Nombre de usuario',
+      authPasswordPlaceholder: 'Contraseña',
+      authLogin: 'Entrar',
+      authCancel: 'Cancelar',
+      addCard: 'Añadir Tarjeta',
+      addFeatureCard: 'Añadir Tarjeta de Función',
+      addContactCard: 'Añadir Tarjeta de Contacto',
+      addCommunityCard: 'Añadir Tarjeta de Comunidad',
+      addRobloxCard: 'Añadir Tarjeta de Roblox',
+      visitLink: 'Visitar enlace →',
+      announcementStaff: 'EQUIPO',
+      announcementPublic: 'ANUNCIO',
+      postedBy: 'Publicado por',
+      raidModeTitle: '🚨 Modo raid activo',
+      raidModeDesc: 'Los envíos públicos están deshabilitados temporalmente.',
+      allRightsReserved: '© Mokza Studios — Todos los derechos reservados.',
+      langChangedTitle: 'Idioma Cambiado',
+      langChangedMsg: 'Idioma establecido en {lang}',
+      loginRequired: 'Inicio de sesión requerido',
+      'Game Development': 'Desarrollo de Juegos',
+      'Creating original, engaging, and memorable gaming experiences.': 'Creando experiencias de juego originales, atractivas y memorables.',
+      'Roblox Projects': 'Proyectos de Roblox',
+      'Building immersive Roblox experiences for millions of players.': 'Construyendo experiencias inmersivas en Roblox para millones de jugadores.',
+      'Software Development': 'Desarrollo de Software',
+      'Designing, building, and deploying software solutions.': 'Diseñando, creando e implementando soluciones de software.',
+      'Our Mission': 'Nuestra Misión',
+      'To create original games that entertain players, inspire creativity, and leave a lasting impression.': 'Crear juegos originales que entretengan a los jugadores, inspiren creatividad y dejen una impresión duradera.',
+      'Our Values': 'Nuestros Valores',
+      'Creativity, Quality, Originality, Community, Growth.': 'Creatividad, Calidad, Originalidad, Comunidad, Crecimiento.',
+      'Mokza Adventure': 'Aventura Mokza',
+      'An immersive adventure game built in Roblox Studio.': 'Un juego de aventura inmersivo creado en Roblox Studio.'
     },
     fr: {
       navHome: 'Accueil',
@@ -241,12 +453,118 @@ This draft is a starting point for review, not a guarantee of enforceability or 
       navRoblox: 'Roblox',
       navCreations: 'Créations',
       navTOS: 'Conditions d\'Utilisation',
+      navTos: 'Conditions d\'Utilisation',
+      'Terms of Service': 'Conditions d\'Utilisation',
       navWorkspace: 'Espace de Travail',
+      languageLabel: 'Langue',
+      devMode: 'Mode Dév',
+      adminPanel: 'Panneau d\'Admin',
+      editTexts: 'Modifier les Textes',
+      editBanner: 'Mode édition de texte — cliquez sur n\'importe quel texte pour le modifier. Enregistrement automatique. Cliquez sur « Modifier les Textes » pour terminer.',
+      heroBadge: 'Mokza Studios',
+      heroTitle: 'Bâtir l\'Avenir',
+      heroSubtitle: 'Studio de jeux indépendant créant des expériences numériques exceptionnelles, des projets Roblox et plus encore.',
+      viewProjects: 'Voir les Projets',
+      joinCommunity: 'Rejoindre la Communauté',
+      statProjects: 'Projets',
+      statOpenTasks: 'Tâches Ouvertes',
+      statAnnouncements: 'Annonces',
       suggestionTitle: 'Partagez Vos Suggestions',
-      suggestionDesc: 'Nous apprécions vos commentaires! Aidez-nous à nous améliorer en partageant vos idées.',
-      suggestionSubmit: 'Envoyer Suggestion',
+      suggestionDesc: 'Nous apprécions vos retours ! Aidez-nous à nous améliorer en partageant vos idées.',
+      suggestionSubmit: 'Envoyer la Suggestion',
       suggestionPlaceholder: 'Dites-nous vos idées, demandes de fonctionnalités ou commentaires...',
-      suggestionEmail: 'E-mail (optionnel) - recevez des notifications lorsque votre suggestion est examinée'
+      suggestionEmail: 'E-mail (optionnel) - recevez des notifications lorsque votre suggestion est examinée',
+      suggestionApproved: 'Approuvée',
+      suggestionDenied: 'Refusée',
+      suggestionApprove: 'Approuver',
+      suggestionDeny: 'Refuser',
+      emptySuggestion: 'Veuillez saisir votre suggestion',
+      suggestionSubmitted: 'Votre suggestion a été soumise',
+      thankYou: 'Merci !',
+      emailNotificationNote: '. Vous recevrez des notifications par e-mail.',
+      aboutTitle: 'À Propos de Nous',
+      aboutSubtitle: 'Mokza Studios est un studio de jeux indépendant axé sur la création d\'expériences de jeu originales, captivantes et mémorables.',
+      contactTitle: 'Contactez-nous',
+      contactSubtitle: 'Contactez-nous pour des collaborations, des questions ou simplement pour dire bonjour !',
+      contactNameLabel: 'Nom',
+      contactNamePlaceholder: 'Votre nom',
+      contactEmailLabel: 'E-mail',
+      contactEmailPlaceholder: 'vous@exemple.com',
+      contactMsgLabel: 'Message',
+      contactMsgPlaceholder: 'Votre message...',
+      contactSend: 'Envoyer le Message',
+      contactDirect: 'Ou écrivez-nous directement :',
+      contactMissingInfo: 'Veuillez saisir votre nom et un message.',
+      contactInvalidEmail: 'Veuillez vérifier votre adresse e-mail.',
+      contactSuccess: 'Message envoyé',
+      contactSuccessDesc: 'Merci {name} — nous vous répondrons bientôt.',
+      communityTitle: 'Communauté',
+      communitySubtitle: 'Rejoignez notre communauté grandissante de développeurs, designers et créateurs !',
+      communityCardText: 'Rejoignez notre serveur Discord pour échanger avec l\'équipe et les autres membres de la communauté.',
+      communityJoinDiscord: 'Rejoindre Discord',
+      robloxTitle: 'Projets Roblox',
+      robloxSubtitle: 'Découvrez nos projets et créations de jeux sur Roblox.',
+      creationsTitle: 'Nos Créations',
+      searchProjects: 'Rechercher des projets...',
+      addProject: 'Ajouter un Projet',
+      noMatchingProjects: 'Aucun projet correspondant',
+      noCreationsYet: 'Pas encore de créations !',
+      tryDifferentSearch: 'Essayez une autre recherche.',
+      comeBackLater: 'Revenez plus tard — nous travaillons sur quelque chose de formidable.',
+      viewProject: 'Voir le Projet',
+      tosTitle: 'Conditions d\'Utilisation',
+      tosSubtitle: 'Veuillez lire attentivement nos conditions avant d\'utiliser nos services.',
+      editTOS: 'Modifier les Conditions d\'Utilisation',
+      lastUpdated: 'Dernière mise à jour :',
+      workspaceStaffTitle: 'Espace de Travail de l\'Équipe',
+      workspaceStaffDesc: 'Mokza Nexus est notre espace de travail interne — chat, tâches, tableaux de projets, notes et plus. Réservé aux membres de l\'équipe connectés.',
+      signIn: 'Se Connecter',
+      workspaceTitle: 'Espace de Travail Mokza Nexus',
+      workspaceSubtitle: 'Notre espace de travail interne — chat, tâches, tableaux de projets, notes et le Centre Logiciel.',
+      openOfficeHub: 'Ouvrir Office Hub',
+      teamChat: 'Chat d\'Équipe',
+      taskBoard: 'Tableau de Tâches',
+      authTitle: 'Connexion',
+      authTabOAuth: 'Connexion',
+      authTabDev: 'Équipe Dév',
+      authOAuthDesc: 'Connectez-vous avec votre compte préféré pour suivre vos suggestions et recevoir des notifications.',
+      authDiscord: 'Se connecter avec Discord',
+      authGoogle: 'Se connecter avec Google',
+      authTOSNotice: 'En vous connectant, vous acceptez nos',
+      authSecurityCode: 'Code de Sécurité',
+      authSecurityCodePlaceholder: 'Entrez le code de sécurité',
+      authCredentials: 'Identifiants',
+      authUsernamePlaceholder: 'Nom d\'utilisateur',
+      authPasswordPlaceholder: 'Mot de passe',
+      authLogin: 'Connexion',
+      authCancel: 'Annuler',
+      addCard: 'Ajouter une Carte',
+      addFeatureCard: 'Ajouter une Carte de Fonction',
+      addContactCard: 'Ajouter une Carte de Contact',
+      addCommunityCard: 'Ajouter une Carte de Communauté',
+      addRobloxCard: 'Ajouter une Carte Roblox',
+      visitLink: 'Visiter le lien →',
+      announcementStaff: 'ÉQUIPE',
+      announcementPublic: 'ANNONCE',
+      postedBy: 'Publié par',
+      raidModeTitle: '🚨 Mode raid actif',
+      raidModeDesc: 'Les soumissions publiques sont temporairement désactivées.',
+      allRightsReserved: '© Mokza Studios — Tous droits réservés.',
+      langChangedTitle: 'Langue Modifiée',
+      langChangedMsg: 'Langue définie sur {lang}',
+      loginRequired: 'Connexion requise',
+      'Game Development': 'Développement de Jeux',
+      'Creating original, engaging, and memorable gaming experiences.': 'Création d\'expériences de jeu originales, captivantes et mémorables.',
+      'Roblox Projects': 'Projets Roblox',
+      'Building immersive Roblox experiences for millions of players.': 'Création d\'expériences Roblox immersives pour des millions de joueurs.',
+      'Software Development': 'Développement de Logiciels',
+      'Designing, building, and deploying software solutions.': 'Conception, développement et déploiement de solutions logicielles.',
+      'Our Mission': 'Notre Mission',
+      'To create original games that entertain players, inspire creativity, and leave a lasting impression.': 'Créer des jeux originaux qui divertissent les joueurs, inspirent la créativité et laissent une impression durable.',
+      'Our Values': 'Nos Valeurs',
+      'Creativity, Quality, Originality, Community, Growth.': 'Créativité, Qualité, Originalité, Communauté, Croissance.',
+      'Mokza Adventure': 'Aventure Mokza',
+      'An immersive adventure game built in Roblox Studio.': 'Un jeu d\'aventure immersif créé dans Roblox Studio.'
     }
   },
   currentLanguage: 'en',
@@ -380,7 +698,7 @@ function isAuthLocked() {
 
 // ── USER AUTHENTICATION (OAuth + Dev Team) ──
 function showUserLoginModal() {
-  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>Sign In</h2><button class="modal-close" onclick="closeAuthModal()">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">Sign In</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">Dev Team</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">Sign in with your preferred account to track your suggestions and receive notifications.</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> Sign in with Discord</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Sign in with Google</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">By signing in, you agree to our <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">Terms of Service</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">Security Code</div><input type="password" id="securityCodeInput" class="input-base" placeholder="Enter security code" /><div class="label-base" style="margin-top:1rem;">Credentials</div><input type="text" id="usernameInput" class="input-base" placeholder="Username" /><input type="password" id="passwordInput" class="input-base" placeholder="Password" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">Login</button><button class="btn-ghost" onclick="closeAuthModal()">Cancel</button></div></div></div></div>';
+  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>' + escHtml(t('authTitle')) + '</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">' + escHtml(t('authTabOAuth')) + '</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">' + escHtml(t('authTabDev')) + '</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">' + escHtml(t('authOAuthDesc')) + '</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> ' + escHtml(t('authDiscord')) + '</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ' + escHtml(t('authGoogle')) + '</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">' + escHtml(t('authTOSNotice')) + ' <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">' + escHtml(t('navTOS')) + '</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">' + escHtml(t('authSecurityCode')) + '</div><input type="password" id="securityCodeInput" class="input-base" placeholder="' + escHtml(t('authSecurityCodePlaceholder')) + '" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('authCredentials')) + '</div><input type="text" id="usernameInput" class="input-base" placeholder="' + escHtml(t('authUsernamePlaceholder')) + '" /><input type="password" id="passwordInput" class="input-base" placeholder="' + escHtml(t('authPasswordPlaceholder')) + '" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">' + escHtml(t('authLogin')) + '</button><button class="btn-ghost" onclick="closeAuthModal()">' + escHtml(t('authCancel')) + '</button></div></div></div></div>';
   document.getElementById('authModal').classList.remove('hidden');
 }
 
@@ -483,6 +801,7 @@ function updateAuthUI() {
     closeOfficeHub();
   } else if (!canEditAllText() && typeof setTextEditMode === 'function') { setTextEditMode(false); }
   renderNavigation();
+  if (typeof updateStaticTranslations === 'function') updateStaticTranslations();
 }
 
 function toggleDevMode() {
@@ -491,7 +810,7 @@ function toggleDevMode() {
 }
 
 /* ── PERSISTENCE (shared site data only — never sessions or personal UI state) ── */
-var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing'];
+var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage'];
 var LOCAL_KEY = 'mokza_state_v2';
 
 function persistable() {
@@ -638,23 +957,25 @@ function renderNavigation() {
   var nav = document.getElementById('navbarLinks');
   var mobile = document.getElementById('mobileNavLinks');
   var enabled = state.navigationLinks.filter(function(l) { return l.enabled && (!l.minRank || canAccess(l.minRank)); });
-  var html = enabled.map(function(l) {
-    var badge = l.minRank ? '<span class="badge badge-blue">' + l.minRank + '+</span>' : '';
-    return '<a href="?page=' + l.page + '" class="nav-link ' + (state.currentPage === l.page ? 'active' : '') + '" onclick="event.preventDefault();changePage(\'' + l.page + '\');return false;"><span>' + escHtml(l.label) + '</span>' + badge + '</a>';
-  }).join('');
-  nav.innerHTML = html;
-  mobile.innerHTML = enabled.map(function(l) {
-    return '<button class="mobile-nav-link ' + (state.currentPage === l.page ? 'active' : '') + '" onclick="changePage(\'' + l.page + '\');closeMobileNav();">' + escHtml(l.label) + '</button>';
-  }).join('');
   
-  // Add language selector
-  var langSelector = '<div class="lang-selector" style="margin-left:1rem;display:flex;gap:0.5rem;align-items:center;">' +
-    '<button class="lang-btn" onclick="setLanguage(\'en\')" style="padding:0.4rem 0.6rem;border:1px solid var(--ov-12);background:transparent;color:var(--text-secondary);border-radius:var(--radius-sm);cursor:pointer;' + (state.currentLanguage === 'en' ? 'background:var(--accent-primary);color:var(--on-accent);border-color:var(--accent-primary);' : '') + '">EN</button>' +
-    '<button class="lang-btn" onclick="setLanguage(\'es\')" style="padding:0.4rem 0.6rem;border:1px solid var(--ov-12);background:transparent;color:var(--text-secondary);border-radius:var(--radius-sm);cursor:pointer;' + (state.currentLanguage === 'es' ? 'background:var(--accent-primary);color:var(--on-accent);border-color:var(--accent-primary);' : '') + '">ES</button>' +
-    '<button class="lang-btn" onclick="setLanguage(\'fr\')" style="padding:0.4rem 0.6rem;border:1px solid var(--ov-12);background:transparent;color:var(--text-secondary);border-radius:var(--radius-sm);cursor:pointer;' + (state.currentLanguage === 'fr' ? 'background:var(--accent-primary);color:var(--on-accent);border-color:var(--accent-primary);' : '') + '">FR</button>' +
-    '</div>';
+  if (nav) {
+    nav.innerHTML = enabled.map(function(l) {
+      var badge = l.minRank ? '<span class="badge badge-blue">' + l.minRank + '+</span>' : '';
+      var navKey = 'nav' + l.page.charAt(0).toUpperCase() + l.page.slice(1);
+      var labelText = t(navKey) !== navKey ? t(navKey) : (t(l.label) || l.label);
+      return '<a href="?page=' + l.page + '" class="nav-link ' + (state.currentPage === l.page ? 'active' : '') + '" onclick="event.preventDefault();changePage(\'' + l.page + '\');return false;"><span>' + escHtml(labelText) + '</span>' + badge + '</a>';
+    }).join('');
+  }
   
-  nav.innerHTML += langSelector;
+  if (mobile) {
+    mobile.innerHTML = enabled.map(function(l) {
+      var navKey = 'nav' + l.page.charAt(0).toUpperCase() + l.page.slice(1);
+      var labelText = t(navKey) !== navKey ? t(navKey) : (t(l.label) || l.label);
+      return '<button class="mobile-nav-link ' + (state.currentPage === l.page ? 'active' : '') + '" onclick="changePage(\'' + l.page + '\');closeMobileNav();">' + escHtml(labelText) + '</button>';
+    }).join('');
+  }
+  
+  renderLanguageSelector();
   afterRender();
 }
 
@@ -695,9 +1016,9 @@ function renderPage() {
   if (!content) return;
   var announcements = state.announcements.filter(function(a) { return a.type === 'all' || state.currentUser; });
   var annHtml = announcements.length > 0 ? '<div class="announcements-banner">' + announcements.map(function(a) {
-    return '<div class="announcement ' + escHtml(a.type) + '"><div class="announcement-header"><span class="announcement-type ' + escHtml(a.type) + '">' + (a.type === 'staff' ? svgIcon('people', 16) + ' STAFF' : '📢 ANNOUNCEMENT') + '</span></div><div class="announcement-title">' + escHtml(a.title) + '</div><div class="announcement-content">' + escHtml(a.content) + '</div>' + (a.author ? '<div class="announcement-footer" style="margin-top:.6rem;font-size:.78rem;opacity:.6">Posted by ' + escHtml(a.author) + (a.timestamp ? ' · ' + escHtml(new Date(a.timestamp).toLocaleDateString()) : '') + '</div>' : '') + '</div>';
+    return '<div class="announcement ' + escHtml(a.type) + '"><div class="announcement-header"><span class="announcement-type ' + escHtml(a.type) + '">' + (a.type === 'staff' ? svgIcon('people', 16) + ' ' + escHtml(t('announcementStaff')) : '📢 ' + escHtml(t('announcementPublic'))) + '</span></div><div class="announcement-title">' + escHtml(a.title) + '</div><div class="announcement-content">' + escHtml(a.content) + '</div>' + (a.author ? '<div class="announcement-footer" style="margin-top:.6rem;font-size:.78rem;opacity:.6">' + escHtml(t('postedBy')) + ' ' + escHtml(a.author) + (a.timestamp ? ' · ' + escHtml(new Date(a.timestamp).toLocaleDateString()) : '') + '</div>' : '') + '</div>';
   }).join('') + '</div>' : '';
-  var raid = state.raidMode ? '<div class="announcement staff" style="margin-bottom:1.5rem"><div class="announcement-title">🚨 Raid mode is active</div><div class="announcement-content">Public submissions are temporarily disabled.</div></div>' : '';
+  var raid = state.raidMode ? '<div class="announcement staff" style="margin-bottom:1.5rem"><div class="announcement-title">' + escHtml(t('raidModeTitle')) + '</div><div class="announcement-content">' + escHtml(t('raidModeDesc')) + '</div></div>' : '';
   switch (state.currentPage) {
     case 'home': content.innerHTML = renderHome(raid + annHtml); break;
     case 'about': content.innerHTML = renderAbout(); break;
@@ -723,14 +1044,17 @@ function renderFeatureCard(card, page) {
   var ctl = manage ? '<div class="card-controls"><button class="card-control-btn" onclick="editFeatureCard(\'' + id + '\',\'' + pg + '\')" title="Edit card" aria-label="Edit card">' + svgIcon('pencil', 14) + '</button><button class="card-control-btn delete" onclick="deleteFeatureCard(\'' + id + '\',\'' + pg + '\')" title="Delete card" aria-label="Delete card">' + svgIcon('trash', 14) + '</button></div>' : '';
   var link = safeUrl(card.link);
   var drag = manage ? ' draggable="true" ondragstart="handleCardDragStart(event)" ondragend="handleCardDragEnd(event)" ondragover="handleCardDragOver(event)" ondrop="handleCardDrop(event)"' : '';
+  var title = t(card.title) || card.title;
+  var desc = t(card.description) || card.description;
   return '<div class="feature-card' + (manage ? ' draggable' : '') + '" data-card-id="' + id + '" data-page="' + pg + '"' + drag + '>' + ctl +
-    '<div class="feature-icon">' + iconHtml(card.icon) + '</div><h3>' + escHtml(card.title) + '</h3><p>' + escHtml(card.description) + '</p>' +
-    (link ? '<a class="card-link" href="' + escHtml(link) + '" target="_blank" rel="noopener noreferrer">Visit link →</a>' : '') + '</div>';
+    '<div class="feature-icon">' + iconHtml(card.icon) + '</div><h3>' + escHtml(title) + '</h3><p>' + escHtml(desc) + '</p>' +
+    (link ? '<a class="card-link" href="' + escHtml(link) + '" target="_blank" rel="noopener noreferrer">' + escHtml(t('visitLink')) + '</a>' : '') + '</div>';
 }
 
 function renderCardsSection(page, addLabel) {
   var cards = (state.featureCards[page] || []).slice().sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
-  var add = canManageCards() ? '<div class="page-tools"><button class="btn btn-primary" onclick="addFeatureCard(\'' + page + '\')">' + svgIcon('plus', 16) + ' ' + escHtml(addLabel || 'Add Card') + '</button></div>' : '';
+  var label = addLabel || t('addCard');
+  var add = canManageCards() ? '<div class="page-tools"><button class="btn btn-primary" onclick="addFeatureCard(\'' + page + '\')">' + svgIcon('plus', 16) + ' ' + escHtml(label) + '</button></div>' : '';
   return add + (cards.length ? '<div class="features-grid">' + cards.map(function(c) { return renderFeatureCard(c, page); }).join('') + '</div>' : '');
 }
 
@@ -740,50 +1064,50 @@ function pageHeader(title, subtitle) {
 
 function renderHome(annHtml) {
   var openTasks = state.tasks.filter(function(t) { return !t.done; }).length;
-  return annHtml + '<div class="hero"><div class="hero-bg"></div><div class="hero-content"><div class="hero-badge">' + svgIcon('sparkles', 16) + ' Mokza Studios</div><h1 class="hero-title">Building the Future</h1><p class="hero-subtitle">Independent game studio creating exceptional digital experiences, Roblox projects, and more.</p><div class="hero-actions"><button class="btn btn-primary" onclick="changePage(\'creations\')">View Projects</button><button class="btn btn-outline" onclick="changePage(\'community\')">Join Community</button></div><div class="hero-stats"><div class="stat-card"><div class="stat-number">' + state.projects.length + '</div><div class="stat-label">Projects</div></div><div class="stat-card"><div class="stat-number">' + openTasks + '</div><div class="stat-label">Open Tasks</div></div><div class="stat-card"><div class="stat-number">' + state.announcements.length + '</div><div class="stat-label">Announcements</div></div></div></div></div>' +
-    pageElements('home') + renderCardsSection('home', 'Add Feature Card') +
-    '<div class="suggestions-section"><div class="suggestions-header"><h2 class="suggestions-title">💡 Share Your Suggestions</h2><p class="suggestions-description">We value your feedback! Help us improve by sharing your ideas.</p></div><div class="suggestion-form"><textarea id="suggestionInput" placeholder="Tell us your ideas, feature requests, or feedback..."></textarea><input type="email" id="suggestionEmail" class="input-base" placeholder="Email (optional) - receive notifications when your suggestion is reviewed" style="margin-top:1rem;width:100%;" /><button class="btn btn-primary" onclick="submitSuggestion()">Submit Suggestion</button></div>' +
+  return annHtml + '<div class="hero"><div class="hero-bg"></div><div class="hero-content"><div class="hero-badge">' + svgIcon('sparkles', 16) + ' ' + escHtml(t('heroBadge')) + '</div><h1 class="hero-title">' + escHtml(t('heroTitle')) + '</h1><p class="hero-subtitle">' + escHtml(t('heroSubtitle')) + '</p><div class="hero-actions"><button class="btn btn-primary" onclick="changePage(\'creations\')">' + escHtml(t('viewProjects')) + '</button><button class="btn btn-outline" onclick="changePage(\'community\')">' + escHtml(t('joinCommunity')) + '</button></div><div class="hero-stats"><div class="stat-card"><div class="stat-number">' + state.projects.length + '</div><div class="stat-label">' + escHtml(t('statProjects')) + '</div></div><div class="stat-card"><div class="stat-number">' + openTasks + '</div><div class="stat-label">' + escHtml(t('statOpenTasks')) + '</div></div><div class="stat-card"><div class="stat-number">' + state.announcements.length + '</div><div class="stat-label">' + escHtml(t('statAnnouncements')) + '</div></div></div></div></div>' +
+    pageElements('home') + renderCardsSection('home', t('addFeatureCard')) +
+    '<div class="suggestions-section"><div class="suggestions-header"><h2 class="suggestions-title">💡 ' + escHtml(t('suggestionTitle')) + '</h2><p class="suggestions-description">' + escHtml(t('suggestionDesc')) + '</p></div><div class="suggestion-form"><textarea id="suggestionInput" placeholder="' + escHtml(t('suggestionPlaceholder')) + '"></textarea><input type="email" id="suggestionEmail" class="input-base" placeholder="' + escHtml(t('suggestionEmail')) + '" style="margin-top:1rem;width:100%;" /><button class="btn btn-primary" onclick="submitSuggestion()">' + escHtml(t('suggestionSubmit')) + '</button></div>' +
     (state.suggestions.length > 0 ? '<div class="suggestion-list">' + state.suggestions.slice(0, 5).map(function(s) {
       var canManage = state.currentUser && canAccess('Apprentice');
-      var statusBadge = s.status === 'approved' ? '<span style="color:var(--accent-success);font-size:0.75rem;font-weight:700;margin-left:0.5rem">✓ Approved</span>' : s.status === 'denied' ? '<span style="color:var(--accent-error);font-size:0.75rem;font-weight:700;margin-left:0.5rem">✗ Denied</span>' : '';
-      var actions = canManage && s.status === 'pending' ? '<div style="margin-top:0.5rem;display:flex;gap:0.5rem"><button class="btn btn-ghost btn-sm" style="border:1px solid var(--accent-success);color:var(--accent-success)" onclick="approveSuggestion(\'' + sid(s.id) + '\')">Approve</button><button class="btn btn-ghost btn-sm" style="border:1px solid var(--accent-error);color:var(--accent-error)" onclick="denySuggestion(\'' + sid(s.id) + '\')">Deny</button></div>' : '';
+      var statusBadge = s.status === 'approved' ? '<span style="color:var(--accent-success);font-size:0.75rem;font-weight:700;margin-left:0.5rem">✓ ' + escHtml(t('suggestionApproved')) + '</span>' : s.status === 'denied' ? '<span style="color:var(--accent-error);font-size:0.75rem;font-weight:700;margin-left:0.5rem">✗ ' + escHtml(t('suggestionDenied')) + '</span>' : '';
+      var actions = canManage && s.status === 'pending' ? '<div style="margin-top:0.5rem;display:flex;gap:0.5rem"><button class="btn btn-ghost btn-sm" style="border:1px solid var(--accent-success);color:var(--accent-success)" onclick="approveSuggestion(\'' + sid(s.id) + '\')">' + escHtml(t('suggestionApprove')) + '</button><button class="btn btn-ghost btn-sm" style="border:1px solid var(--accent-error);color:var(--accent-error)" onclick="denySuggestion(\'' + sid(s.id) + '\')">' + escHtml(t('suggestionDeny')) + '</button></div>' : '';
       return '<div class="suggestion-item"><div class="suggestion-author">' + escHtml(s.author) + statusBadge + '</div><div class="suggestion-text">' + escHtml(s.text) + '</div><div class="suggestion-time">' + escHtml(s.timestamp) + '</div>' + actions + '</div>';
     }).join('') + '</div>' : '') + '</div>';
 }
 
 function renderAbout() {
-  return pageHeader('About Us', 'Mokza Studios is an independent game studio focused on creating original, engaging, and memorable gaming experiences.') + pageElements('about') + renderCardsSection('about', 'Add Feature Card');
+  return pageHeader(t('aboutTitle'), t('aboutSubtitle')) + pageElements('about') + renderCardsSection('about', t('addFeatureCard'));
 }
 
 function renderContact() {
   var mail = safeUrl('mailto:' + (state.siteSettings.contactEmail || ''));
-  return pageHeader('Contact Us', 'Get in touch with us for collaborations, inquiries, or just to say hello!') +
-    '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:600px;margin:0 auto 2rem;"><div class="label-base">Name</div><input type="text" id="contactName" class="input-base" placeholder="Your name" maxlength="80" /><div class="label-base" style="margin-top:1rem;">Email</div><input type="email" id="contactEmail" class="input-base" placeholder="you@example.com" maxlength="120" /><div class="label-base" style="margin-top:1rem;">Message</div><textarea id="contactMessage" class="input-base" placeholder="Your message..." rows="4" maxlength="2000"></textarea><button class="btn btn-primary" style="margin-top:1rem;width:100%;justify-content:center;" onclick="sendContactMessage()">Send Message</button>' +
-    (state.siteSettings.contactEmail ? '<p style="margin-top:1rem;text-align:center;font-size:.85rem;opacity:.7">Or email us directly: <a href="' + escHtml(mail) + '" style="color:var(--accent-primary)">' + escHtml(state.siteSettings.contactEmail) + '</a></p>' : '') + '</div>' +
-    pageElements('contact') + renderCardsSection('contact', 'Add Contact Card');
+  return pageHeader(t('contactTitle'), t('contactSubtitle')) +
+    '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:600px;margin:0 auto 2rem;"><div class="label-base">' + escHtml(t('contactNameLabel')) + '</div><input type="text" id="contactName" class="input-base" placeholder="' + escHtml(t('contactNamePlaceholder')) + '" maxlength="80" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactEmailLabel')) + '</div><input type="email" id="contactEmail" class="input-base" placeholder="' + escHtml(t('contactEmailPlaceholder')) + '" maxlength="120" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactMsgLabel')) + '</div><textarea id="contactMessage" class="input-base" placeholder="' + escHtml(t('contactMsgPlaceholder')) + '" rows="4" maxlength="2000"></textarea><button class="btn btn-primary" style="margin-top:1rem;width:100%;justify-content:center;" onclick="sendContactMessage()">' + escHtml(t('contactSend')) + '</button>' +
+    (state.siteSettings.contactEmail ? '<p style="margin-top:1rem;text-align:center;font-size:.85rem;opacity:.7">' + escHtml(t('contactDirect')) + ' <a href="' + escHtml(mail) + '" style="color:var(--accent-primary)">' + escHtml(state.siteSettings.contactEmail) + '</a></p>' : '') + '</div>' +
+    pageElements('contact') + renderCardsSection('contact', t('addContactCard'));
 }
 
 function sendContactMessage() {
-  if (state.raidMode && !state.currentUser) { showNotification('Unavailable', 'Submissions are temporarily disabled.', 'error'); return; }
+  if (state.raidMode && !state.currentUser) { showNotification('Unavailable', t('raidModeDesc'), 'error'); return; }
   var name = document.getElementById('contactName').value.trim();
   var email = document.getElementById('contactEmail').value.trim();
   var message = document.getElementById('contactMessage').value.trim();
-  if (!name || !message) { showNotification('Missing info', 'Please enter your name and a message.', 'error'); return; }
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', 'Please check your email address.', 'error'); return; }
+  if (!name || !message) { showNotification('Missing info', t('contactMissingInfo'), 'error'); return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', t('contactInvalidEmail'), 'error'); return; }
   state.contactMessages.unshift({ id: 'msg_' + Date.now(), name: name, email: email, message: message, timestamp: new Date().toISOString() });
   if (state.contactMessages.length > 200) state.contactMessages.length = 200;
   logActivity('Contact Message', 'New message from ' + name);
   saveToFirestore();
-  showNotification('Message sent', 'Thanks ' + name + ' — we will get back to you soon.', 'success');
+  showNotification(t('contactSuccess'), t('contactSuccessDesc', { name: name }), 'success');
   ['contactName', 'contactEmail', 'contactMessage'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
 }
 
 function renderTOS() {
   var canEdit = canAccess('CoOwner');
-  var editBtn = canEdit ? '<button class="btn btn-primary" style="margin-bottom:1.5rem;" onclick="openTOSEditor()">' + svgIcon('pencil', 16) + ' Edit Terms of Service</button>' : '';
-  return pageHeader('Terms of Service', 'Please read our terms carefully before using our services.') + editBtn +
+  var editBtn = canEdit ? '<button class="btn btn-primary" style="margin-bottom:1.5rem;" onclick="openTOSEditor()">' + svgIcon('pencil', 16) + ' ' + escHtml(t('editTOS')) + '</button>' : '';
+  return pageHeader(t('tosTitle'), t('tosSubtitle')) + editBtn +
     '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:900px;margin:0 auto;line-height:1.8;"><div id="tosContent">' + state.tosContent.content + '</div></div>' +
-    '<div style="text-align:center;margin-top:2rem;color:var(--text-muted);font-size:0.85rem;"><p>Last updated: ' + escHtml(new Date(state.tosContent.lastUpdated).toLocaleString()) + '</p></div>';
+    '<div style="text-align:center;margin-top:2rem;color:var(--text-muted);font-size:0.85rem;"><p>' + escHtml(t('lastUpdated')) + ' ' + escHtml(new Date(state.tosContent.lastUpdated).toLocaleString()) + '</p></div>';
 }
 
 function openTOSEditor() {
@@ -807,9 +1131,9 @@ window.openTOSEditor = openTOSEditor;
 window.saveTOS = saveTOS;
 
 function renderCommunity() {
-  return pageHeader('Community', 'Join our growing community of developers, designers, and creators!') +
-    '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:800px;margin:0 auto 2rem;"><p>Join our Discord server to connect with the team and other community members.</p><button class="btn btn-primary" style="margin-top:1rem;" onclick="openDiscord()">Join Discord</button></div>' +
-    pageElements('community') + renderCardsSection('community', 'Add Community Card');
+  return pageHeader(t('communityTitle'), t('communitySubtitle')) +
+    '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:800px;margin:0 auto 2rem;"><p>' + escHtml(t('communityCardText')) + '</p><button class="btn btn-primary" style="margin-top:1rem;" onclick="openDiscord()">' + escHtml(t('communityJoinDiscord')) + '</button></div>' +
+    pageElements('community') + renderCardsSection('community', t('addCommunityCard'));
 }
 function openDiscord() {
   var url = safeUrl(state.siteSettings.discordUrl);
@@ -818,17 +1142,19 @@ function openDiscord() {
 }
 
 function renderRoblox() {
-  return pageHeader('Roblox Projects', 'Explore our Roblox game development projects and creations.') + pageElements('roblox') + renderCardsSection('roblox', 'Add Roblox Card');
+  return pageHeader(t('robloxTitle'), t('robloxSubtitle')) + pageElements('roblox') + renderCardsSection('roblox', t('addRobloxCard'));
 }
 
 function renderGenericPage(page) {
   var link = (state.navigationLinks || []).find(function(l) { return l.page === page; });
+  var navKey = link ? 'nav' + link.page.charAt(0).toUpperCase() + link.page.slice(1) : page;
+  var title = (link && t(navKey) !== navKey) ? t(navKey) : (link ? link.label : page);
   if (!state.featureCards[page]) state.featureCards[page] = [];
-  return pageHeader(link ? link.label : page, '') + pageElements(page) + renderCardsSection(page, 'Add Card');
+  return pageHeader(title, '') + pageElements(page) + renderCardsSection(page, t('addCard'));
 }
 
 function renderCreations() {
-  return '<div class="page-header"><h1 class="page-title">Our Creations</h1></div><div class="search-bar"><input type="text" class="input-base" id="projectSearch" placeholder="Search projects..." value="' + escHtml(state.searchQuery || '') + '" oninput="onProjectSearch(this.value)" aria-label="Search projects" />' + (canManageCards() ? '<button class="btn btn-primary" onclick="addProject()">' + svgIcon('plus', 16) + ' Add Project</button>' : '') + '</div>' + pageElements('creations') + '<div class="projects-grid" id="projectsGrid"></div>';
+  return '<div class="page-header"><h1 class="page-title">' + escHtml(t('creationsTitle')) + '</h1></div><div class="search-bar"><input type="text" class="input-base" id="projectSearch" placeholder="' + escHtml(t('searchProjects')) + '" value="' + escHtml(state.searchQuery || '') + '" oninput="onProjectSearch(this.value)" aria-label="' + escHtml(t('searchProjects')) + '" />' + (canManageCards() ? '<button class="btn btn-primary" onclick="addProject()">' + svgIcon('plus', 16) + ' ' + escHtml(t('addProject')) + '</button>' : '') + '</div>' + pageElements('creations') + '<div class="projects-grid" id="projectsGrid"></div>';
 }
 function onProjectSearch(v) { state.searchQuery = v; renderProjectsGrid(); }
 function renderProjectsGrid() {
@@ -837,32 +1163,32 @@ function renderProjectsGrid() {
   var q = (state.searchQuery || '').toLowerCase();
   var list = state.projects.filter(function(p) { return !q || (p.title || '').toLowerCase().indexOf(q) !== -1 || (p.description || '').toLowerCase().indexOf(q) !== -1; });
   if (!list.length) {
-    grid.innerHTML = '<div class="empty-placeholder"><div class="empty-icon">' + svgIcon('construction', 48) + '</div><h3>' + (state.projects.length ? 'No matching projects' : 'No creations yet!') + '</h3><p>' + (state.projects.length ? 'Try a different search.' : 'Come back later — we\'re working on something great.') + '</p></div>';
+    grid.innerHTML = '<div class="empty-placeholder"><div class="empty-icon">' + svgIcon('construction', 48) + '</div><h3>' + escHtml(state.projects.length ? t('noMatchingProjects') : t('noCreationsYet')) + '</h3><p>' + escHtml(state.projects.length ? t('tryDifferentSearch') : t('comeBackLater')) + '</p></div>';
     afterRender(); return;
   }
   grid.innerHTML = list.map(function(p) {
     var link = safeUrl(p.link);
     var ctl = canManageCards() ? '<div class="card-controls"><button class="card-control-btn" onclick="editProject(' + Number(p.id) + ')" title="Edit project" aria-label="Edit project">' + svgIcon('pencil', 14) + '</button><button class="card-control-btn delete" onclick="deleteProject(' + Number(p.id) + ')" title="Delete project" aria-label="Delete project">' + svgIcon('trash', 14) + '</button></div>' : '';
-    return '<div class="project-card">' + ctl + '<div class="project-image">' + iconHtml(p.image || '📦', 56) + '</div><div class="project-content"><div class="project-title">' + escHtml(p.title) + '</div><div class="project-description">' + escHtml(p.description) + '</div><div class="project-meta"><span>' + svgIcon('calendar', 16) + ' ' + escHtml(p.date || '') + '</span><span>' + svgIcon('person', 16) + ' ' + escHtml(p.poster || '') + '</span></div>' + (link ? '<a href="' + escHtml(link) + '" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">View Project</a>' : '') + '</div></div>';
+    return '<div class="project-card">' + ctl + '<div class="project-image">' + iconHtml(p.image || '📦', 56) + '</div><div class="project-content"><div class="project-title">' + escHtml(p.title) + '</div><div class="project-description">' + escHtml(p.description) + '</div><div class="project-meta"><span>' + svgIcon('calendar', 16) + ' ' + escHtml(p.date || '') + '</span><span>' + svgIcon('person', 16) + ' ' + escHtml(p.poster || '') + '</span></div>' + (link ? '<a href="' + escHtml(link) + '" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;">' + escHtml(t('viewProject')) + '</a>' : '') + '</div></div>';
   }).join('');
   afterRender();
 }
 
 function renderWorkspace() {
   if (!state.currentUser) {
-    return '<div class="card-bg" style="padding:3rem;text-align:center;max-width:600px;margin:0 auto;"><div class="empty-icon">' + svgIcon('lock', 20) + '</div><h3>Staff Workspace</h3><p style="margin-bottom:1.5rem;">Mokza Nexus is our internal workspace — chat, tasks, project boards, notes, and more. It\'s restricted to signed-in team members.</p><button class="btn btn-primary" onclick="showAuthModal()">Sign In</button></div>';
+    return '<div class="card-bg" style="padding:3rem;text-align:center;max-width:600px;margin:0 auto;"><div class="empty-icon">' + svgIcon('lock', 20) + '</div><h3>' + escHtml(t('workspaceStaffTitle')) + '</h3><p style="margin-bottom:1.5rem;">' + escHtml(t('workspaceStaffDesc')) + '</p><button class="btn btn-primary" onclick="showAuthModal()">' + escHtml(t('signIn')) + '</button></div>';
   }
-  return '<div class="page-header"><h1 class="page-title">Mokza Nexus Workspace</h1><p class="page-subtitle">Our internal team workspace — chat, tasks, project boards, notes, and the Software Center.</p></div><div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;"><button class="btn btn-primary" onclick="closeOfficeHub();openOfficeHub()">' + svgIcon('building', 20) + ' Open Office Hub</button><button class="btn btn-outline" onclick="switchHubView(\'chat\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('chat', 20) + ' Team Chat</button><button class="btn btn-outline" onclick="switchHubView(\'tasks\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('memo', 20) + ' Task Board</button></div><iframe src="workspace/index.html" title="Mokza Nexus Workspace" style="width:100%;height:600px;border:none;border-radius:var(--radius-lg);"></iframe>';
+  return '<div class="page-header"><h1 class="page-title">' + escHtml(t('workspaceTitle')) + '</h1><p class="page-subtitle">' + escHtml(t('workspaceSubtitle')) + '</p></div><div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;"><button class="btn btn-primary" onclick="closeOfficeHub();openOfficeHub()">' + svgIcon('building', 20) + ' ' + escHtml(t('openOfficeHub')) + '</button><button class="btn btn-outline" onclick="switchHubView(\'chat\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('chat', 20) + ' ' + escHtml(t('teamChat')) + '</button><button class="btn btn-outline" onclick="switchHubView(\'tasks\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('memo', 20) + ' ' + escHtml(t('taskBoard')) + '</button></div><iframe src="workspace/index.html" title="Mokza Nexus Workspace" style="width:100%;height:600px;border:none;border-radius:var(--radius-lg);"></iframe>';
 }
 
 function submitSuggestion() {
-  if (state.raidMode && !state.currentUser) { showNotification('Unavailable', 'Submissions are temporarily disabled.', 'error'); return; }
+  if (state.raidMode && !state.currentUser) { showNotification('Unavailable', t('raidModeDesc'), 'error'); return; }
   var inp = document.getElementById('suggestionInput');
   var emailInp = document.getElementById('suggestionEmail');
   var text = inp.value.trim();
   var email = emailInp ? emailInp.value.trim() : '';
-  if (!text) { showNotification('Empty Suggestion', 'Please enter your suggestion', 'error'); return; }
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', 'Please check your email address for notifications', 'error'); return; }
+  if (!text) { showNotification('Empty Suggestion', t('emptySuggestion'), 'error'); return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', t('contactInvalidEmail'), 'error'); return; }
   
   var suggestion = {
     id: 'sugg_' + Date.now(),
@@ -885,7 +1211,7 @@ function submitSuggestion() {
     body: suggestion
   }).then(function(res) {
     if (res && res.success) {
-      showNotification('Thank You!', 'Your suggestion has been submitted' + (email ? '. You will receive email notifications.' : ''), 'success');
+      showNotification(t('thankYou'), t('suggestionSubmitted') + (email ? t('emailNotificationNote') : ''), 'success');
     } else {
       showNotification('Saved Locally', 'Your suggestion was saved locally (cloud save failed)', 'warning');
     }
@@ -1039,21 +1365,112 @@ function sendSuggestionNotification(suggestion, status) {
 window.sendSuggestionNotification = sendSuggestionNotification;
 
 // ── LANGUAGE SUPPORT ──
-function t(key) {
+function t(key, params) {
   var lang = state.currentLanguage || 'en';
-  var trans = state.translations[lang];
-  return trans && trans[key] || state.translations.en[key] || key;
+  var trans = state.translations && state.translations[lang];
+  var text = (trans && trans[key]) || (state.translations && state.translations.en && state.translations.en[key]) || key;
+  if (params && typeof params === 'object') {
+    Object.keys(params).forEach(function(p) {
+      text = text.replace(new RegExp('\\{' + p + '\\}', 'g'), params[p]);
+    });
+  }
+  return text;
+}
+window.t = t;
+
+function initLanguage() {
+  var saved = null;
+  try { saved = localStorage.getItem('mokza_language'); } catch (e) {}
+  if (saved && state.translations[saved]) {
+    state.currentLanguage = saved;
+  } else if (typeof navigator !== 'undefined' && navigator.language) {
+    var prefix = navigator.language.slice(0, 2).toLowerCase();
+    if (state.translations[prefix]) {
+      state.currentLanguage = prefix;
+    }
+  }
+  document.documentElement.setAttribute('lang', state.currentLanguage || 'en');
+}
+
+function renderLanguageSelector() {
+  var desktopEl = document.getElementById('langSelector');
+  var mobileEl = document.getElementById('mobileLangWrap');
+  var langs = [
+    { code: 'en', label: 'EN', name: 'English' },
+    { code: 'es', label: 'ES', name: 'Español' },
+    { code: 'fr', label: 'FR', name: 'Français' }
+  ];
+  var current = state.currentLanguage || 'en';
+
+  if (desktopEl) {
+    desktopEl.innerHTML = langs.map(function(l) {
+      var active = current === l.code ? ' active' : '';
+      return '<button class="lang-btn' + active + '" onclick="setLanguage(\'' + l.code + '\')" title="' + l.name + '" aria-label="' + l.name + '">' + l.label + '</button>';
+    }).join('');
+  }
+
+  if (mobileEl) {
+    mobileEl.innerHTML = '<div class="mobile-lang-label">' + escHtml(t('languageLabel')) + '</div>' +
+      '<div class="mobile-lang-selector">' +
+      langs.map(function(l) {
+        var active = current === l.code ? ' active' : '';
+        return '<button class="mobile-lang-btn' + active + '" onclick="setLanguage(\'' + l.code + '\');closeMobileNav();">' + l.label + ' (' + l.name + ')</button>';
+      }).join('') +
+      '</div>';
+  }
+}
+
+function renderFooter() {
+  var footerLinks = document.getElementById('footerLinks');
+  var footerCopy = document.getElementById('footerCopy');
+  if (footerLinks) {
+    var links = [
+      { page: 'home', key: 'navHome' },
+      { page: 'about', key: 'navAbout' },
+      { page: 'contact', key: 'navContact' },
+      { page: 'community', key: 'navCommunity' },
+      { page: 'roblox', key: 'navRoblox' },
+      { page: 'creations', key: 'navCreations' },
+      { page: 'tos', key: 'navTOS' },
+      { page: 'workspace', key: 'navWorkspace' }
+    ];
+    footerLinks.innerHTML = links.map(function(item) {
+      return '<a href="?page=' + item.page + '" class="footer-link" onclick="event.preventDefault();changePage(\'' + item.page + '\');return false;">' + escHtml(t(item.key)) + '</a>';
+    }).join('');
+  }
+  if (footerCopy) {
+    footerCopy.textContent = t('allRightsReserved');
+  }
+}
+
+function updateStaticTranslations() {
+  var devLabel = document.getElementById('devToggleLabel');
+  if (devLabel) devLabel.textContent = t('devMode');
+  var adminLabel = document.getElementById('adminBtnLabel');
+  if (adminLabel) adminLabel.textContent = t('adminPanel');
+  var editLabel = document.getElementById('editTextsBtnLabel');
+  if (editLabel) editLabel.textContent = t('editTexts');
+  var editBanner = document.getElementById('editBanner');
+  if (editBanner) editBanner.textContent = t('editBanner');
+  document.documentElement.setAttribute('lang', state.currentLanguage || 'en');
+  renderFooter();
+  renderLanguageSelector();
 }
 
 function setLanguage(lang) {
   if (!state.translations[lang]) return;
   state.currentLanguage = lang;
-  localStorage.setItem('mokza_language', lang);
+  try { localStorage.setItem('mokza_language', lang); } catch (e) {}
+  document.documentElement.setAttribute('lang', lang);
   renderNavigation();
+  updateStaticTranslations();
   renderPage();
-  showNotification('Language Changed', 'Language set to ' + lang.toUpperCase(), 'success');
+  showNotification(t('langChangedTitle'), t('langChangedMsg', { lang: lang.toUpperCase() }), 'success');
 }
 window.setLanguage = setLanguage;
+window.renderFooter = renderFooter;
+window.renderLanguageSelector = renderLanguageSelector;
+window.updateStaticTranslations = updateStaticTranslations;
 
 /* ── OFFICE HUB ── */
 function openOfficeHub() {
@@ -1482,6 +1899,7 @@ function importWebsiteState() {
 async function init() {
   try {
     initTheme();
+    initLanguage();
     ensureDefaults();
     await loadFromFirestore();
     
@@ -1493,6 +1911,7 @@ async function init() {
     }
     
     renderNavigation();
+    updateStaticTranslations();
     renderPage();
     updateAuthUI();
     logActivity('System', 'Website initialized');

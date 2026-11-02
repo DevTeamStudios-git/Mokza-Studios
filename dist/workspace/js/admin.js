@@ -504,7 +504,7 @@ function textNodesIn(root) {
   var out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;
   while ((n = w.nextNode())) {
     var t = n.nodeValue.trim(); if (!t) continue;
-    var p = n.parentElement; if (!p || TEXT_SKIP_TAGS[p.tagName] || p.closest('svg,[data-no-edit],#editTextsBtn,.element-controls,.card-controls,.stat-number')) continue;
+    var p = n.parentElement; if (!p || TEXT_SKIP_TAGS[p.tagName] || p.closest('svg,[data-no-edit],#editTextsBtn,.element-controls,.card-controls,.stat-number,.lang-selector,.mobile-lang-wrap')) continue;
     if (/^[\d\s.,%+\/:\-–·]+$/.test(t)) continue;      // pure numbers / dates
     out.push(n);
   }

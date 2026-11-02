@@ -419,13 +419,27 @@ function deleteFile(id) {
 /* ═════════════════════════ ADMIN CHAT (+ call controls) ═════════════════════════ */
 function renderChatSection(c) {
   var msgs = state.chatMessages.filter(function(m) { return (m.ch || '#general') === '#general'; }).slice(-60);
-  var mic = state.micEnabled, vid = state.videoEnabled;
-  c.innerHTML = '<div class="admin-chat"><h3>Team chat <span style="font-weight:400;font-size:.8rem;color:var(--text-muted)">#general · type /help for bot commands</span></h3><div class="chat-messages" id="chatMessages">' + (msgs.length ? msgs.map(function(m) {
+  var call = state.callState || {};
+  var mic = call.micEnabled !== false, vid = call.videoEnabled !== false;
+  var elapsed = call.inCall && call.startedAt ? Math.floor((Date.now() - call.startedAt) / 1000) : 0;
+  var h = Math.floor(elapsed / 3600), m = Math.floor((elapsed % 3600) / 60), s = elapsed % 60;
+  var timer = (h ? h + ':' : '') + (m < 10 && h ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  c.innerHTML = '<div class="admin-chat"><h3>Team chat <span style="font-weight:400;font-size:.8rem;color:var(--text-muted)">#general · type /help for bot commands</span></h3>' +
+    (call.inCall ? '<div class="call-banner"><span class="call-dot"></span> LIVE CALL — ' + escHtml(timer) + ' <span style="opacity:.7">· ' + call.participants.length + ' participant' + (call.participants.length !== 1 ? 's' : '') + '</span></div>' : '') +
+    '<div class="chat-messages" id="chatMessages">' + (msgs.length ? msgs.map(function(m) {
     return '<div class="chat-message"><div class="message-avatar">' + escHtml((m.from || '?')[0].toUpperCase()) + '</div><div class="message-content"><div style="font-size:.8rem;color:var(--text-muted)"><strong style="color:var(--text-primary)">' + escHtml(m.from) + '</strong>' + verifiedBadge(m.rank, m.isBot) + ' · ' + escHtml(m.t || '') + '</div><div style="color:var(--text-secondary)">' + fmtChat(m.text) + '</div>' + (m.embed ? '<div class="chat-embed">' + m.embed + '</div>' : '') + '</div></div>';
   }).join('') : '<p class="no-messages">No messages yet. Start chatting!</p>') + '</div>' +
     '<div class="chat-input-area"><input type="text" id="chatInput" class="input-base" placeholder="Type a message…" maxlength="1000" onkeydown="if(event.key===\'Enter\')sendMessage()" /><button class="btn-primary" onclick="sendMessage()" aria-label="Send">' + svgIcon('rocket', 16) + '</button></div>' +
-    '<div class="call-controls"><button class="call-btn ' + (state.inCall ? 'active' : '') + '" onclick="toggleCall()">' + (state.inCall ? 'End Call' : 'Start Call') + '</button>' + (state.inCall ? '<button class="control-btn ' + (mic ? '' : 'disabled') + '" onclick="toggleMic()" title="' + (mic ? 'Mute' : 'Unmute') + '">🎤</button><button class="control-btn ' + (vid ? '' : 'disabled') + '" onclick="toggleVideo()" title="Camera">📷</button><button class="control-btn ' + (state.screenSharing ? 'active' : '') + '" onclick="toggleScreenShare()" title="Share screen">🖥️</button>' : '') + '</div>' +
-    (state.inCall ? '<div class="call-status">📞 In call with team' + (state.screenSharing ? '<br>🖥️ Screen sharing active' : '') + '</div>' : '') + '</div>';
+    '<div class="call-controls">' +
+    '<button class="call-btn ' + (call.inCall ? 'active' : '') + '" onclick="toggleCall()">' + (call.inCall ? 'End Call' : 'Start Call') + '</button>' +
+    (call.inCall ? '<button class="control-btn ' + (mic ? '' : 'disabled') + '" onclick="toggleMic()" title="' + (mic ? 'Mute' : 'Unmute') + '">' + (mic ? svgIcon('mic-on', 16) : svgIcon('mic-off', 16)) + '</button>' : '') +
+    (call.inCall ? '<button class="control-btn ' + (vid ? '' : 'disabled') + '" onclick="toggleVideo()" title="Camera">' + (vid ? svgIcon('video-on', 16) : svgIcon('video-off', 16)) + '</button>' : '') +
+    (call.inCall ? '<button class="control-btn ' + (call.screenSharing ? 'active' : '') + '" onclick="toggleScreenShare()" title="Share screen">' + (call.screenSharing ? svgIcon('screen-share', 16) : svgIcon('screen', 16)) + '</button>' : '') +
+    '</div>' +
+    (call.inCall ? '<div class="call-status"><span style="font-weight:700">📞 In call</span>' + (call.screenSharing ? ' <span style="opacity:.7">· 🖥️ Screen sharing active</span>' : '') + '<br>' +
+    (call.participants || []).map(function(p) {
+      return '<span class="call-participant"><span class="dot ' + (p.mic ? 'dot-green' : 'dot-grey') + '"></span> ' + escHtml(p.name) + (p.screen ? ' <span style="opacity:.7">[screen]</span>' : '') + '</span>';
+    }).join('') + '</div>' : '') + '</div>';
   var box = $('chatMessages'); if (box) box.scrollTop = box.scrollHeight;
 }
 function sendMessage() {
@@ -435,10 +449,72 @@ function sendMessage() {
   pushChat({ id: 'm' + Date.now(), from: state.currentUser.username, rank: state.currentUser.rank, text: text.slice(0, 1000), t: nowShort(), isBot: false, ch: '#general' });
   if (/^[\/!]/.test(text)) setTimeout(function() { devTBot(text.slice(1), '#general'); }, 350);
 }
-function toggleCall() { state.inCall = !state.inCall; if (!state.inCall) { state.micEnabled = true; state.videoEnabled = true; state.screenSharing = false; } logActivity(state.inCall ? 'Call Started' : 'Call Ended', (state.inCall ? 'Started' : 'Ended') + ' team call'); renderAdminContent(); }
-function toggleMic() { state.micEnabled = !state.micEnabled; renderAdminContent(); }
-function toggleVideo() { state.videoEnabled = !state.videoEnabled; renderAdminContent(); }
-function toggleScreenShare() { state.screenSharing = !state.screenSharing; renderAdminContent(); }
+function toggleCall() {
+  var next = !state.callState.inCall;
+  state.callState.inCall = next;
+  state.callState.startedAt = next ? Date.now() : null;
+  state.callState.participants = next ? [{ name: state.currentUser ? state.currentUser.username : 'You', mic: true, video: true, screen: false, joinedAt: Date.now() }] : [];
+  state.inCall = next; state.micEnabled = true; state.videoEnabled = true; state.screenSharing = false;
+  state.callState.micEnabled = true; state.callState.videoEnabled = true; state.callState.screenSharing = false;
+  saveCallState();
+  logActivity(state.inCall ? 'Call Started' : 'Call Ended', (state.inCall ? 'Started' : 'Ended') + ' team call');
+  renderAdminContent();
+}
+function toggleMic() {
+  state.callState.micEnabled = !state.callState.micEnabled;
+  state.micEnabled = state.callState.micEnabled;
+  saveCallState();
+  renderAdminContent();
+}
+function toggleVideo() {
+  state.callState.videoEnabled = !state.callState.videoEnabled;
+  state.videoEnabled = state.callState.videoEnabled;
+  saveCallState();
+  renderAdminContent();
+}
+function toggleScreenShare() {
+  state.callState.screenSharing = !state.callState.screenSharing;
+  state.screenSharing = state.callState.screenSharing;
+  saveCallState();
+  renderAdminContent();
+}
+
+/* ── Realtime call state sync ── */
+var _callPollTimer = null;
+function startCallPolling() {
+  if (_callPollTimer) return;
+  _callPollTimer = setInterval(async function() {
+    try {
+      var res = await apiRequest('/call-state');
+      if (res && res.success && res.call) {
+        var remote = res.call;
+        if (remote.updatedAt !== state.callState.updatedAt) {
+          state.callState = remote;
+          state.inCall = remote.inCall;
+          state.micEnabled = remote.micEnabled;
+          state.videoEnabled = remote.videoEnabled;
+          state.screenSharing = remote.screenSharing;
+          if (state.adminMenuOpen && state.adminSection === 'chat' && typeof renderAdminContent === 'function') renderAdminContent();
+        }
+      }
+    } catch (e) { /* ignore - call state endpoint may not be ready */ }
+  }, 3000);
+}
+function stopCallPolling() {
+  if (_callPollTimer) { clearInterval(_callPollTimer); _callPollTimer = null; }
+}
+async function saveCallState() {
+  state.callState.updatedAt = new Date().toISOString();
+  state.callState.participants = state.callState.participants || [];
+  if (state.callState.inCall && state.currentUser) {
+    var me = state.callState.participants.find(function(p) { return p.name === state.currentUser.username; });
+    if (!me) state.callState.participants.push({ name: state.currentUser.username, mic: state.callState.micEnabled, video: state.callState.videoEnabled, screen: state.callState.screenSharing, joinedAt: Date.now() });
+  }
+  try {
+    await apiRequest('/call-state', { method: 'POST', body: { state: state.callState, updatedBy: state.currentUser ? state.currentUser.username : 'System' } });
+  } catch (e) { console.warn('Call state save failed:', e.message); }
+  renderAdminContent();
+}
 
 /* ═════════════════════════ USERS / ACTIVITY / MESSAGES / SITE ═════════════════════════ */
 function renderUsersSection(c) {
@@ -504,7 +580,7 @@ function textNodesIn(root) {
   var out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;
   while ((n = w.nextNode())) {
     var t = n.nodeValue.trim(); if (!t) continue;
-    var p = n.parentElement; if (!p || TEXT_SKIP_TAGS[p.tagName] || p.closest('svg,[data-no-edit],#editTextsBtn,.element-controls,.card-controls,.stat-number')) continue;
+    var p = n.parentElement; if (!p || TEXT_SKIP_TAGS[p.tagName] || p.closest('svg,[data-no-edit],#editTextsBtn,.element-controls,.card-controls,.stat-number,.lang-selector,.mobile-lang-wrap')) continue;
     if (/^[\d\s.,%+\/:\-–·]+$/.test(t)) continue;      // pure numbers / dates
     out.push(n);
   }

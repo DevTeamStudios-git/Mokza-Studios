@@ -9,6 +9,7 @@ const STATE_FILE = path.resolve(process.cwd(), 'server', 'data', 'website-state.
 const ANNOUNCEMENTS_FILE = path.resolve(process.cwd(), 'server', 'data', 'announcements.json');
 const TASKS_FILE = path.resolve(process.cwd(), 'server', 'data', 'tasks.json');
 const SUGGESTIONS_FILE = path.resolve(process.cwd(), 'server', 'data', 'suggestions.json');
+const CALL_STATE_FILE = path.resolve(process.cwd(), 'server', 'data', 'call-state.json');
 
 fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
 
@@ -466,6 +467,61 @@ router.delete('/suggestions/:id', async (req, res) => {
     return res.json({ success: true, cloud: cloudOk });
   } catch (err) {
     console.error('[API] DELETE suggestions error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CALL STATE (Realtime team call)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/call-state — returns current call state (shared across all users)
+router.get('/call-state', async (req, res) => {
+  try {
+    let call = null;
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('call_state').select('*').eq('id', 'main').single();
+        if (!error && data) call = data.state;
+      } catch (_) {}
+    }
+    if (!call) call = readJson(CALL_STATE_FILE, { inCall: false, micEnabled: true, videoEnabled: true, screenSharing: false, startedAt: null, participants: [], updatedAt: null });
+    return res.json({ success: true, call });
+  } catch (err) {
+    console.error('[API] GET call-state error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/call-state — update call state (from any user)
+router.post('/call-state', async (req, res) => {
+  try {
+    const { state: callState, updatedBy } = req.body;
+    if (!callState) {
+      return res.status(400).json({ success: false, error: 'No call state provided' });
+    }
+
+    const updatedAt = new Date().toISOString();
+    const payload = { ...callState, updatedAt, updatedBy };
+
+    let cloudOk = false;
+    if (supabase) {
+      try {
+        await supabase.from('call_state').upsert(
+          { id: 'main', state: payload, updated_at: updatedAt },
+          { onConflict: 'id' }
+        );
+        cloudOk = true;
+      } catch (e) {
+        console.warn('[Supabase] Call state save failed:', e.message);
+      }
+    }
+
+    writeJson(CALL_STATE_FILE, payload);
+
+    return res.json({ success: true, cloud: cloudOk, call: payload });
+  } catch (err) {
+    console.error('[API] POST call-state error:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });

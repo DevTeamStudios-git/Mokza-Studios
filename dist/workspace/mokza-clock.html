@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Clock — Time Refined</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════
+   VARIABLES & RESET
+══════════════════════════════════ */
+:root {
+  --bg:        #09090F;
+  --bg2:       #0F0F18;
+  --sidebar:   #0C0C16;
+  --card:      #141420;
+  --card2:     #1C1C2C;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --accent:    #5B8DF6;
+  --accent2:   #8B5CF6;
+  --green:     #2DD4BF;
+  --red:       #F56565;
+  --amber:     #F6AD55;
+  --text:      #EEEEF8;
+  --text2:     #8888AA;
+  --text3:     #44445A;
+  --sidebar-w: 240px;
+  --fn-ui:     'Syne', sans-serif;
+  --fn-mono:   'DM Mono', monospace;
+  --r:         16px;
+  --r-sm:      10px;
+}
+.theme-light {
+  --bg: #F4F4FB; --bg2: #EAEAF5; --sidebar: #E8E8F2;
+  --card: #FFFFFF; --card2: #F0F0FA;
+  --border: rgba(0,0,0,0.07); --border2: rgba(0,0,0,0.12);
+  --text: #0C0C1E; --text2: #5A5A7A; --text3: #BBBBCC;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; background:#000; overflow:hidden; }
+body { font-family: var(--fn-ui); }
+
+/* ══════════════════════════════════
+   APP SHELL — RESPONSIVE
+══════════════════════════════════ */
+#app {
+  width:100%; height:100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+  color: var(--text);
+}
+
+/* ══ SIDEBAR (desktop) ══ */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100%;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 16px 24px;
+  gap: 6px;
+  overflow: hidden;
+  transition: background 0.3s;
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 8px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.sidebar-logo-icon {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.sidebar-logo-text { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+.sidebar-logo-sub { font-size: 11px; color: var(--text3); font-weight: 400; margin-top: 1px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: var(--r-sm);
+  cursor: pointer; transition: all 0.18s;
+  color: var(--text2); font-size: 14px; font-weight: 600;
+  border: 1px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active {
+  background: var(--card);
+  color: var(--accent);
+  border-color: var(--border2);
+}
+.nav-item .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.theme-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border);
+}
+.theme-row span { font-size: 13px; font-weight: 600; color: var(--text2); }
+
+/* ══ CONTENT AREA ══ */
+#content { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ══ MOBILE BOTTOM NAV ══ */
+#bottom-nav {
+  display: none;
+  height: 68px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.bnav-inner { display: flex; height: 68px; }
+.bn-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; cursor: pointer; transition: all 0.18s; color: var(--text3);
+  font-size: 9px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+}
+.bn-item .bn-icon { font-size: 20px; transition: transform 0.2s; }
+.bn-item.active { color: var(--accent); }
+.bn-item.active .bn-icon { transform: scale(1.12); }
+
+/* ══════════════════════════════════
+   SCREENS
+══════════════════════════════════ */
+.screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.screen.active { display: flex; }
+
+.screen-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 28px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.screen-title { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; }
+.hdr-actions { display: flex; gap: 8px; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text2); font-size: 16px; transition: all 0.2s;
+}
+.icon-btn:hover { background: var(--card2); color: var(--text); }
+.icon-btn:active { transform: scale(0.92); }
+
+.scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.scroll::-webkit-scrollbar { width: 4px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ══════════════════════════════════
+   CLOCK SCREEN
+══════════════════════════════════ */
+#clock-screen { background: var(--bg); }
+.clock-body {
+  flex: 1; display: grid;
+  grid-template-columns: 1fr 1fr;
+  place-items: center;
+  padding: 24px 32px;
+  gap: 24px;
+}
+.clock-left { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 340px; }
+.clock-right { display: flex; align-items: center; justify-content: center; }
+.date-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 16px; border-radius: 30px;
+  background: var(--card); border: 1px solid var(--border2);
+  font-size: 13px; color: var(--text2); font-weight: 600;
+  width: fit-content;
+}
+.tz-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+.digital-time {
+  font-family: var(--fn-mono);
+  font-size: 72px; font-weight: 500;
+  color: var(--text); letter-spacing: -3px; line-height: 1;
+}
+.digital-time .ampm { font-size: 24px; color: var(--text2); letter-spacing: 0; margin-left: 8px; font-weight: 300; }
+.digital-secs { font-family: var(--fn-mono); font-size: 20px; color: var(--text3); letter-spacing: -1px; margin-top: 4px; }
+.tz-label {
+  font-size: 12px; color: var(--text3); font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase;
+}
+
+.analog-wrap { position: relative; }
+.analog-clock { width: 260px; height: 260px; }
+.analog-clock svg { width: 100%; height: 100%; }
+.c-face { fill: var(--card); }
+.c-ring { fill: none; stroke: var(--border2); stroke-width: 2; }
+.h-tick { stroke: var(--text2); stroke-width: 2.5; stroke-linecap: round; }
+.m-tick { stroke: var(--text3); stroke-width: 1.2; stroke-linecap: round; }
+.hand { stroke-linecap: round; transform-origin: 130px 130px; }
+#hH { stroke: var(--text); stroke-width: 6; }
+#hM { stroke: var(--text); stroke-width: 4; }
+#hS { stroke: var(--accent); stroke-width: 2.5; }
+.c-center { fill: var(--accent); }
+.c-center2 { fill: var(--bg2); }
+
+/* ══════════════════════════════════
+   SEGMENT TIME PICKER
+══════════════════════════════════ */
+.seg-picker {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 0; padding: 16px 0 8px;
+}
+.seg-block {
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+}
+.seg-colon {
+  font-family: var(--fn-mono); font-size: 40px; font-weight: 300;
+  color: var(--text3); padding: 0 4px; align-self: center; margin-bottom: 20px;
+}
+.seg-arrow {
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 13px; padding: 4px 16px;
+  transition: all 0.15s; border-radius: 8px; line-height: 1;
+  font-family: var(--fn-ui);
+}
+.seg-arrow:hover { color: var(--accent); background: var(--card2); }
+.seg-arrow:active { transform: scale(0.9); }
+.seg-val {
+  font-family: var(--fn-mono); font-size: 52px; font-weight: 400;
+  color: var(--text); cursor: pointer; text-align: center;
+  width: 80px; border-radius: 12px; transition: all 0.18s;
+  padding: 4px 0; line-height: 1; position: relative;
+}
+.seg-val:hover { background: var(--card2); }
+.seg-val.editing {
+  background: rgba(91,141,246,0.12);
+  outline: 2px solid var(--accent);
+  color: var(--accent);
+}
+.seg-val input {
+  width: 80px; background: none; border: none; outline: none;
+  font-family: var(--fn-mono); font-size: 52px; font-weight: 400;
+  color: var(--accent); text-align: center; padding: 0;
+  -moz-appearance: textfield;
+}
+.seg-val input::-webkit-inner-spin-button,
+.seg-val input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.seg-lbl {
+  font-size: 10px; font-weight: 700; color: var(--text3);
+  letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px;
+}
+.ampm-stack {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-left: 12px; margin-bottom: 24px; align-self: center;
+}
+.ampm-opt {
+  padding: 8px 14px; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text2); transition: all 0.18s;
+}
+.ampm-opt.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ══════════════════════════════════
+   ALARM SCREEN
+══════════════════════════════════ */
+.alarm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.alarm-card {
+  background: var(--card); border-radius: var(--r);
+  padding: 16px 18px; border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  transition: all 0.25s; cursor: pointer;
+  animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.alarm-card:hover { border-color: var(--border2); background: var(--card2); }
+.alarm-card.disabled .alarm-t { color: var(--text3); }
+.alarm-t { font-family: var(--fn-mono); font-size: 30px; font-weight: 500; line-height: 1; }
+.alarm-t .ap { font-size: 14px; color: var(--text2); font-weight: 300; }
+.alarm-sub { font-size: 12px; color: var(--text2); margin-top: 5px; }
+.alarm-lbl { font-weight: 700; color: var(--text); font-size: 13px; }
+.alarm-repeat-tag {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px; margin-top: 4px;
+  background: var(--card2); color: var(--text3); letter-spacing: 0.3px;
+}
+.alarm-right { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.del-btn { color: var(--text3); cursor: pointer; font-size: 16px; padding: 4px; transition: color 0.2s; }
+.del-btn:hover { color: var(--red); }
+
+/* ══ TOGGLE ══ */
+.toggle {
+  width: 48px; height: 27px; border-radius: 13.5px;
+  background: var(--card2); position: relative; cursor: pointer;
+  border: 1px solid var(--border2); transition: background 0.3s, border-color 0.3s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--green); border-color: var(--green); }
+.toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 21px; height: 21px; border-radius: 50%;
+  background: #fff; transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.toggle.on::after { transform: translateX(21px); }
+
+/* ADD ALARM BTN */
+.add-row {
+  width: 100%; padding: 14px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px dashed var(--border2);
+  color: var(--accent); font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s; margin-bottom: 16px; font-family: var(--fn-ui);
+}
+.add-row:hover { background: rgba(91,141,246,0.08); }
+.add-row:active { transform: scale(0.98); }
+
+/* ══════════════════════════════════
+   TIMER SCREEN
+══════════════════════════════════ */
+.timer-body {
+  flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+  gap: 32px; padding: 28px 32px; place-items: center;
+}
+.timer-left { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.timer-ring-wrap { position: relative; width: 260px; height: 260px; }
+.t-ring-svg { transform: rotate(-90deg); }
+.t-bg { fill: none; stroke: var(--card2); stroke-width: 10; }
+.t-prog { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.5s linear; }
+.timer-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.timer-disp { font-family: var(--fn-mono); font-size: 46px; font-weight: 400; color: var(--text); }
+.timer-status { font-size: 12px; color: var(--text3); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px; }
+.timer-controls { display: flex; gap: 14px; align-items: center; }
+
+.timer-right { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 320px; }
+.timer-right h3 { font-size: 14px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; }
+.presets { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.preset {
+  padding: 12px 8px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text2); font-size: 13px; font-weight: 700;
+  cursor: pointer; text-align: center; transition: all 0.18s;
+  font-family: var(--fn-ui);
+}
+.preset:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,141,246,0.08); }
+.preset:active { transform: scale(0.96); }
+
+.timer-name-input {
+  width: 100%; padding: 12px 14px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border2);
+  color: var(--text); font-size: 14px; font-family: var(--fn-ui);
+  outline: none; transition: border-color 0.2s;
+}
+.timer-name-input:focus { border-color: var(--accent); }
+.timer-name-input::placeholder { color: var(--text3); }
+
+.timer-snooze-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; background: var(--card); border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+}
+.timer-snooze-row span { font-size: 14px; color: var(--text); }
+.mini-select {
+  background: var(--card2); border: 1px solid var(--border2);
+  color: var(--text); padding: 6px 10px; border-radius: 8px;
+  font-family: var(--fn-ui); font-size: 13px; outline: none; cursor: pointer;
+}
+
+/* ══ CONTROL BUTTONS ══ */
+.ctrl {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--card2); border: 1px solid var(--border2);
+  color: var(--text); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s; flex-shrink: 0;
+}
+.ctrl:hover { background: var(--card); border-color: var(--border2); }
+.ctrl:active { transform: scale(0.91); }
+.ctrl.main {
+  width: 68px; height: 68px; background: var(--accent);
+  border-color: var(--accent); font-size: 22px; color: #fff;
+  box-shadow: 0 8px 24px rgba(91,141,246,0.4);
+}
+.ctrl.main:hover { box-shadow: 0 10px 32px rgba(91,141,246,0.5); }
+.ctrl.main.paused { background: var(--amber); border-color: var(--amber); box-shadow: 0 8px 24px rgba(246,173,85,0.4); }
+
+/* ══════════════════════════════════
+   STOPWATCH
+══════════════════════════════════ */
+.sw-body {
+  flex: 1; display: grid; grid-template-columns: auto 1fr;
+  gap: 32px; padding: 28px 32px; overflow: hidden;
+}
+.sw-left { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+.sw-time { font-family: var(--fn-mono); font-size: 64px; font-weight: 400; color: var(--text); letter-spacing: -2px; white-space: nowrap; }
+.sw-ms-span { font-size: 32px; font-weight: 300; color: var(--text3); }
+.sw-right { display: flex; flex-direction: column; overflow: hidden; }
+.lap-header, .lap-row {
+  display: grid; grid-template-columns: 40px 1fr 1fr;
+  padding: 10px 14px; border-radius: 8px; gap: 8px; font-size: 13px;
+}
+.lap-header { color: var(--text3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.lap-row { background: var(--card); margin-bottom: 4px; color: var(--text); animation: fadeUp 0.25s ease; }
+.lap-row.best .lap-sp { color: var(--green); }
+.lap-row.worst .lap-sp { color: var(--red); }
+.lap-sp, .lap-tot { font-family: var(--fn-mono); font-size: 12px; }
+.lap-list { overflow-y: auto; flex: 1; }
+.lap-list::-webkit-scrollbar { width: 3px; }
+.lap-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ══════════════════════════════════
+   WORLD CLOCK
+══════════════════════════════════ */
+.world-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.city-card {
+  background: var(--card); border-radius: var(--r); padding: 16px 18px;
+  border: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
+  transition: border-color 0.2s;
+  animation: fadeUp 0.3s ease;
+}
+.city-card:hover { border-color: var(--border2); }
+.dn-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+}
+.dn-icon.day { background: rgba(246,173,85,0.12); }
+.dn-icon.night { background: rgba(91,141,246,0.12); }
+.city-info { flex: 1; min-width: 0; }
+.city-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.city-off { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.city-right { text-align: right; flex-shrink: 0; }
+.city-t { font-family: var(--fn-mono); font-size: 22px; font-weight: 400; color: var(--text); }
+.city-d { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.city-rm { color: var(--text3); cursor: pointer; font-size: 15px; padding: 4px; margin-left: 4px; transition: color 0.18s; }
+.city-rm:hover { color: var(--red); }
+
+/* ══════════════════════════════════
+   SETTINGS
+══════════════════════════════════ */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.settings-section { }
+.s-section-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; padding: 0 2px; }
+.s-card { background: var(--card); border-radius: var(--r); border: 1px solid var(--border); overflow: hidden; }
+.s-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 15px 18px; border-bottom: 1px solid var(--border); gap: 12px;
+}
+.s-row:last-child { border-bottom: none; }
+.s-row-left { display: flex; align-items: center; gap: 12px; }
+.s-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.s-name { font-size: 14px; color: var(--text); font-weight: 600; }
+.s-desc { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.seg-ctl { display: flex; background: var(--card2); border-radius: 9px; padding: 3px; border: 1px solid var(--border); }
+.seg-o { padding: 6px 13px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; color: var(--text2); font-family: var(--fn-ui); }
+.seg-o.selected { background: var(--accent); color: #fff; }
+
+/* ══════════════════════════════════
+   MODAL
+══════════════════════════════════ */
+.overlay {
+  position: absolute; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  padding: 16px;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto;
+  background: var(--bg2); border-radius: 24px;
+  padding: 28px; border: 1px solid var(--border2);
+  transform: scale(0.95) translateY(10px);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+}
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.overlay.open .modal { transform: scale(1) translateY(0); }
+.modal-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.modal-title { font-size: 20px; font-weight: 800; }
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; }
+.field-input {
+  width: 100%; padding: 13px 16px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border2);
+  color: var(--text); font-size: 14px; font-family: var(--fn-ui);
+  outline: none; transition: border-color 0.2s;
+}
+.field-input:focus { border-color: var(--accent); }
+.field-input::placeholder { color: var(--text3); }
+.chip-row { display: flex; gap: 7px; flex-wrap: wrap; }
+.chip {
+  padding: 8px 14px; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--border2);
+  color: var(--text2); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s; font-family: var(--fn-ui);
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.day-row { display: flex; gap: 8px; }
+.day-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--border2);
+  color: var(--text2); font-size: 12px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s; font-family: var(--fn-ui);
+}
+.day-btn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sound-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sound-opt {
+  padding: 10px; border-radius: var(--r-sm); background: var(--card);
+  border: 1px solid var(--border2); color: var(--text2); font-size: 13px;
+  font-weight: 600; cursor: pointer; text-align: center; transition: all 0.18s; font-family: var(--fn-ui);
+}
+.sound-opt.on { background: rgba(91,141,246,0.12); color: var(--accent); border-color: var(--accent); }
+.modal-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.modal-row:last-of-type { border-bottom: none; }
+.modal-row span { font-size: 14px; color: var(--text); font-weight: 500; }
+.modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+.btn {
+  flex: 1; padding: 14px; border-radius: var(--r-sm);
+  font-size: 15px; font-weight: 700; cursor: pointer; border: none;
+  transition: all 0.2s; font-family: var(--fn-ui);
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { box-shadow: 0 6px 20px rgba(91,141,246,0.45); }
+.btn-ghost { background: var(--card); color: var(--text2); border: 1px solid var(--border2); }
+
+/* ══ CITY SEARCH MODAL ══ */
+.city-search-input {
+  width: 100%; padding: 12px 16px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border2);
+  color: var(--text); font-size: 14px; font-family: var(--fn-ui);
+  outline: none; margin-bottom: 12px;
+}
+.city-search-input:focus { border-color: var(--accent); }
+.city-results { background: var(--card); border-radius: var(--r-sm); border: 1px solid var(--border2); overflow: hidden; max-height: 280px; overflow-y: auto; }
+.city-res { padding: 12px 16px; cursor: pointer; color: var(--text); font-size: 14px; font-weight: 600; transition: background 0.15s; border-bottom: 1px solid var(--border); }
+.city-res:last-child { border-bottom: none; }
+.city-res:hover { background: var(--card2); color: var(--accent); }
+
+/* ══════════════════════════════════
+   ALARM RING
+══════════════════════════════════ */
+#alarm-ring {
+  position: absolute; inset: 0; z-index: 200;
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background: radial-gradient(ellipse at 50% 30%, #1A1040 0%, #080812 70%);
+}
+#alarm-ring.show { display: flex; animation: ringIn 0.5s ease; }
+@keyframes ringIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+.ring-wave {
+  width: 180px; height: 180px; border-radius: 50%;
+  border: 2px solid rgba(91,141,246,0.3);
+  display: flex; align-items: center; justify-content: center;
+  animation: wave 2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(91,141,246,0.4);
+  position: relative;
+}
+@keyframes wave {
+  0%,100% { box-shadow: 0 0 0 0 rgba(91,141,246,0.4), 0 0 60px rgba(91,141,246,0.1); }
+  50% { box-shadow: 0 0 0 24px rgba(91,141,246,0), 0 0 120px rgba(91,141,246,0.2); }
+}
+.ring-bell { font-size: 72px; animation: bellSwing 0.6s ease infinite; }
+@keyframes bellSwing { 0%,100%{transform:rotate(-20deg)} 50%{transform:rotate(20deg)} }
+.ring-subtitle { font-size: 13px; color: var(--text3); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 8px; animation: blink 1.2s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.ring-time-big { font-family: var(--fn-mono); font-size: 72px; font-weight: 400; color: var(--text); line-height: 1; }
+.ring-name-big { font-size: 28px; font-weight: 800; color: var(--text); }
+.challenge-wrap {
+  background: var(--card); border-radius: var(--r); padding: 20px 24px;
+  border: 1px solid var(--border2); text-align: center; width: 300px; margin-top: 8px;
+}
+.challenge-hint { font-size: 12px; color: var(--text3); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+.challenge-eq { font-family: var(--fn-mono); font-size: 36px; font-weight: 400; color: var(--text); }
+.challenge-ans {
+  width: 100%; margin-top: 12px; padding: 12px; border-radius: var(--r-sm);
+  background: var(--card2); border: 1px solid var(--border2); color: var(--text);
+  font-family: var(--fn-mono); font-size: 28px; text-align: center; outline: none;
+  -moz-appearance: textfield;
+}
+.challenge-ans::-webkit-inner-spin-button { -webkit-appearance: none; }
+.ring-btns { display: flex; gap: 16px; margin-top: 24px; }
+.ring-btn {
+  padding: 16px 40px; border-radius: 50px; font-size: 16px; font-weight: 800;
+  cursor: pointer; border: none; transition: all 0.2s; min-width: 140px;
+  font-family: var(--fn-ui); letter-spacing: 0.3px;
+}
+.ring-btn:active { transform: scale(0.95); }
+.btn-snooze { background: var(--amber); color: #000; }
+.btn-stop { background: var(--red); color: #fff; }
+
+/* ══════════════════════════════════
+   TIMER DONE OVERLAY
+══════════════════════════════════ */
+#timer-done {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(9,9,15,0.92); backdrop-filter: blur(12px);
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+}
+#timer-done.show { display: flex; animation: ringIn 0.4s ease; }
+.done-bell { font-size: 80px; animation: pulse 1s ease infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+.done-label { font-size: 32px; font-weight: 800; color: var(--text); }
+.done-name { font-size: 16px; color: var(--text2); }
+
+/* ══════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════ */
+.empty { text-align: center; padding: 56px 24px; color: var(--text3); }
+.empty .e-icon { font-size: 52px; margin-bottom: 14px; opacity: 0.5; }
+.empty p { font-size: 14px; line-height: 1.6; }
+
+/* ══════════════════════════════════
+   MOBILE RESPONSIVE
+══════════════════════════════════ */
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  #bottom-nav { display: block; }
+  
+  .clock-body { grid-template-columns: 1fr; padding: 20px 16px; }
+  .clock-right { display: none; }
+  .digital-time { font-size: 56px; }
+  
+  .alarm-grid { grid-template-columns: 1fr; }
+  
+  .timer-body { grid-template-columns: 1fr; padding: 20px 16px; }
+  .timer-ring-wrap { width: 220px; height: 220px; }
+  .timer-disp { font-size: 38px; }
+  .timer-right { max-width: 100%; }
+  
+  .sw-body { grid-template-columns: 1fr; padding: 16px; }
+  .sw-time { font-size: 48px; }
+  .sw-ms-span { font-size: 24px; }
+  
+  .world-grid { grid-template-columns: 1fr; }
+  
+  .settings-grid { grid-template-columns: 1fr; }
+  
+  .screen-header { padding: 16px 18px 12px; }
+  .scroll { padding: 14px 16px; }
+  
+  .overlay { align-items: flex-end; padding: 0; }
+  .modal { border-radius: 24px 24px 0 0; max-width: 100%; }
+
+  .seg-val { font-size: 44px; width: 68px; }
+  .seg-val input { font-size: 44px; width: 68px; }
+  .seg-colon { font-size: 34px; }
+}
+
+@media (max-width: 420px) {
+  .digital-time { font-size: 48px; }
+  .sw-time { font-size: 40px; }
+  .seg-val { font-size: 38px; width: 58px; }
+  .seg-val input { font-size: 38px; width: 58px; }
+}
+
+/* ══ SCROLLBAR GLOBAL ══ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════ SIDEBAR (Desktop) ══════ -->
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">⏰</div>
+      <div>
+        <div class="sidebar-logo-text">Clock</div>
+        <div class="sidebar-logo-sub">Time Refined</div>
+      </div>
+    </div>
+    <div class="nav-item active" data-tab="clock" onclick="goTab('clock')">
+      <span class="nav-icon">🕐</span> Clock
+    </div>
+    <div class="nav-item" data-tab="alarm" onclick="goTab('alarm')">
+      <span class="nav-icon">🔔</span> Alarms
+    </div>
+    <div class="nav-item" data-tab="timer" onclick="goTab('timer')">
+      <span class="nav-icon">⏱</span> Timer
+    </div>
+    <div class="nav-item" data-tab="stopwatch" onclick="goTab('stopwatch')">
+      <span class="nav-icon">⏲</span> Stopwatch
+    </div>
+    <div class="nav-item" data-tab="world" onclick="goTab('world')">
+      <span class="nav-icon">🌍</span> World Clock
+    </div>
+    <div class="nav-item" data-tab="settings" onclick="goTab('settings')">
+      <span class="nav-icon">⚙️</span> Settings
+    </div>
+    <div class="sidebar-footer">
+      <div class="theme-row">
+        <span>Dark Mode</span>
+        <div class="toggle on" id="sidebar-theme" onclick="toggleTheme()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CONTENT ══════ -->
+  <div id="content">
+
+    <!-- ── CLOCK ── -->
+    <div id="clock-screen" class="screen active">
+      <div class="screen-header">
+        <div>
+          <div class="screen-title">Good <span id="greeting-word">Evening</span></div>
+          <div id="clock-date-str" style="font-size:13px;color:var(--text2);margin-top:2px"></div>
+        </div>
+        <div class="date-tag">
+          <div class="tz-dot"></div>
+          <span id="tz-name" style="font-size:12px;font-weight:600;color:var(--text2)">—</span>
+        </div>
+      </div>
+      <div class="clock-body">
+        <div class="clock-left">
+          <div class="digital-time">
+            <span id="dtime-hm">00:00</span><span class="ampm" id="dtime-ap"></span>
+          </div>
+          <div class="digital-secs">:<span id="dtime-s">00</span></div>
+          <div class="tz-label" id="tz-offset-label"></div>
+        </div>
+        <div class="clock-right">
+          <div class="analog-wrap">
+            <svg class="analog-clock" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
+              <circle class="c-face" cx="130" cy="130" r="128"/>
+              <circle class="c-ring" cx="130" cy="130" r="126"/>
+              <g id="a-h-marks"></g>
+              <g id="a-m-marks"></g>
+              <line id="hH" class="hand" x1="130" y1="75" x2="130" y2="138"/>
+              <line id="hM" class="hand" x1="130" y1="40" x2="130" y2="140"/>
+              <line id="hS" class="hand" x1="130" y1="28" x2="130" y2="148"/>
+              <circle class="c-center" cx="130" cy="130" r="7"/>
+              <circle class="c-center2" cx="130" cy="130" r="3"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALARMS ── -->
+    <div id="alarm-screen" class="screen">
+      <div class="screen-header">
+        <div class="screen-title">Alarms</div>
+        <div class="hdr-actions">
+          <div class="icon-btn" onclick="openAddAlarm()">＋</div>
+        </div>
+      </div>
+      <div class="scroll">
+        <button class="add-row" onclick="openAddAlarm()">＋ &nbsp;Add Alarm</button>
+        <div class="alarm-grid" id="alarm-list"></div>
+      </div>
+    </div>
+
+    <!-- ── TIMER ── -->
+    <div id="timer-screen" class="screen">
+      <div class="screen-header">
+        <div class="screen-title">Timer</div>
+      </div>
+      <div class="timer-body">
+        <!-- Left: Ring + Controls -->
+        <div class="timer-left">
+          <div class="timer-ring-wrap">
+            <svg class="t-ring-svg" width="260" height="260" viewBox="0 0 260 260">
+              <circle class="t-bg" cx="130" cy="130" r="116"/>
+              <circle class="t-prog" id="t-prog" cx="130" cy="130" r="116"
+                stroke-dasharray="729" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-center">
+              <div class="timer-disp" id="t-display">25:00</div>
+              <div class="timer-status" id="t-status">Ready</div>
+            </div>
+          </div>
+          <div class="timer-controls">
+            <div class="ctrl" onclick="resetTimer()" title="Reset">↺</div>
+            <div class="ctrl main" id="t-main-btn" onclick="toggleTimer()">▶</div>
+          </div>
+        </div>
+        <!-- Right: Config -->
+        <div class="timer-right">
+          <h3>Set Duration</h3>
+          <div style="background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:12px 16px 16px">
+            <div id="timer-seg-picker"><!-- built by JS --></div>
+          </div>
+          <h3>Presets</h3>
+          <div class="presets">
+            <div class="preset" onclick="setTimerSecs(5*60)">5 min</div>
+            <div class="preset" onclick="setTimerSecs(10*60)">10 min</div>
+            <div class="preset" onclick="setTimerSecs(15*60)">15 min</div>
+            <div class="preset" onclick="setTimerSecs(25*60)">25 min</div>
+            <div class="preset" onclick="setTimerSecs(45*60)">45 min</div>
+            <div class="preset" onclick="setTimerSecs(60*60)">1 hour</div>
+          </div>
+          <h3>Options</h3>
+          <input class="timer-name-input" id="t-name-input" placeholder="Timer name (e.g. Focus, Workout)">
+          <div class="timer-snooze-row">
+            <span>Snooze when done</span>
+            <select class="mini-select" id="t-snooze-sel">
+              <option value="0">Off</option>
+              <option value="5">5 min</option>
+              <option value="10" selected>10 min</option>
+              <option value="15">15 min</option>
+              <option value="20">20 min</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Done overlay -->
+      <div id="timer-done">
+        <div class="done-bell">⏰</div>
+        <div class="done-label">Time's Up!</div>
+        <div class="done-name" id="t-done-name">Timer finished</div>
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <button class="btn btn-ghost" style="min-width:130px" id="t-done-snooze-btn" onclick="timerSnooze()">💤 Snooze</button>
+          <button class="btn btn-primary" style="min-width:130px" onclick="dismissTimer()">✓ Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STOPWATCH ── -->
+    <div id="stopwatch-screen" class="screen">
+      <div class="screen-header">
+        <div class="screen-title">Stopwatch</div>
+        <div class="hdr-actions">
+          <div class="icon-btn" onclick="swReset()" title="Reset">↺</div>
+        </div>
+      </div>
+      <div class="sw-body">
+        <div class="sw-left">
+          <div class="sw-time">
+            <span id="sw-disp">00:00</span><span class="sw-ms-span">.<span id="sw-ms">00</span></span>
+          </div>
+          <div class="timer-controls">
+            <div class="ctrl" id="sw-lap-btn" onclick="swLap()" style="opacity:0.3" title="Lap">⚑</div>
+            <div class="ctrl main" id="sw-btn" onclick="swToggle()">▶</div>
+          </div>
+        </div>
+        <div class="sw-right">
+          <div class="lap-header">
+            <span>#</span><span>Split</span><span>Total</span>
+          </div>
+          <div class="lap-list" id="sw-laps"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WORLD CLOCK ── -->
+    <div id="world-screen" class="screen">
+      <div class="screen-header">
+        <div class="screen-title">World Clock</div>
+        <div class="icon-btn" onclick="openAddCity()">＋</div>
+      </div>
+      <div class="scroll">
+        <div class="world-grid" id="world-list"></div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div id="settings-screen" class="screen">
+      <div class="screen-header">
+        <div class="screen-title">Settings</div>
+      </div>
+      <div class="scroll">
+        <div class="settings-grid">
+          <div class="settings-section">
+            <div class="s-section-title">Display</div>
+            <div class="s-card">
+              <div class="s-row">
+                <div class="s-row-left">
+                  <div class="s-icon" style="background:rgba(91,141,246,0.12)">🕐</div>
+                  <div><div class="s-name">Time Format</div><div class="s-desc">12-hour or 24-hour clock</div></div>
+                </div>
+                <div class="seg-ctl">
+                  <div class="seg-o selected" id="sf12" onclick="setFmt(false)">12h</div>
+                  <div class="seg-o" id="sf24" onclick="setFmt(true)">24h</div>
+                </div>
+              </div>
+              <div class="s-row">
+                <div class="s-row-left">
+                  <div class="s-icon" style="background:rgba(246,173,85,0.12)">🌙</div>
+                  <div><div class="s-name">Theme</div><div class="s-desc">Dark or light appearance</div></div>
+                </div>
+                <div class="seg-ctl">
+                  <div class="seg-o selected" id="sfDark" onclick="setThemeMode('dark')">Dark</div>
+                  <div class="seg-o" id="sfLight" onclick="setThemeMode('light')">Light</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="s-section-title">Alarm</div>
+            <div class="s-card">
+              <div class="s-row">
+                <div class="s-row-left">
+                  <div class="s-icon" style="background:rgba(45,212,191,0.12)">😴</div>
+                  <div><div class="s-name">Default Snooze</div><div class="s-desc">Per-alarm can override</div></div>
+                </div>
+                <select class="mini-select" id="def-snooze" onchange="cfg.defaultSnooze=+this.value;save()">
+                  <option value="5">5 min</option>
+                  <option value="10" selected>10 min</option>
+                  <option value="15">15 min</option>
+                </select>
+              </div>
+              <div class="s-row">
+                <div class="s-row-left">
+                  <div class="s-icon" style="background:rgba(245,101,101,0.12)">🧮</div>
+                  <div><div class="s-name">Challenge Mode</div><div class="s-desc">Solve math to dismiss</div></div>
+                </div>
+                <div class="toggle" id="s-challenge" onclick="toggleCfg('challenge')"></div>
+              </div>
+              <div class="s-row">
+                <div class="s-row-left">
+                  <div class="s-icon" style="background:rgba(139,92,246,0.12)">📳</div>
+                  <div><div class="s-name">Vibration</div><div class="s-desc">Vibrate on alarm</div></div>
+                </div>
+                <div class="toggle on" id="s-vibration" onclick="toggleCfg('vibration')"></div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="s-section-title">Notifications</div>
+            <div class="s-card">
+              <div class="s-row">
+                <div class="s-row-left">
+                  <div class="s-icon" style="background:rgba(91,141,246,0.12)">🔔</div>
+                  <div><div class="s-name">Notifications</div><div class="s-desc">Browser notifications</div></div>
+                </div>
+                <button class="btn btn-ghost" style="padding:8px 14px;font-size:12px;max-width:140px" onclick="reqNotif()">Enable</button>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="s-section-title">About</div>
+            <div class="s-card">
+              <div class="s-row">
+                <div class="s-row-left">
+                  <div class="s-icon" style="background:rgba(91,141,246,0.12)">⏰</div>
+                  <div><div class="s-name">Clock App</div><div class="s-desc">Version 2.0</div></div>
+                </div>
+                <span style="font-size:13px;color:var(--accent);font-weight:700">v2.0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ══════ MOBILE BOTTOM NAV ══════ -->
+  <div id="bottom-nav">
+    <div class="bnav-inner">
+      <div class="bn-item active" data-tab="clock" onclick="goTab('clock')"><span class="bn-icon">🕐</span>Clock</div>
+      <div class="bn-item" data-tab="alarm" onclick="goTab('alarm')"><span class="bn-icon">🔔</span>Alarm</div>
+      <div class="bn-item" data-tab="timer" onclick="goTab('timer')"><span class="bn-icon">⏱</span>Timer</div>
+      <div class="bn-item" data-tab="stopwatch" onclick="goTab('stopwatch')"><span class="bn-icon">⏲</span>Stop</div>
+      <div class="bn-item" data-tab="world" onclick="goTab('world')"><span class="bn-icon">🌍</span>World</div>
+      <div class="bn-item" data-tab="settings" onclick="goTab('settings')"><span class="bn-icon">⚙️</span>More</div>
+    </div>
+  </div>
+
+  <!-- ══════ ALARM MODAL ══════ -->
+  <div class="overlay" id="alarm-modal">
+    <div class="modal">
+      <div class="modal-top">
+        <div class="modal-title" id="am-title">New Alarm</div>
+        <div class="icon-btn" onclick="closeOverlay('alarm-modal')">✕</div>
+      </div>
+      <div class="field">
+        <label>Time</label>
+        <div id="alarm-seg-picker"></div>
+      </div>
+      <div class="field">
+        <label>Label</label>
+        <input class="field-input" id="am-label" placeholder="Wake Up, Gym, Study..." maxlength="30">
+      </div>
+      <div class="field">
+        <label>Repeat</label>
+        <div class="chip-row" id="am-repeat">
+          <div class="chip on" data-v="once">Once</div>
+          <div class="chip" data-v="daily">Daily</div>
+          <div class="chip" data-v="weekdays">Weekdays</div>
+          <div class="chip" data-v="weekends">Weekends</div>
+          <div class="chip" data-v="custom">Custom</div>
+        </div>
+      </div>
+      <div class="field" id="am-days-wrap" style="display:none">
+        <label>Days</label>
+        <div class="day-row">
+          <div class="day-btn" data-d="0">Su</div>
+          <div class="day-btn" data-d="1">Mo</div>
+          <div class="day-btn" data-d="2">Tu</div>
+          <div class="day-btn" data-d="3">We</div>
+          <div class="day-btn" data-d="4">Th</div>
+          <div class="day-btn" data-d="5">Fr</div>
+          <div class="day-btn" data-d="6">Sa</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Sound</label>
+        <div class="sound-grid" id="am-sound">
+          <div class="sound-opt on" data-s="digital">🔊 Digital</div>
+          <div class="sound-opt" data-s="classic">🔔 Classic</div>
+          <div class="sound-opt" data-s="gentle">🎵 Gentle</div>
+          <div class="sound-opt" data-s="loud">📣 Loud</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="modal-row">
+          <span>Snooze duration</span>
+          <select class="mini-select" id="am-snooze-dur">
+            <option value="0">Off</option>
+            <option value="5">5 min</option>
+            <option value="10" selected>10 min</option>
+            <option value="15">15 min</option>
+            <option value="20">20 min</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <span>Vibration</span>
+          <div class="toggle on" id="am-vib"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeOverlay('alarm-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAlarm()">Save Alarm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ CITY MODAL ══════ -->
+  <div class="overlay" id="city-modal">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-top">
+        <div class="modal-title">Add City</div>
+        <div class="icon-btn" onclick="closeOverlay('city-modal')">✕</div>
+      </div>
+      <input class="city-search-input" id="city-q" placeholder="Search cities..." oninput="filterCities(this.value)" autocomplete="off">
+      <div class="city-results" id="city-res"></div>
+    </div>
+  </div>
+
+  <!-- ══════ ALARM RING ══════ -->
+  <div id="alarm-ring">
+    <div class="ring-wave"><div class="ring-bell">🔔</div></div>
+    <div class="ring-subtitle">Alarm Ringing</div>
+    <div class="ring-time-big" id="ring-t">07:00</div>
+    <div class="ring-name-big" id="ring-n">Wake Up</div>
+    <div class="challenge-wrap" id="ring-challenge" style="display:none">
+      <div class="challenge-hint">Solve to dismiss</div>
+      <div class="challenge-eq" id="ring-eq">3 + 4 = ?</div>
+      <input class="challenge-ans" id="ring-ans" type="number" placeholder="?" oninput="checkChallenge()">
+    </div>
+    <div class="ring-btns">
+      <button class="ring-btn btn-snooze" id="ring-snooze-btn" onclick="snoozeAlarm()">💤 Snooze</button>
+      <button class="ring-btn btn-stop" id="ring-stop-btn" onclick="stopAlarm()">⏹ Stop</button>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let cfg = { format24h:false, theme:'dark', defaultSnooze:10, challenge:false, vibration:true };
+let alarms = [];
+let worldCities = ['America/New_York','Europe/London','Asia/Tokyo'];
+
+// Alarm form state
+let editId = null;
+let amSeg = { h:7, m:0, ap:'AM' };
+let amRepeat = 'once';
+let amDays = [];
+let amSound = 'digital';
+
+// Timer state
+let tDur = 25*60, tRemain = 25*60, tRunning = false, tInterval = null;
+let tSeg = { h:0, m:25, s:0 };
+
+// Stopwatch state
+let swMs = 0, swRun = false, swInt = null, swLapMs = 0;
+let swLapList = [];
+
+// Alarm audio
+let audioCtx = null, audioLoop = null, ringingAlarm = null;
+let challengeAns = null;
+
+const CITIES = [
+  {n:'New York',z:'America/New_York'},{n:'Los Angeles',z:'America/Los_Angeles'},
+  {n:'Chicago',z:'America/Chicago'},{n:'Toronto',z:'America/Toronto'},
+  {n:'São Paulo',z:'America/Sao_Paulo'},{n:'London',z:'Europe/London'},
+  {n:'Paris',z:'Europe/Paris'},{n:'Berlin',z:'Europe/Berlin'},
+  {n:'Madrid',z:'Europe/Madrid'},{n:'Rome',z:'Europe/Rome'},
+  {n:'Amsterdam',z:'Europe/Amsterdam'},{n:'Moscow',z:'Europe/Moscow'},
+  {n:'Dubai',z:'Asia/Dubai'},{n:'Istanbul',z:'Europe/Istanbul'},
+  {n:'Mumbai',z:'Asia/Kolkata'},{n:'Bangkok',z:'Asia/Bangkok'},
+  {n:'Singapore',z:'Asia/Singapore'},{n:'Hong Kong',z:'Asia/Hong_Kong'},
+  {n:'Shanghai',z:'Asia/Shanghai'},{n:'Seoul',z:'Asia/Seoul'},
+  {n:'Tokyo',z:'Asia/Tokyo'},{n:'Sydney',z:'Australia/Sydney'},
+  {n:'Melbourne',z:'Australia/Melbourne'},{n:'Auckland',z:'Pacific/Auckland'},
+  {n:'Honolulu',z:'Pacific/Honolulu'},{n:'Mexico City',z:'America/Mexico_City'},
+  {n:'Buenos Aires',z:'America/Argentina/Buenos_Aires'},
+  {n:'Johannesburg',z:'Africa/Johannesburg'},{n:'Cairo',z:'Africa/Cairo'},
+  {n:'Lagos',z:'Africa/Lagos'},{n:'Nairobi',z:'Africa/Nairobi'},
+  {n:'Riyadh',z:'Asia/Riyadh'},{n:'Jakarta',z:'Asia/Jakarta'},
+  {n:'Taipei',z:'Asia/Taipei'},{n:'Kuala Lumpur',z:'Asia/Kuala_Lumpur'},
+  {n:'Karachi',z:'Asia/Karachi'},{n:'Anchorage',z:'America/Anchorage'},
+];
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+function init() {
+  loadData();
+  applyTheme();
+  buildAnalog();
+  buildSegPicker('alarm-seg-picker', amSeg, false, false);
+  buildSegPicker('timer-seg-picker', tSeg, true, true);
+  tickClock();
+  setInterval(tickClock, 500);
+  setInterval(checkAlarms, 1000);
+  setInterval(renderWorldTimes, 1000);
+  renderAlarms();
+  renderWorld();
+  renderTimerDisplay();
+  updateTimerRing();
+  reqNotif();
+}
+
+function loadData() {
+  try {
+    const c = localStorage.getItem('clk_cfg'); if(c) cfg = {...cfg,...JSON.parse(c)};
+    const a = localStorage.getItem('clk_alarms'); if(a) alarms = JSON.parse(a);
+    const w = localStorage.getItem('clk_world'); if(w) worldCities = JSON.parse(w);
+  } catch(e) {}
+}
+function save() {
+  localStorage.setItem('clk_cfg', JSON.stringify(cfg));
+  localStorage.setItem('clk_alarms', JSON.stringify(alarms));
+  localStorage.setItem('clk_world', JSON.stringify(worldCities));
+}
+
+/* ═══════════════════════════════════════════════
+   SEGMENT TIME PICKER
+   Each block: ▲ / [number] / ▼ / label
+   Click number → inline editing (keyboard / type)
+═══════════════════════════════════════════════ */
+function buildSegPicker(containerId, stateObj, showSeconds, noAmPm) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const fields = showSeconds
+    ? [{key:'h',lbl:'HRS',max:23,min:0},{key:'m',lbl:'MIN',max:59,min:0},{key:'s',lbl:'SEC',max:59,min:0}]
+    : [{key:'h',lbl:'HRS',max:12,min:1},{key:'m',lbl:'MIN',max:59,min:0}];
+
+  let html = `<div class="seg-picker" id="${containerId}-inner">`;
+  fields.forEach((f, i) => {
+    html += `
+      <div class="seg-block">
+        <button class="seg-arrow" onclick="adjSeg('${containerId}','${f.key}',1)">▲</button>
+        <div class="seg-val" id="${containerId}-${f.key}" 
+          onclick="startEdit('${containerId}','${f.key}')"
+          onwheel="wheelSeg(event,'${containerId}','${f.key}')"
+          title="Click to edit">${p2(stateObj[f.key])}</div>
+        <button class="seg-arrow" onclick="adjSeg('${containerId}','${f.key}',-1)">▼</button>
+        <div class="seg-lbl">${f.lbl}</div>
+      </div>`;
+    if (i < fields.length - 1) html += `<div class="seg-colon">:</div>`;
+  });
+
+  if (!noAmPm && !cfg.format24h) {
+    html += `
+      <div class="ampm-stack">
+        <div class="ampm-opt ${stateObj.ap==='AM'?'selected':''}" 
+          id="${containerId}-am" onclick="setAp('${containerId}','AM')">AM</div>
+        <div class="ampm-opt ${stateObj.ap==='PM'?'selected':''}" 
+          id="${containerId}-pm" onclick="setAp('${containerId}','PM')">PM</div>
+      </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function getSegState(cid) {
+  return cid.startsWith('alarm') ? amSeg : tSeg;
+}
+function getSegLimits(cid, key) {
+  if (key === 'm' || key === 's') return {min:0,max:59};
+  if (key === 'h') {
+    if (cid.startsWith('timer')) return {min:0,max:23};
+    return cfg.format24h ? {min:0,max:23} : {min:1,max:12};
+  }
+  return {min:0,max:59};
+}
+
+function adjSeg(cid, key, delta) {
+  const st = getSegState(cid);
+  const {min,max} = getSegLimits(cid, key);
+  const range = max - min + 1;
+  st[key] = ((st[key] - min + delta + range) % range) + min;
+  updateSegDisplay(cid, key);
+  if (cid.startsWith('timer')) syncTimerFromSeg();
+}
+
+function wheelSeg(e, cid, key) {
+  e.preventDefault();
+  adjSeg(cid, key, e.deltaY < 0 ? 1 : -1);
+}
+
+function startEdit(cid, key) {
+  const el = document.getElementById(`${cid}-${key}`);
+  if (!el) return;
+  const st = getSegState(cid);
+  const {min,max} = getSegLimits(cid, key);
+  el.classList.add('editing');
+  el.innerHTML = `<input type="number" min="${min}" max="${max}" value="${p2(st[key])}" 
+    id="${cid}-${key}-inp" inputmode="numeric" pattern="[0-9]*">`;
+  const inp = document.getElementById(`${cid}-${key}-inp`);
+  inp.focus(); inp.select();
+  inp.addEventListener('blur', () => commitEdit(cid, key));
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); commitEdit(cid, key); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); adjSeg(cid,key,1); commitEdit(cid,key); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); adjSeg(cid,key,-1); commitEdit(cid,key); }
+  });
+}
+
+function commitEdit(cid, key) {
+  const inp = document.getElementById(`${cid}-${key}-inp`);
+  if (!inp) return;
+  const st = getSegState(cid);
+  const {min,max} = getSegLimits(cid, key);
+  let v = parseInt(inp.value);
+  if (isNaN(v)) v = st[key];
+  st[key] = Math.min(max, Math.max(min, v));
+  updateSegDisplay(cid, key);
+  if (cid.startsWith('timer')) syncTimerFromSeg();
+}
+
+function updateSegDisplay(cid, key) {
+  const el = document.getElementById(`${cid}-${key}`);
+  if (!el) return;
+  const st = getSegState(cid);
+  el.classList.remove('editing');
+  el.innerHTML = p2(st[key]);
+}
+
+function setAp(cid, val) {
+  const st = getSegState(cid);
+  st.ap = val;
+  const am = document.getElementById(`${cid}-am`);
+  const pm = document.getElementById(`${cid}-pm`);
+  if (am) am.classList.toggle('selected', val==='AM');
+  if (pm) pm.classList.toggle('selected', val==='PM');
+}
+
+function syncTimerFromSeg() {
+  tDur = tSeg.h * 3600 + tSeg.m * 60 + tSeg.s;
+  if (!tRunning) { tRemain = tDur; renderTimerDisplay(); updateTimerRing(); }
+}
+
+/* ═══════════════════════════════════════════════
+   CLOCK
+═══════════════════════════════════════════════ */
+function buildAnalog() {
+  const hg = document.getElementById('a-h-marks');
+  const mg = document.getElementById('a-m-marks');
+  for (let i = 0; i < 12; i++) {
+    const a = i*30*Math.PI/180;
+    const [x1,y1] = [130+114*Math.sin(a), 130-114*Math.cos(a)];
+    const [x2,y2] = [130+124*Math.sin(a), 130-124*Math.cos(a)];
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    Object.assign(l, {}); l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+    l.setAttribute('class','h-tick'); hg.appendChild(l);
+  }
+  for (let i = 0; i < 60; i++) {
+    if (i%5===0) continue;
+    const a = i*6*Math.PI/180;
+    const [x1,y1] = [130+120*Math.sin(a), 130-120*Math.cos(a)];
+    const [x2,y2] = [130+124*Math.sin(a), 130-124*Math.cos(a)];
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+    l.setAttribute('class','m-tick'); mg.appendChild(l);
+  }
+}
+
+function tickClock() {
+  const now = new Date();
+  const H=now.getHours(), M=now.getMinutes(), S=now.getSeconds(), MS=now.getMilliseconds();
+
+  // Analog
+  const hDeg = (H%12)*30 + M*0.5 + S/120;
+  const mDeg = M*6 + S*0.1;
+  const sDeg = S*6 + MS*0.006;
+  document.getElementById('hH').style.transform = `rotate(${hDeg}deg)`;
+  document.getElementById('hM').style.transform = `rotate(${mDeg}deg)`;
+  document.getElementById('hS').style.transform = `rotate(${sDeg}deg)`;
+
+  // Digital
+  if (cfg.format24h) {
+    document.getElementById('dtime-hm').textContent = p2(H)+':'+p2(M);
+    document.getElementById('dtime-ap').textContent = '';
+  } else {
+    document.getElementById('dtime-hm').textContent = p2(H%12||12)+':'+p2(M);
+    document.getElementById('dtime-ap').textContent = H>=12?'PM':'AM';
+  }
+  document.getElementById('dtime-s').textContent = p2(S);
+
+  // Date
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('clock-date-str').textContent = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate();
+
+  // Greeting
+  const greets = [[0,'Night'],[6,'Morning'],[12,'Afternoon'],[18,'Evening'],[21,'Night']];
+  let g = 'Evening';
+  for (const [t,label] of greets) if (H >= t) g = label;
+  document.getElementById('greeting-word').textContent = g;
+
+  // TZ
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    document.getElementById('tz-name').textContent = tz;
+    const off = -now.getTimezoneOffset();
+    const sign = off>=0?'+':'-';
+    const oH = Math.floor(Math.abs(off)/60), oM = Math.abs(off)%60;
+    document.getElementById('tz-offset-label').textContent = `UTC${sign}${p2(oH)}:${p2(oM)}`;
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+function goTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(tab+'-screen').classList.add('active');
+  document.querySelectorAll('.nav-item, .bn-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════ */
+function applyTheme() {
+  document.getElementById('app').className = cfg.theme === 'light' ? 'theme-light' : '';
+  const st = document.getElementById('sidebar-theme');
+  if (st) st.classList.toggle('on', cfg.theme === 'dark');
+  document.getElementById('sfDark').classList.toggle('selected', cfg.theme === 'dark');
+  document.getElementById('sfLight').classList.toggle('selected', cfg.theme === 'light');
+  document.getElementById('sf12').classList.toggle('selected', !cfg.format24h);
+  document.getElementById('sf24').classList.toggle('selected', cfg.format24h);
+  document.getElementById('s-challenge').classList.toggle('on', cfg.challenge);
+  document.getElementById('s-vibration').classList.toggle('on', cfg.vibration);
+  document.getElementById('def-snooze').value = cfg.defaultSnooze;
+}
+
+function toggleTheme() {
+  cfg.theme = cfg.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(); save();
+}
+function setThemeMode(m) { cfg.theme = m; applyTheme(); save(); }
+function setFmt(is24) {
+  cfg.format24h = is24; applyTheme(); save();
+  buildSegPicker('alarm-seg-picker', amSeg, false, false);
+}
+function toggleCfg(key) {
+  cfg[key] = !cfg[key];
+  document.getElementById('s-'+key).classList.toggle('on', cfg[key]);
+  save();
+}
+
+/* ═══════════════════════════════════════════════
+   ALARMS
+═══════════════════════════════════════════════ */
+function renderAlarms() {
+  const el = document.getElementById('alarm-list');
+  if (!alarms.length) {
+    el.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e-icon">🔕</div><p>No alarms yet.<br>Tap <b>+</b> to create one.</p></div>';
+    return;
+  }
+  alarms.sort((a,b) => a.h24*60+a.min - (b.h24*60+b.min));
+  el.innerHTML = alarms.map(al => {
+    const h = cfg.format24h ? al.h24 : (al.h24%12||12);
+    const ap = cfg.format24h ? '' : (al.h24>=12?'PM':'AM');
+    const repStr = {once:'Once',daily:'Every day',weekdays:'Mon–Fri',weekends:'Sat–Sun',
+      custom:(al.days||[]).map(d=>['Su','Mo','Tu','We','Th','Fr','Sa'][d]).join(', ')||'—'}[al.repeat]||'Once';
+    const snStr = al.snooze > 0 ? `💤 ${al.snooze}m` : 'No snooze';
+    return `<div class="alarm-card ${al.on?'':'disabled'}" onclick="editAlarm('${al.id}')">
+      <div style="flex:1">
+        <div class="alarm-t">${p2(h)}<span style="opacity:0.5">:</span>${p2(al.min)}<span class="ap"> ${ap}</span></div>
+        <div class="alarm-lbl">${al.label||'Alarm'}</div>
+        <div><span class="alarm-repeat-tag">${repStr}</span> <span class="alarm-repeat-tag">${snStr}</span></div>
+      </div>
+      <div class="alarm-right">
+        <div class="toggle ${al.on?'on':''}" onclick="event.stopPropagation();toggleAl('${al.id}')"></div>
+        <div class="del-btn" onclick="event.stopPropagation();delAl('${al.id}')">🗑</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAl(id) {
+  const a = alarms.find(x => x.id===id);
+  if (a) { a.on = !a.on; save(); renderAlarms(); }
+}
+function delAl(id) {
+  alarms = alarms.filter(x => x.id!==id); save(); renderAlarms();
+}
+
+function openAddAlarm() {
+  editId = null;
+  const now = new Date();
+  amSeg = { h: now.getHours()%12||12, m: now.getMinutes(), ap: now.getHours()>=12?'PM':'AM' };
+  amRepeat = 'once'; amDays = []; amSound = 'digital';
+  document.getElementById('am-title').textContent = 'New Alarm';
+  document.getElementById('am-label').value = '';
+  document.getElementById('am-snooze-dur').value = cfg.defaultSnooze;
+  document.getElementById('am-vib').classList.add('on');
+  buildSegPicker('alarm-seg-picker', amSeg, false, false);
+  syncAlarmModal();
+  openOverlay('alarm-modal');
+}
+
+function editAlarm(id) {
+  const al = alarms.find(x => x.id===id);
+  if (!al) return;
+  editId = id;
+  amSeg = { h: al.h24%12||12, m: al.min, ap: al.h24>=12?'PM':'AM' };
+  amRepeat = al.repeat; amDays = [...(al.days||[])]; amSound = al.sound||'digital';
+  document.getElementById('am-title').textContent = 'Edit Alarm';
+  document.getElementById('am-label').value = al.label||'';
+  document.getElementById('am-snooze-dur').value = al.snooze ?? cfg.defaultSnooze;
+  document.getElementById('am-vib').classList.toggle('on', al.vib !== false);
+  buildSegPicker('alarm-seg-picker', amSeg, false, false);
+  syncAlarmModal();
+  openOverlay('alarm-modal');
+}
+
+function syncAlarmModal() {
+  document.querySelectorAll('#am-repeat .chip').forEach(c => c.classList.toggle('on', c.dataset.v===amRepeat));
+  document.getElementById('am-days-wrap').style.display = amRepeat==='custom'?'block':'none';
+  document.querySelectorAll('#am-days-wrap .day-btn').forEach(b => b.classList.toggle('on', amDays.includes(+b.dataset.d)));
+  document.querySelectorAll('#am-sound .sound-opt').forEach(b => b.classList.toggle('on', b.dataset.s===amSound));
+}
+
+// Wire repeat chips
+document.querySelectorAll('#am-repeat .chip').forEach(c => c.onclick = function() {
+  amRepeat = this.dataset.v;
+  document.querySelectorAll('#am-repeat .chip').forEach(x => x.classList.remove('on'));
+  this.classList.add('on');
+  document.getElementById('am-days-wrap').style.display = amRepeat==='custom'?'block':'none';
+});
+// Wire day buttons
+document.querySelectorAll('#am-days-wrap .day-btn').forEach(b => b.onclick = function() {
+  const d = +this.dataset.d;
+  if (amDays.includes(d)) amDays = amDays.filter(x=>x!==d); else amDays.push(d);
+  this.classList.toggle('on', amDays.includes(d));
+});
+// Wire sound buttons
+document.querySelectorAll('#am-sound .sound-opt').forEach(b => b.onclick = function() {
+  amSound = this.dataset.s;
+  document.querySelectorAll('#am-sound .sound-opt').forEach(x=>x.classList.remove('on'));
+  this.classList.add('on');
+  previewSound(amSound);
+});
+// Wire vib toggle
+document.getElementById('am-vib').onclick = function() { this.classList.toggle('on'); };
+
+function saveAlarm() {
+  let h24 = amSeg.h;
+  if (!cfg.format24h) {
+    if (amSeg.ap === 'AM') { if (h24===12) h24=0; }
+    else { if (h24!==12) h24+=12; }
+  }
+  const snoozeVal = parseInt(document.getElementById('am-snooze-dur').value) || 0;
+  const al = {
+    id: editId || 'al_'+Date.now(),
+    h24, min: amSeg.m, label: document.getElementById('am-label').value.trim()||'Alarm',
+    repeat: amRepeat, days: [...amDays], sound: amSound,
+    snooze: snoozeVal, vib: document.getElementById('am-vib').classList.contains('on'),
+    on: true
+  };
+  if (editId) { const i = alarms.findIndex(x=>x.id===editId); if(i>=0) alarms[i]=al; }
+  else alarms.push(al);
+  save(); renderAlarms(); closeOverlay('alarm-modal');
+}
+
+/* ═══════════════════════════════════════════════
+   CHECK ALARMS
+═══════════════════════════════════════════════ */
+function checkAlarms() {
+  if (ringingAlarm) return;
+  const now = new Date();
+  const H=now.getHours(), M=now.getMinutes(), S=now.getSeconds(), D=now.getDay();
+  if (S!==0) return;
+  for (const al of alarms) {
+    if (!al.on || al.h24!==H || al.min!==M) continue;
+    let ring = false;
+    if (al.repeat==='once') ring=true;
+    else if (al.repeat==='daily') ring=true;
+    else if (al.repeat==='weekdays') ring=D>=1&&D<=5;
+    else if (al.repeat==='weekends') ring=D===0||D===6;
+    else if (al.repeat==='custom') ring=(al.days||[]).includes(D);
+    if (ring) {
+      if (al.repeat==='once') { al.on=false; save(); }
+      triggerAlarm(al); break;
+    }
+  }
+}
+
+function triggerAlarm(al) {
+  ringingAlarm = al;
+  const h = cfg.format24h ? al.h24 : (al.h24%12||12);
+  const ap = cfg.format24h ? '' : (al.h24>=12?' PM':' AM');
+  document.getElementById('ring-t').textContent = p2(h)+':'+p2(al.min)+ap;
+  document.getElementById('ring-n').textContent = al.label||'Alarm';
+  document.getElementById('ring-snooze-btn').style.display = al.snooze>0 ? 'block' : 'none';
+
+  if (cfg.challenge) {
+    const a=Math.floor(Math.random()*20)+1, b=Math.floor(Math.random()*20)+1;
+    const ops=[['+',(x,y)=>x+y],['-',(x,y)=>x-y],['×',(x,y)=>x*y]];
+    const [sym,fn] = ops[Math.floor(Math.random()*3)];
+    challengeAns = fn(a,b);
+    document.getElementById('ring-eq').textContent = `${a} ${sym} ${b} = ?`;
+    document.getElementById('ring-challenge').style.display = 'block';
+    document.getElementById('ring-challenge-ans').value = '';
+    document.getElementById('ring-stop-btn').style.display = 'none';
+  } else {
+    document.getElementById('ring-challenge').style.display = 'none';
+    document.getElementById('ring-stop-btn').style.display = 'block';
+  }
+
+  document.getElementById('alarm-ring').classList.add('show');
+  startSound(al.sound||'digital', true);
+  if (al.vib && cfg.vibration && navigator.vibrate) navigator.vibrate([500,200,500,200,500]);
+  notify('⏰ '+(al.label||'Alarm'), p2(h)+':'+p2(al.min)+ap);
+}
+
+function checkChallenge() {
+  const v = parseInt(document.getElementById('ring-ans').value);
+  if (v === challengeAns) {
+    document.getElementById('ring-stop-btn').style.display = 'block';
+    stopAlarm();
+  }
+}
+
+function snoozeAlarm() {
+  const dur = ringingAlarm?.snooze > 0 ? ringingAlarm.snooze : cfg.defaultSnooze;
+  const now = new Date(); now.setMinutes(now.getMinutes()+dur);
+  alarms.push({ id:'snz_'+Date.now(), h24:now.getHours(), min:now.getMinutes(),
+    label:'💤 Snooze', repeat:'once', days:[], sound:ringingAlarm?.sound||'digital',
+    snooze:0, vib:true, on:true });
+  save(); renderAlarms(); stopAlarm();
+}
+function stopAlarm() {
+  document.getElementById('alarm-ring').classList.remove('show');
+  ringingAlarm = null; stopSound();
+  if (navigator.vibrate) navigator.vibrate(0);
+}
+
+/* ═══════════════════════════════════════════════
+   TIMER
+═══════════════════════════════════════════════ */
+function setTimerSecs(s) {
+  if (tRunning) return;
+  tDur = s; tRemain = s;
+  tSeg.h = Math.floor(s/3600);
+  tSeg.m = Math.floor((s%3600)/60);
+  tSeg.s = s%60;
+  updateSegDisplay('timer-seg-picker','h');
+  updateSegDisplay('timer-seg-picker','m');
+  updateSegDisplay('timer-seg-picker','s');
+  renderTimerDisplay(); updateTimerRing();
+  document.getElementById('t-status').textContent = 'Ready';
+}
+
+function toggleTimer() {
+  if (!tRunning) startTimer(); else pauseTimer();
+}
+function startTimer() {
+  if (tRemain<=0) return;
+  tRunning = true;
+  const btn = document.getElementById('t-main-btn');
+  btn.textContent = '⏸'; btn.classList.add('paused');
+  document.getElementById('t-status').textContent = 'Running';
+  tInterval = setInterval(() => {
+    tRemain--; renderTimerDisplay(); updateTimerRing();
+    if (tRemain<=0) finishTimer();
+  }, 1000);
+}
+function pauseTimer() {
+  tRunning = false; clearInterval(tInterval);
+  const btn = document.getElementById('t-main-btn');
+  btn.textContent = '▶'; btn.classList.remove('paused');
+  document.getElementById('t-status').textContent = 'Paused';
+}
+function resetTimer() {
+  pauseTimer(); tRemain = tDur;
+  renderTimerDisplay(); updateTimerRing();
+  document.getElementById('t-status').textContent = 'Ready';
+}
+function finishTimer() {
+  pauseTimer();
+  const name = document.getElementById('t-name-input').value.trim() || 'Timer';
+  document.getElementById('t-done-name').textContent = name;
+  const snz = parseInt(document.getElementById('t-snooze-sel').value)||0;
+  document.getElementById('t-done-snooze-btn').style.display = snz>0 ? 'flex' : 'none';
+  document.getElementById('timer-done').classList.add('show');
+  playDoneSound();
+  notify('⏱ Timer Done!', name+' finished.');
+  if (navigator.vibrate) navigator.vibrate([500,100,500]);
+}
+function timerSnooze() {
+  const snz = parseInt(document.getElementById('t-snooze-sel').value)||5;
+  dismissTimer(); setTimerSecs(snz*60); startTimer();
+}
+function dismissTimer() { document.getElementById('timer-done').classList.remove('show'); resetTimer(); }
+
+function renderTimerDisplay() {
+  const r = tRemain;
+  const h=Math.floor(r/3600), m=Math.floor((r%3600)/60), s=r%60;
+  document.getElementById('t-display').textContent = h>0 ? `${p2(h)}:${p2(m)}:${p2(s)}` : `${p2(m)}:${p2(s)}`;
+}
+function updateTimerRing() {
+  const circ = 2*Math.PI*116;
+  const prog = tDur>0 ? tRemain/tDur : 1;
+  document.getElementById('t-prog').style.strokeDasharray = circ;
+  document.getElementById('t-prog').style.strokeDashoffset = circ*(1-prog);
+}
+
+/* ═══════════════════════════════════════════════
+   STOPWATCH
+═══════════════════════════════════════════════ */
+function swToggle() { swRun ? swPause() : swStart(); }
+function swStart() {
+  swRun = true;
+  const t0 = Date.now() - swMs;
+  document.getElementById('sw-btn').textContent = '⏸';
+  document.getElementById('sw-btn').classList.add('paused');
+  document.getElementById('sw-lap-btn').style.opacity = '1';
+  swInt = setInterval(() => { swMs = Date.now()-t0; renderSw(); }, 50);
+}
+function swPause() {
+  swRun = false; clearInterval(swInt);
+  document.getElementById('sw-btn').textContent = '▶';
+  document.getElementById('sw-btn').classList.remove('paused');
+}
+function swReset() {
+  swPause(); swMs=0; swLapMs=0; swLapList=[];
+  renderSw();
+  document.getElementById('sw-laps').innerHTML='';
+  document.getElementById('sw-lap-btn').style.opacity='0.3';
+}
+function swLap() {
+  if (!swRun) return;
+  const split = swMs - swLapMs;
+  swLapList.unshift({ n: swLapList.length+1, split, total: swMs });
+  swLapMs = swMs;
+  renderSwLaps();
+}
+function renderSw() {
+  const ms = swMs % 1000, s = Math.floor(swMs/1000)%60, m = Math.floor(swMs/60000)%60, h = Math.floor(swMs/3600000);
+  document.getElementById('sw-disp').textContent = h>0 ? `${p2(h)}:${p2(m)}:${p2(s)}` : `${p2(m)}:${p2(s)}`;
+  document.getElementById('sw-ms').textContent = p2(Math.floor(ms/10));
+}
+function renderSwLaps() {
+  if (!swLapList.length) { document.getElementById('sw-laps').innerHTML=''; return; }
+  const splits = swLapList.map(l=>l.split);
+  const best = Math.min(...splits), worst = Math.max(...splits);
+  document.getElementById('sw-laps').innerHTML = swLapList.map(l => {
+    const cls = swLapList.length>1 ? (l.split===best?'best':l.split===worst?'worst':'') : '';
+    return `<div class="lap-row ${cls}"><span>${l.n}</span><span class="lap-sp">${fmtSw(l.split)}</span><span class="lap-tot">${fmtSw(l.total)}</span></div>`;
+  }).join('');
+}
+function fmtSw(ms) {
+  const s=Math.floor(ms/1000)%60, m=Math.floor(ms/60000)%60, cs=Math.floor((ms%1000)/10);
+  return `${p2(m)}:${p2(s)}.${p2(cs)}`;
+}
+
+/* ═══════════════════════════════════════════════
+   WORLD CLOCK
+═══════════════════════════════════════════════ */
+function renderWorld() {
+  const el = document.getElementById('world-list');
+  if (!worldCities.length) {
+    el.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="e-icon">🌍</div><p>No cities added.<br>Tap <b>+</b> to add.</p></div>';
+    return;
+  }
+  el.innerHTML = worldCities.map((tz,i) => {
+    const info = tzInfo(tz);
+    const city = CITIES.find(c=>c.z===tz)?.n || tz;
+    return `<div class="city-card">
+      <div class="dn-icon ${info.day?'day':'night'}">${info.day?'☀️':'🌙'}</div>
+      <div class="city-info"><div class="city-name">${city}</div><div class="city-off">${info.off}</div></div>
+      <div class="city-right"><div class="city-t">${info.time}</div><div class="city-d">${info.date}</div></div>
+      <span class="city-rm" onclick="rmCity(${i})">✕</span>
+    </div>`;
+  }).join('');
+}
+function renderWorldTimes() {
+  document.querySelectorAll('.city-card').forEach((card, i) => {
+    if (i >= worldCities.length) return;
+    const info = tzInfo(worldCities[i]);
+    const t = card.querySelector('.city-t');
+    const dn = card.querySelector('.dn-icon');
+    if (t) t.textContent = info.time;
+    if (dn) { dn.textContent = info.day?'☀️':'🌙'; dn.className=`dn-icon ${info.day?'day':'night'}`; }
+  });
+}
+function tzInfo(tz) {
+  try {
+    const now = new Date();
+    const time = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:!cfg.format24h}).format(now);
+    const date = new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short',month:'short',day:'numeric'}).format(now);
+    const H = parseInt(new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',hour12:false}).format(now));
+    const localOff = -now.getTimezoneOffset();
+    const tzDate = new Date(now.toLocaleString('en-US',{timeZone:tz}));
+    const locDate = new Date(now.toLocaleString('en-US'));
+    const diffMin = Math.round((tzDate-locDate)/60000);
+    const sign = diffMin>=0?'+':'-';
+    const dH = Math.floor(Math.abs(diffMin)/60), dM = Math.abs(diffMin)%60;
+    const off = diffMin===0 ? 'Local time' : `${sign}${dH}h${dM>0?' '+dM+'m':''} from local`;
+    return { time, date, off, day: H>=6&&H<20 };
+  } catch(e) { return {time:'--:--',date:'',off:'',day:true}; }
+}
+function rmCity(i) { worldCities.splice(i,1); save(); renderWorld(); }
+function openAddCity() {
+  document.getElementById('city-q').value = '';
+  filterCities('');
+  openOverlay('city-modal');
+  setTimeout(()=>document.getElementById('city-q').focus(),300);
+}
+function filterCities(q) {
+  const res = CITIES.filter(c => c.n.toLowerCase().includes(q.toLowerCase()) && !worldCities.includes(c.z));
+  document.getElementById('city-res').innerHTML = res.slice(0,8).map(c =>
+    `<div class="city-res" onclick="addCity('${c.z}')">${c.n}</div>`
+  ).join('') || '<div style="padding:14px 16px;color:var(--text3);font-size:14px">No results</div>';
+}
+function addCity(tz) { if(!worldCities.includes(tz)) worldCities.push(tz); save(); renderWorld(); closeOverlay('city-modal'); }
+
+/* ═══════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════ */
+function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
+});
+
+/* ═══════════════════════════════════════════════
+   SOUND
+═══════════════════════════════════════════════ */
+let soundCtx = null, soundLoop = null, soundLooping = false;
+
+function startSound(type, loop) {
+  try {
+    soundCtx = new (window.AudioContext||window.webkitAudioContext)();
+    soundLooping = loop;
+    playPattern(type);
+  } catch(e){}
+}
+function playPattern(type) {
+  if (!soundCtx) return;
+  const ctx = soundCtx;
+  const patterns = {
+    digital: [[880,0.08,'square'],[880,0.08,'square'],[880,0.08,'square']],
+    classic: [[440,0.5,'sine'],[550,0.5,'sine']],
+    gentle:  [[523,0.25,'sine'],[659,0.25,'sine'],[784,0.25,'sine']],
+    loud:    [[1100,0.1,'square'],[1100,0.1,'square'],[880,0.1,'square'],[1100,0.1,'square']]
+  };
+  const notes = patterns[type] || patterns.digital;
+  let t = ctx.currentTime + 0.05;
+  notes.forEach(([f,dur,wave]) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = f; osc.type = wave;
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t+dur);
+    osc.start(t); osc.stop(t+dur); t+=dur+0.04;
+  });
+  if (soundLooping) soundLoop = setTimeout(()=>playPattern(type), (t-ctx.currentTime+0.15)*1000);
+}
+function stopSound() {
+  soundLooping = false; clearTimeout(soundLoop);
+  if (soundCtx) { try{soundCtx.close();}catch(e){} soundCtx=null; }
+}
+function previewSound(t) {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = {digital:880,classic:440,gentle:523,loud:1100}[t]||880;
+    osc.type = t==='classic'||t==='gentle' ? 'sine' : 'square';
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+    osc.start(); osc.stop(ctx.currentTime+0.5);
+  } catch(e){}
+}
+function playDoneSound() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [523,659,784,1047].forEach((f,i)=>{
+      const osc=ctx.createOscillator(),gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=f;
+      const t=ctx.currentTime+i*0.18;
+      gain.gain.setValueAtTime(0.2,t); gain.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+      osc.start(t); osc.stop(t+0.3);
+    });
+  } catch(e){}
+}
+
+/* ═══════════════════════════════════════════════
+   NOTIFICATIONS
+═══════════════════════════════════════════════ */
+function reqNotif() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+function notify(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification(title, { body, icon:'⏰', requireInteraction:true }); } catch(e){}
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════ */
+function p2(n) { return String(n).padStart(2,'0'); }
+
+/* ═══════════════════════════════════════════════
+   SEED DEFAULTS & START
+═══════════════════════════════════════════════ */
+init();
+
+if (!alarms.length) {
+  alarms = [
+    {id:'a1',h24:7,min:0,label:'Wake Up',repeat:'weekdays',days:[],sound:'digital',snooze:10,vib:true,on:true},
+    {id:'a2',h24:9,min:30,label:'Workout',repeat:'weekends',days:[],sound:'classic',snooze:5,vib:true,on:false},
+    {id:'a3',h24:18,min:30,label:'Study',repeat:'daily',days:[],sound:'gentle',snooze:0,vib:false,on:true},
+  ];
+  save(); renderAlarms();
+}
+</script>
+</body>
+</html>
+
