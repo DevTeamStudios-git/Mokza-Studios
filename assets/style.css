@@ -547,6 +547,13 @@ img { max-width: 100%; display: block; }
 .dot-yellow { background: var(--accent-warning); box-shadow: 0 0 6px var(--accent-warning); }
 .dot-red { background: var(--accent-error); box-shadow: 0 0 6px var(--accent-error); }
 .dot-grey { background: var(--text-muted); }
+/* Auth Modal */
+.auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--ov-06); padding-bottom: 0.5rem; }
+.auth-tab { flex: 1; padding: 0.6rem; border: none; background: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); transition: var(--transition-fast); }
+.auth-tab:hover { background: var(--ov-08); color: var(--text-primary); }
+.auth-tab.active { background: var(--accent-primary); color: var(--on-accent); }
+.auth-section { display: none; }
+.auth-section:not(.hidden) { display: block; }
 .hub-stat-big { font-size: 1.75rem; font-weight: 800; line-height: 1; color: var(--text-secondary); }
 [data-theme="light"] .hub-stat-big { color: var(--accent-primary); }
 .hub-stat-label { font-size: 0.7rem; margin-top: 0.25rem; color: var(--text-muted); }

@@ -15,7 +15,7 @@ const state = {
   chatMessages: [],
   activityLog: [],
   featureCards: {
-    home: [], about: [], contact: [], community: [], roblox: [], creations: []
+    home: [], about: [], contact: [], community: [], roblox: [], creations: [], tos: []
   },
   navigationLinks: [
     { id: 'nav_home', label: 'Home', page: 'home', enabled: true, author: 'System', minRank: null },
@@ -24,6 +24,7 @@ const state = {
     { id: 'nav_community', label: 'Community', page: 'community', enabled: true, author: 'System', minRank: null },
     { id: 'nav_roblox', label: 'Roblox', page: 'roblox', enabled: true, author: 'System', minRank: null },
     { id: 'nav_creations', label: 'Creations', page: 'creations', enabled: true, author: 'System', minRank: null },
+    { id: 'nav_tos', label: 'Terms of Service', page: 'tos', enabled: true, author: 'System', minRank: null },
     { id: 'nav_workspace', label: 'Workspace', page: 'workspace', enabled: true, author: 'System', minRank: 'Apprentice' }
   ],
   pageViews: {},
@@ -35,6 +36,90 @@ const state = {
   contactMessages: [],
   textOverrides: {},
   siteSettings: { discordUrl: '', contactEmail: '' },
+  tosContent: {
+    lastUpdated: new Date().toISOString(),
+    content: `<h1>Terms of Service</h1>
+      <p><strong>Last Updated:</strong> ${new Date().toLocaleDateString()}</p>
+      
+      <h2>1. Acceptance of Terms</h2>
+      <p>By accessing and using Mokza Studios' website and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
+      
+      <h2>2. Use of Services</h2>
+      <p>You may use our services for lawful purposes only. You agree not to:</p>
+      <ul>
+        <li>Use the services for any illegal purpose</li>
+        <li>Violate any international, federal, provincial, or local laws</li>
+        <li>Infringe upon our intellectual property or that of others</li>
+        <li>Harass, abuse, or harm other users</li>
+        <li>Submit false, misleading, or fraudulent information</li>
+      </ul>
+      
+      <h2>3. User Content</h2>
+      <p>By submitting content (suggestions, messages, etc.) to our platform, you grant us a non-exclusive, worldwide, royalty-free license to use, display, and distribute such content. You represent that you have the right to grant such license.</p>
+      
+      <h2>4. Privacy Policy</h2>
+      <p>Your privacy is important to us. Please review our Privacy Policy, which also governs our services and explains how we collect, use, and protect your data.</p>
+      
+      <h2>5. Disclaimer</h2>
+      <p>Our services are provided "as is" without warranties of any kind. We do not guarantee that the services will be uninterrupted, secure, or error-free.</p>
+      
+      <h2>6. Limitation of Liability</h2>
+      <p>Mokza Studios shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of our services.</p>
+      
+      <h2>7. Changes to Terms</h2>
+      <p>We reserve the right to modify these terms at any time. Continued use of our services after such modifications constitutes acceptance of the updated terms.</p>
+      
+      <h2>8. Contact</h2>
+      <p>If you have questions about these Terms of Service, please contact us through our contact page.</p>`
+  },
+  translations: {
+    en: {
+      navHome: 'Home',
+      navAbout: 'About Us',
+      navContact: 'Contact',
+      navCommunity: 'Community',
+      navRoblox: 'Roblox',
+      navCreations: 'Creations',
+      navTOS: 'Terms of Service',
+      navWorkspace: 'Workspace',
+      suggestionTitle: 'Share Your Suggestions',
+      suggestionDesc: 'We value your feedback! Help us improve by sharing your ideas.',
+      suggestionSubmit: 'Submit Suggestion',
+      suggestionPlaceholder: 'Tell us your ideas, feature requests, or feedback...',
+      suggestionEmail: 'Email (optional) - receive notifications when your suggestion is reviewed'
+    },
+    es: {
+      navHome: 'Inicio',
+      navAbout: 'Sobre Nosotros',
+      navContact: 'Contacto',
+      navCommunity: 'Comunidad',
+      navRoblox: 'Roblox',
+      navCreations: 'Creaciones',
+      navTOS: 'Términos de Servicio',
+      navWorkspace: 'Espacio de Trabajo',
+      suggestionTitle: 'Comparte tus Sugerencias',
+      suggestionDesc: '¡Valoramos tus comentarios! Ayúdanos a mejorar compartiendo tus ideas.',
+      suggestionSubmit: 'Enviar Sugerencia',
+      suggestionPlaceholder: 'Cuéntanos tus ideas, solicitudes de funciones o comentarios...',
+      suggestionEmail: 'Correo electrónico (opcional) - recibe notificaciones cuando se revise tu sugerencia'
+    },
+    fr: {
+      navHome: 'Accueil',
+      navAbout: 'À Propos',
+      navContact: 'Contact',
+      navCommunity: 'Communauté',
+      navRoblox: 'Roblox',
+      navCreations: 'Créations',
+      navTOS: 'Conditions d\'Utilisation',
+      navWorkspace: 'Espace de Travail',
+      suggestionTitle: 'Partagez Vos Suggestions',
+      suggestionDesc: 'Nous apprécions vos commentaires! Aidez-nous à nous améliorer en partageant vos idées.',
+      suggestionSubmit: 'Envoyer Suggestion',
+      suggestionPlaceholder: 'Dites-nous vos idées, demandes de fonctionnalités ou commentaires...',
+      suggestionEmail: 'E-mail (optionnel) - recevez des notifications lorsque votre suggestion est examinée'
+    }
+  },
+  currentLanguage: 'en',
   seeded: {},
   /* per-session / per-user UI state (never synced to the shared database) */
   editMode: false,
@@ -163,6 +248,40 @@ function isAuthLocked() {
   return false;
 }
 
+// ── USER AUTHENTICATION (OAuth + Dev Team) ──
+function showUserLoginModal() {
+  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>Sign In</h2><button class="modal-close" onclick="closeAuthModal()">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">Sign In</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">Dev Team</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">Sign in with your preferred account to track your suggestions and receive notifications.</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> Sign in with Discord</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Sign in with Google</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">By signing in, you agree to our <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">Terms of Service</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">Security Code</div><input type="password" id="securityCodeInput" class="input-base" placeholder="Enter security code" /><div class="label-base" style="margin-top:1rem;">Credentials</div><input type="text" id="usernameInput" class="input-base" placeholder="Username" /><input type="password" id="passwordInput" class="input-base" placeholder="Password" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">Login</button><button class="btn-ghost" onclick="closeAuthModal()">Cancel</button></div></div></div></div>';
+  document.getElementById('authModal').classList.remove('hidden');
+}
+
+function switchAuthTab(tab) {
+  var oauthSection = document.getElementById('oauthSection');
+  var devSection = document.getElementById('devSection');
+  var tabs = document.querySelectorAll('.auth-tab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  if (tab === 'oauth') {
+    oauthSection.classList.remove('hidden');
+    devSection.classList.add('hidden');
+    tabs[0].classList.add('active');
+  } else {
+    oauthSection.classList.add('hidden');
+    devSection.classList.remove('hidden');
+    tabs[1].classList.add('active');
+  }
+}
+
+function oauthLogin(provider) {
+  // TODO: Implement OAuth flow
+  // This requires backend OAuth endpoints and API keys
+  showNotification('Coming Soon', provider.charAt(0).toUpperCase() + provider.slice(1) + ' OAuth login will be available soon!', 'info');
+  console.log('[OAuth] Provider:', provider);
+  // Example implementation:
+  // window.location.href = '/api/auth/' + provider;
+}
+window.oauthLogin = oauthLogin;
+window.switchAuthTab = switchAuthTab;
+}
+
 async function handleAuthSubmit() {
   if (isAuthLocked()) {
     var remaining = Math.ceil((_authLockedUntil - Date.now()) / 1000);
@@ -204,8 +323,7 @@ async function handleAuthSubmit() {
 }
 
 function showAuthModal() {
-  document.getElementById('authModal').classList.remove('hidden');
-  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>Developer Authentication</h2><button class="modal-close" onclick="closeAuthModal()">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="label-base">Security Code</div><input type="password" id="securityCodeInput" class="input-base" placeholder="Enter security code" /><div class="label-base" style="margin-top:1rem;">Credentials</div><input type="text" id="usernameInput" class="input-base" placeholder="Username" /><input type="password" id="passwordInput" class="input-base" placeholder="Password" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">Login</button><button class="btn-ghost" onclick="closeAuthModal()">Cancel</button></div></div></div>';
+  showUserLoginModal();
 }
 
 function closeAuthModal() {
@@ -387,6 +505,15 @@ function renderNavigation() {
   mobile.innerHTML = enabled.map(function(l) {
     return '<button class="mobile-nav-link ' + (state.currentPage === l.page ? 'active' : '') + '" onclick="changePage(\'' + l.page + '\');closeMobileNav();">' + escHtml(l.label) + '</button>';
   }).join('');
+  
+  // Add language selector
+  var langSelector = '<div class="lang-selector" style="margin-left:1rem;display:flex;gap:0.5rem;align-items:center;">' +
+    '<button class="lang-btn" onclick="setLanguage(\'en\')" style="padding:0.4rem 0.6rem;border:1px solid var(--ov-12);background:transparent;color:var(--text-secondary);border-radius:var(--radius-sm);cursor:pointer;' + (state.currentLanguage === 'en' ? 'background:var(--accent-primary);color:var(--on-accent);border-color:var(--accent-primary);' : '') + '">EN</button>' +
+    '<button class="lang-btn" onclick="setLanguage(\'es\')" style="padding:0.4rem 0.6rem;border:1px solid var(--ov-12);background:transparent;color:var(--text-secondary);border-radius:var(--radius-sm);cursor:pointer;' + (state.currentLanguage === 'es' ? 'background:var(--accent-primary);color:var(--on-accent);border-color:var(--accent-primary);' : '') + '">ES</button>' +
+    '<button class="lang-btn" onclick="setLanguage(\'fr\')" style="padding:0.4rem 0.6rem;border:1px solid var(--ov-12);background:transparent;color:var(--text-secondary);border-radius:var(--radius-sm);cursor:pointer;' + (state.currentLanguage === 'fr' ? 'background:var(--accent-primary);color:var(--on-accent);border-color:var(--accent-primary);' : '') + '">FR</button>' +
+    '</div>';
+  
+  nav.innerHTML += langSelector;
   afterRender();
 }
 
@@ -433,6 +560,7 @@ function renderPage() {
     case 'community': content.innerHTML = renderCommunity(); break;
     case 'roblox': content.innerHTML = renderRoblox(); break;
     case 'creations': content.innerHTML = renderCreations(); renderProjectsGrid(); break;
+    case 'tos': content.innerHTML = renderTOS(); break;
     case 'workspace': content.innerHTML = renderWorkspace(); break;
     default: content.innerHTML = renderGenericPage(state.currentPage);
   }
@@ -469,7 +597,7 @@ function renderHome(annHtml) {
   var openTasks = state.tasks.filter(function(t) { return !t.done; }).length;
   return annHtml + '<div class="hero"><div class="hero-bg"></div><div class="hero-content"><div class="hero-badge">' + svgIcon('sparkles', 16) + ' Mokza Studios</div><h1 class="hero-title">Building the Future</h1><p class="hero-subtitle">Independent game studio creating exceptional digital experiences, Roblox projects, and more.</p><div class="hero-actions"><button class="btn btn-primary" onclick="changePage(\'creations\')">View Projects</button><button class="btn btn-outline" onclick="changePage(\'community\')">Join Community</button></div><div class="hero-stats"><div class="stat-card"><div class="stat-number">' + state.projects.length + '</div><div class="stat-label">Projects</div></div><div class="stat-card"><div class="stat-number">' + openTasks + '</div><div class="stat-label">Open Tasks</div></div><div class="stat-card"><div class="stat-number">' + state.announcements.length + '</div><div class="stat-label">Announcements</div></div></div></div></div>' +
     pageElements('home') + renderCardsSection('home', 'Add Feature Card') +
-    '<div class="suggestions-section"><div class="suggestions-header"><h2 class="suggestions-title">💡 Share Your Suggestions</h2><p class="suggestions-description">We value your feedback! Help us improve by sharing your ideas.</p></div><div class="suggestion-form"><textarea id="suggestionInput" placeholder="Tell us your ideas, feature requests, or feedback..."></textarea><button class="btn btn-primary" onclick="submitSuggestion()">Submit Suggestion</button></div>' +
+    '<div class="suggestions-section"><div class="suggestions-header"><h2 class="suggestions-title">💡 Share Your Suggestions</h2><p class="suggestions-description">We value your feedback! Help us improve by sharing your ideas.</p></div><div class="suggestion-form"><textarea id="suggestionInput" placeholder="Tell us your ideas, feature requests, or feedback..."></textarea><input type="email" id="suggestionEmail" class="input-base" placeholder="Email (optional) - receive notifications when your suggestion is reviewed" style="margin-top:1rem;width:100%;" /><button class="btn btn-primary" onclick="submitSuggestion()">Submit Suggestion</button></div>' +
     (state.suggestions.length > 0 ? '<div class="suggestion-list">' + state.suggestions.slice(0, 5).map(function(s) {
       var canManage = state.currentUser && canAccess('Apprentice');
       var statusBadge = s.status === 'approved' ? '<span style="color:var(--accent-success);font-size:0.75rem;font-weight:700;margin-left:0.5rem">✓ Approved</span>' : s.status === 'denied' ? '<span style="color:var(--accent-error);font-size:0.75rem;font-weight:700;margin-left:0.5rem">✗ Denied</span>' : '';
@@ -504,6 +632,34 @@ function sendContactMessage() {
   showNotification('Message sent', 'Thanks ' + name + ' — we will get back to you soon.', 'success');
   ['contactName', 'contactEmail', 'contactMessage'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
 }
+
+function renderTOS() {
+  var canEdit = canAccess('CoOwner');
+  var editBtn = canEdit ? '<button class="btn btn-primary" style="margin-bottom:1.5rem;" onclick="openTOSEditor()">' + svgIcon('pencil', 16) + ' Edit Terms of Service</button>' : '';
+  return pageHeader('Terms of Service', 'Please read our terms carefully before using our services.') + editBtn +
+    '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:900px;margin:0 auto;line-height:1.8;"><div id="tosContent">' + state.tosContent.content + '</div></div>' +
+    '<div style="text-align:center;margin-top:2rem;color:var(--text-muted);font-size:0.85rem;"><p>Last updated: ' + escHtml(new Date(state.tosContent.lastUpdated).toLocaleString()) + '</p></div>';
+}
+
+function openTOSEditor() {
+  if (!canAccess('CoOwner')) { showNotification('Access Denied', 'CoOwner+ required to edit TOS', 'error'); return; }
+  openModal('Edit Terms of Service', '<label class="modal-label">Terms of Service Content (HTML allowed)</label><textarea id="tosEditor" class="modal-input" rows="20" style="font-family:monospace;font-size:0.85rem;">' + escHtml(state.tosContent.content) + '</textarea><div class="modal-buttons"><button class="btn-primary" onclick="saveTOS()">Save Changes</button><button class="btn-ghost" onclick="closeElementModal()">Cancel</button></div>');
+}
+
+function saveTOS() {
+  if (!canAccess('CoOwner')) { showNotification('Access Denied', 'CoOwner+ required to edit TOS', 'error'); return; }
+  var content = document.getElementById('tosEditor').value.trim();
+  if (!content) { showNotification('Empty Content', 'TOS content cannot be empty', 'error'); return; }
+  state.tosContent.content = content;
+  state.tosContent.lastUpdated = new Date().toISOString();
+  closeElementModal();
+  logActivity('TOS Updated', 'Terms of Service updated by ' + state.currentUser.username);
+  saveToFirestore();
+  showNotification('Saved', 'Terms of Service updated successfully', 'success');
+  renderPage();
+}
+window.openTOSEditor = openTOSEditor;
+window.saveTOS = saveTOS;
 
 function renderCommunity() {
   return pageHeader('Community', 'Join our growing community of developers, designers, and creators!') +
@@ -557,13 +713,17 @@ function renderWorkspace() {
 function submitSuggestion() {
   if (state.raidMode && !state.currentUser) { showNotification('Unavailable', 'Submissions are temporarily disabled.', 'error'); return; }
   var inp = document.getElementById('suggestionInput');
+  var emailInp = document.getElementById('suggestionEmail');
   var text = inp.value.trim();
+  var email = emailInp ? emailInp.value.trim() : '';
   if (!text) { showNotification('Empty Suggestion', 'Please enter your suggestion', 'error'); return; }
-  state.suggestions.unshift({ id: Date.now(), author: state.currentUser ? state.currentUser.username : 'Anonymous', text: text, timestamp: new Date().toLocaleString(), status: 'pending' });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', 'Please check your email address for notifications', 'error'); return; }
+  state.suggestions.unshift({ id: Date.now(), author: state.currentUser ? state.currentUser.username : 'Anonymous', email: email, text: text, timestamp: new Date().toLocaleString(), status: 'pending' });
   inp.value = '';
+  if (emailInp) emailInp.value = '';
   logActivity('Suggestion Submitted', 'New suggestion from ' + (state.currentUser ? state.currentUser.username : 'Anonymous'));
   saveToFirestore();
-  showNotification('Thank You!', 'Your suggestion has been submitted', 'success');
+  showNotification('Thank You!', 'Your suggestion has been submitted' + (email ? '. You will receive email notifications.' : ''), 'success');
   renderPage();
 }
 
@@ -578,6 +738,10 @@ function approveSuggestion(id) {
   saveToFirestore();
   showNotification('Approved', 'Suggestion has been approved', 'success');
   renderPage();
+  // Send notification if email provided
+  if (s.email) {
+    sendSuggestionNotification(s, 'approved');
+  }
 }
 
 function denySuggestion(id) {
@@ -587,10 +751,19 @@ function denySuggestion(id) {
   s.status = 'denied';
   s.deniedBy = state.currentUser.username;
   s.deniedAt = new Date().toLocaleString();
+  s.deleteAt = Date.now() + (5 * 60 * 1000); // Auto-delete in 5 minutes
   logActivity('Suggestion Denied', 'Denied suggestion by ' + s.author);
   saveToFirestore();
-  showNotification('Denied', 'Suggestion has been denied', 'info');
+  showNotification('Denied', 'Suggestion has been denied and will auto-delete in 5 minutes', 'info');
   renderPage();
+  // Send notification if email provided
+  if (s.email) {
+    sendSuggestionNotification(s, 'denied');
+  }
+  // Start auto-delete timer
+  setTimeout(function() {
+    deleteSuggestion(id);
+  }, 5 * 60 * 1000);
 }
 
 window.approveSuggestion = approveSuggestion;
@@ -607,6 +780,48 @@ function deleteSuggestion(id) {
   renderPage();
 }
 window.deleteSuggestion = deleteSuggestion;
+
+// Email notification function (placeholder - requires email service integration)
+function sendSuggestionNotification(suggestion, status) {
+  // This is a placeholder for email notification
+  // In production, this would call your backend API to send emails
+  console.log('[Notification] Email would be sent to:', suggestion.email);
+  console.log('[Notification] Status:', status);
+  console.log('[Notification] Suggestion:', suggestion.text);
+  
+  // TODO: Integrate with email service (e.g., SendGrid, Mailgun, or Supabase Email)
+  // Example API call:
+  // await apiRequest('/api/send-notification', {
+  //   method: 'POST',
+  //   body: {
+  //     email: suggestion.email,
+  //     type: 'suggestion_' + status,
+  //     data: {
+  //       suggestion: suggestion.text,
+  //       status: status,
+  //       timestamp: new Date().toISOString()
+  //     }
+  //   }
+  // });
+}
+window.sendSuggestionNotification = sendSuggestionNotification;
+
+// ── LANGUAGE SUPPORT ──
+function t(key) {
+  var lang = state.currentLanguage || 'en';
+  var trans = state.translations[lang];
+  return trans && trans[key] || state.translations.en[key] || key;
+}
+
+function setLanguage(lang) {
+  if (!state.translations[lang]) return;
+  state.currentLanguage = lang;
+  localStorage.setItem('mokza_language', lang);
+  renderNavigation();
+  renderPage();
+  showNotification('Language Changed', 'Language set to ' + lang.toUpperCase(), 'success');
+}
+window.setLanguage = setLanguage;
 
 /* ── OFFICE HUB ── */
 function openOfficeHub() {
