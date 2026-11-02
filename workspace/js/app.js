@@ -424,7 +424,19 @@ async function loadFromFirestore() {
   try {
     var result = await apiRequest('/website-state');
     _apiOnline = true;
-    if (result && result.state) { applyPersisted(result.state); return true; }
+    if (result && result.state) { applyPersisted(result.state); }
+    
+    // Load suggestions from API
+    try {
+      var suggestionsResult = await apiRequest('/suggestions');
+      if (suggestionsResult && suggestionsResult.success && suggestionsResult.suggestions) {
+        state.suggestions = suggestionsResult.suggestions;
+      }
+    } catch (e) {
+      console.warn('Failed to load suggestions from API:', e.message);
+    }
+    
+    return true;
   } catch (e) { _apiOnline = false; console.warn('Load failed (using local copy):', e.message); }
   return false;
 }
@@ -498,7 +510,7 @@ function renderNavigation() {
   var enabled = state.navigationLinks.filter(function(l) { return l.enabled && (!l.minRank || canAccess(l.minRank)); });
   var html = enabled.map(function(l) {
     var badge = l.minRank ? '<span class="badge badge-blue">' + l.minRank + '+</span>' : '';
-    return '<button class="nav-link ' + (state.currentPage === l.page ? 'active' : '') + '" onclick="changePage(\'' + l.page + '\')"><span>' + escHtml(l.label) + '</span>' + badge + '</button>';
+    return '<a href="?page=' + l.page + '" class="nav-link ' + (state.currentPage === l.page ? 'active' : '') + '" onclick="event.preventDefault();changePage(\'' + l.page + '\');return false;"><span>' + escHtml(l.label) + '</span>' + badge + '</a>';
   }).join('');
   nav.innerHTML = html;
   mobile.innerHTML = enabled.map(function(l) {
@@ -523,6 +535,10 @@ function changePage(page) {
   renderNavigation();
   renderPage();
   window.scrollTo({ top: 0 });
+  // Update URL with query parameter
+  var url = new URL(window.location);
+  url.searchParams.set('page', page);
+  window.history.pushState({ page: page }, '', url);
 }
 
 function toggleMobileNav() {
@@ -717,13 +733,40 @@ function submitSuggestion() {
   var email = emailInp ? emailInp.value.trim() : '';
   if (!text) { showNotification('Empty Suggestion', 'Please enter your suggestion', 'error'); return; }
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', 'Please check your email address for notifications', 'error'); return; }
-  state.suggestions.unshift({ id: Date.now(), author: state.currentUser ? state.currentUser.username : 'Anonymous', email: email, text: text, timestamp: new Date().toLocaleString(), status: 'pending' });
+  
+  var suggestion = {
+    id: 'sugg_' + Date.now(),
+    author: state.currentUser ? state.currentUser.username : 'Anonymous',
+    email: email,
+    text: text,
+    timestamp: new Date().toISOString(),
+    status: 'pending'
+  };
+  
+  // Save to state and API
+  state.suggestions.unshift(suggestion);
   inp.value = '';
   if (emailInp) emailInp.value = '';
   logActivity('Suggestion Submitted', 'New suggestion from ' + (state.currentUser ? state.currentUser.username : 'Anonymous'));
-  saveToFirestore();
-  showNotification('Thank You!', 'Your suggestion has been submitted' + (email ? '. You will receive email notifications.' : ''), 'success');
-  renderPage();
+  
+  // Save to Supabase via API
+  apiRequest('/suggestions', {
+    method: 'POST',
+    body: suggestion
+  }).then(function(res) {
+    if (res && res.success) {
+      showNotification('Thank You!', 'Your suggestion has been submitted' + (email ? '. You will receive email notifications.' : ''), 'success');
+    } else {
+      showNotification('Saved Locally', 'Your suggestion was saved locally (cloud save failed)', 'warning');
+    }
+    saveToFirestore();
+    renderPage();
+  }).catch(function(err) {
+    console.error('Suggestion save error:', err);
+    showNotification('Saved Locally', 'Your suggestion was saved locally (cloud save failed)', 'warning');
+    saveToFirestore();
+    renderPage();
+  });
 }
 
 function approveSuggestion(id) {
@@ -732,15 +775,34 @@ function approveSuggestion(id) {
   if (!s) return;
   s.status = 'approved';
   s.approvedBy = state.currentUser.username;
-  s.approvedAt = new Date().toLocaleString();
+  s.approvedAt = new Date().toISOString();
   logActivity('Suggestion Approved', 'Approved suggestion by ' + s.author);
-  saveToFirestore();
-  showNotification('Approved', 'Suggestion has been approved', 'success');
-  renderPage();
-  // Send notification if email provided
-  if (s.email) {
-    sendSuggestionNotification(s, 'approved');
-  }
+  
+  // Update in Supabase via API
+  apiRequest('/suggestions/' + id, {
+    method: 'PATCH',
+    body: {
+      status: 'approved',
+      approvedBy: state.currentUser.username,
+      approvedAt: new Date().toISOString()
+    }
+  }).then(function(res) {
+    if (res && res.success) {
+      showNotification('Approved', 'Suggestion has been approved', 'success');
+    } else {
+      showNotification('Approved', 'Suggestion approved (cloud update failed)', 'warning');
+    }
+    saveToFirestore();
+    renderPage();
+    if (s.email) {
+      sendSuggestionNotification(s, 'approved');
+    }
+  }).catch(function(err) {
+    console.error('Suggestion approve error:', err);
+    showNotification('Approved', 'Suggestion approved (cloud update failed)', 'warning');
+    saveToFirestore();
+    renderPage();
+  });
 }
 
 function denySuggestion(id) {
@@ -749,20 +811,46 @@ function denySuggestion(id) {
   if (!s) return;
   s.status = 'denied';
   s.deniedBy = state.currentUser.username;
-  s.deniedAt = new Date().toLocaleString();
-  s.deleteAt = Date.now() + (5 * 60 * 1000); // Auto-delete in 5 minutes
+  s.deniedAt = new Date().toISOString();
+  s.deleteAt = new Date(Date.now() + (5 * 60 * 1000)).toISOString(); // Auto-delete in 5 minutes
   logActivity('Suggestion Denied', 'Denied suggestion by ' + s.author);
-  saveToFirestore();
-  showNotification('Denied', 'Suggestion has been denied and will auto-delete in 5 minutes', 'info');
-  renderPage();
-  // Send notification if email provided
-  if (s.email) {
-    sendSuggestionNotification(s, 'denied');
-  }
-  // Start auto-delete timer
-  setTimeout(function() {
-    deleteSuggestion(id);
-  }, 5 * 60 * 1000);
+  
+  // Update in Supabase via API
+  apiRequest('/suggestions/' + id, {
+    method: 'PATCH',
+    body: {
+      status: 'denied',
+      deniedBy: state.currentUser.username,
+      deniedAt: new Date().toISOString(),
+      deleteAt: new Date(Date.now() + (5 * 60 * 1000)).toISOString()
+    }
+  }).then(function(res) {
+    if (res && res.success) {
+      showNotification('Denied', 'Suggestion has been denied and will auto-delete in 5 minutes', 'info');
+    } else {
+      showNotification('Denied', 'Suggestion denied (cloud update failed)', 'warning');
+    }
+    saveToFirestore();
+    renderPage();
+    if (s.email) {
+      sendSuggestionNotification(s, 'denied');
+    }
+    // Start auto-delete timer
+    setTimeout(function() {
+      deleteSuggestion(id);
+    }, 5 * 60 * 1000);
+  }).catch(function(err) {
+    console.error('Suggestion deny error:', err);
+    showNotification('Denied', 'Suggestion denied (cloud update failed)', 'warning');
+    saveToFirestore();
+    renderPage();
+    if (s.email) {
+      sendSuggestionNotification(s, 'denied');
+    }
+    setTimeout(function() {
+      deleteSuggestion(id);
+    }, 5 * 60 * 1000);
+  });
 }
 
 window.approveSuggestion = approveSuggestion;
@@ -774,9 +862,24 @@ function deleteSuggestion(id) {
   if (!s || !confirm('Delete this suggestion?')) return;
   state.suggestions = state.suggestions.filter(function(x) { return x !== s; });
   logActivity('Suggestion Deleted', 'Deleted suggestion from ' + s.author);
-  saveToFirestore();
-  showNotification('Deleted', 'Suggestion has been removed', 'success');
-  renderPage();
+  
+  // Delete from Supabase via API
+  apiRequest('/suggestions/' + id, {
+    method: 'DELETE'
+  }).then(function(res) {
+    if (res && res.success) {
+      showNotification('Deleted', 'Suggestion has been removed', 'success');
+    } else {
+      showNotification('Deleted', 'Suggestion removed (cloud delete failed)', 'warning');
+    }
+    saveToFirestore();
+    renderPage();
+  }).catch(function(err) {
+    console.error('Suggestion delete error:', err);
+    showNotification('Deleted', 'Suggestion removed (cloud delete failed)', 'warning');
+    saveToFirestore();
+    renderPage();
+  });
 }
 window.deleteSuggestion = deleteSuggestion;
 
@@ -1251,6 +1354,14 @@ async function init() {
     initTheme();
     ensureDefaults();
     await loadFromFirestore();
+    
+    // Check URL for page parameter
+    var urlParams = new URLSearchParams(window.location.search);
+    var pageParam = urlParams.get('page');
+    if (pageParam && ['home', 'about', 'contact', 'community', 'roblox', 'creations', 'tos', 'workspace'].indexOf(pageParam) !== -1) {
+      state.currentPage = pageParam;
+    }
+    
     renderNavigation();
     renderPage();
     updateAuthUI();

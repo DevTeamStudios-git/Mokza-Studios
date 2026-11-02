@@ -8,6 +8,7 @@ const router = express.Router();
 const STATE_FILE = path.resolve(process.cwd(), 'server', 'data', 'website-state.json');
 const ANNOUNCEMENTS_FILE = path.resolve(process.cwd(), 'server', 'data', 'announcements.json');
 const TASKS_FILE = path.resolve(process.cwd(), 'server', 'data', 'tasks.json');
+const SUGGESTIONS_FILE = path.resolve(process.cwd(), 'server', 'data', 'suggestions.json');
 
 fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
 
@@ -335,6 +336,136 @@ router.delete('/tasks/:id', async (req, res) => {
     return res.json({ success: true, cloud: cloudOk });
   } catch (err) {
     console.error('[API] DELETE tasks error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SUGGESTIONS
+// ═════════════════════════════════════════════════════════════════════════════
+
+const SUGGESTIONS_TABLE = 'suggestions';
+
+async function supabaseGetSuggestions() {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from(SUGGESTIONS_TABLE).select('*').order('timestamp', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.warn('[Supabase] Suggestions load failed:', e.message);
+    return null;
+  }
+}
+
+async function supabaseCreateSuggestion(suggestion) {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from(SUGGESTIONS_TABLE).insert([suggestion]).select();
+    if (error) throw error;
+    return data ? data[0] : null;
+  } catch (e) {
+    console.warn('[Supabase] Suggestion create failed:', e.message);
+    return null;
+  }
+}
+
+async function supabaseUpdateSuggestion(id, updates) {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from(SUGGESTIONS_TABLE).update(updates).eq('id', id).select();
+    if (error) throw error;
+    return data ? data[0] : null;
+  } catch (e) {
+    console.warn('[Supabase] Suggestion update failed:', e.message);
+    return null;
+  }
+}
+
+async function supabaseDeleteSuggestion(id) {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from(SUGGESTIONS_TABLE).delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.warn('[Supabase] Suggestion delete failed:', e.message);
+    return false;
+  }
+}
+
+// GET /api/suggestions
+router.get('/suggestions', async (req, res) => {
+  try {
+    let suggestions = null;
+    if (supabase) suggestions = await supabaseGetSuggestions();
+    if (!suggestions) suggestions = readJson(SUGGESTIONS_FILE, []);
+    return res.json({ success: true, suggestions });
+  } catch (err) {
+    console.error('[API] GET suggestions error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/suggestions
+router.post('/suggestions', async (req, res) => {
+  try {
+    const suggestion = req.body;
+    suggestion.timestamp = suggestion.timestamp || new Date().toISOString();
+    suggestion.id = suggestion.id || 'sugg_' + Date.now();
+    suggestion.status = suggestion.status || 'pending';
+
+    let cloudSuggestion = null;
+    if (supabase) cloudSuggestion = await supabaseCreateSuggestion(suggestion);
+
+    const list = readJson(SUGGESTIONS_FILE, []);
+    list.unshift(cloudSuggestion || suggestion);
+    writeJson(SUGGESTIONS_FILE, list);
+
+    return res.json({ success: true, suggestion: cloudSuggestion || suggestion });
+  } catch (err) {
+    console.error('[API] POST suggestions error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /api/suggestions/:id
+router.patch('/suggestions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    let cloudSuggestion = null;
+    if (supabase) cloudSuggestion = await supabaseUpdateSuggestion(id, updates);
+
+    const list = readJson(SUGGESTIONS_FILE, []);
+    const idx = list.findIndex(s => s.id === id);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...updates };
+      writeJson(SUGGESTIONS_FILE, list);
+      return res.json({ success: true, suggestion: list[idx] });
+    }
+    return res.status(404).json({ success: false, error: 'Suggestion not found' });
+  } catch (err) {
+    console.error('[API] PATCH suggestions error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/suggestions/:id
+router.delete('/suggestions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let cloudOk = false;
+    if (supabase) cloudOk = await supabaseDeleteSuggestion(id);
+
+    const list = readJson(SUGGESTIONS_FILE, []);
+    const filtered = list.filter(s => s.id !== id);
+    writeJson(SUGGESTIONS_FILE, filtered);
+
+    return res.json({ success: true, cloud: cloudOk });
+  } catch (err) {
+    console.error('[API] DELETE suggestions error:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });
