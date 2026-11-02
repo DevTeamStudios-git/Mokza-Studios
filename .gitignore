@@ -2,5 +2,9 @@ node_modules
 vite-error.txt
 vite-output.txt
 MokzaSRC.zip
+NewMokzasrcv1.1.zip
+*.zip
 .env
 .env.example
+dist/
+server/data/
