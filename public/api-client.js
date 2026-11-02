@@ -15,8 +15,8 @@ const API_BASE = '/api';
 async function apiRequest(path, options = {}) {
   const url = `${API_BASE}${path}`;
   const config = {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
   };
   if (config.body && typeof config.body === 'object') {
     config.body = JSON.stringify(config.body);
@@ -65,9 +65,11 @@ window.__firestoreOps = {
    * @param {Object} data — full state object
    */
   save: async (data) => {
+    const token = process.env.ADMIN_API_TOKEN || localStorage.getItem('mokza_api_token') || '';
     return apiRequest('/website-state/save', {
       method: 'POST',
       body: { data },
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
     });
   },
 

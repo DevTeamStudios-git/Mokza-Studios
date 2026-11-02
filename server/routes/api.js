@@ -82,8 +82,21 @@ router.get('/website-state', async (req, res) => {
   }
 });
 
+// Auth check for state-modifying endpoints
+function requireAuth(req, res, next) {
+  const token = req.headers.authorization;
+  if (!token || !token.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: missing bearer token' });
+  }
+  const provided = token.slice(7);
+  if (provided !== process.env.ADMIN_API_TOKEN) {
+    return res.status(403).json({ success: false, error: 'Forbidden: invalid token' });
+  }
+  next();
+}
+
 // POST /api/website-state/save
-router.post('/website-state/save', async (req, res) => {
+router.post('/website-state/save', requireAuth, async (req, res) => {
   try {
     const { data } = req.body;
     if (!data) {
