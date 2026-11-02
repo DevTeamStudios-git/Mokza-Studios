@@ -140,5 +140,15 @@
   <script src="/api-client.js"></script>
   <script src="/workspace/js/app.js" defer></script>
   <script src="/workspace/js/admin.js" defer></script>
+  <script>
+    // Fallback: Always dismiss loading screen after 3 seconds even if JS fails
+    setTimeout(function() {
+      var ls = document.getElementById('loadingScreen');
+      if (ls) {
+        ls.classList.add('fade-out');
+        setTimeout(function() { ls.style.display = 'none'; }, 600);
+      }
+    }, 3000);
+  </script>
 </body>
 </html>
