@@ -280,7 +280,6 @@ function oauthLogin(provider) {
 }
 window.oauthLogin = oauthLogin;
 window.switchAuthTab = switchAuthTab;
-}
 
 async function handleAuthSubmit() {
   if (isAuthLocked()) {
