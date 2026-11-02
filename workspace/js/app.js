@@ -38,39 +38,169 @@ const state = {
   siteSettings: { discordUrl: '', contactEmail: '' },
   tosContent: {
     lastUpdated: new Date().toISOString(),
-    content: `<h1>Terms of Service</h1>
-      <p><strong>Last Updated:</strong> ${new Date().toLocaleDateString()}</p>
-      
-      <h2>1. Acceptance of Terms</h2>
-      <p>By accessing and using Mokza Studios' website and services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
-      
-      <h2>2. Use of Services</h2>
-      <p>You may use our services for lawful purposes only. You agree not to:</p>
-      <ul>
-        <li>Use the services for any illegal purpose</li>
-        <li>Violate any international, federal, provincial, or local laws</li>
-        <li>Infringe upon our intellectual property or that of others</li>
-        <li>Harass, abuse, or harm other users</li>
-        <li>Submit false, misleading, or fraudulent information</li>
-      </ul>
-      
-      <h2>3. User Content</h2>
-      <p>By submitting content (suggestions, messages, etc.) to our platform, you grant us a non-exclusive, worldwide, royalty-free license to use, display, and distribute such content. You represent that you have the right to grant such license.</p>
-      
-      <h2>4. Privacy Policy</h2>
-      <p>Your privacy is important to us. Please review our Privacy Policy, which also governs our services and explains how we collect, use, and protect your data.</p>
-      
-      <h2>5. Disclaimer</h2>
-      <p>Our services are provided "as is" without warranties of any kind. We do not guarantee that the services will be uninterrupted, secure, or error-free.</p>
-      
-      <h2>6. Limitation of Liability</h2>
-      <p>Mokza Studios shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of our services.</p>
-      
-      <h2>7. Changes to Terms</h2>
-      <p>We reserve the right to modify these terms at any time. Continued use of our services after such modifications constitutes acceptance of the updated terms.</p>
-      
-      <h2>8. Contact</h2>
-      <p>If you have questions about these Terms of Service, please contact us through our contact page.</p>`
+    content: `<h1>MOKZA STUDIOS</h1>
+<h2>Terms of Service</h2>
+<p><em>Rules for using the Mokza Studios website, workspace, and digital tools</em></p>
+
+<div style="background:var(--ov-12);padding:1rem;border-left:4px solid var(--accent-warning);margin:1.5rem 0;">
+<p><strong>DRAFT FOR REVIEW - NOT READY TO PUBLISH</strong><br>
+This is a product-tailored drafting document based on the repository snapshot reviewed on 1 November 2026. It is not legal advice. Complete every bracketed field, align it with actual operating practices and the Privacy Policy, and obtain qualified legal review before publication.</p>
+</div>
+
+<p><strong>Proposed effective date:</strong> [INSERT DATE] • Version: 1.0 (Draft)</p>
+
+<h3>Important publication details</h3>
+<table style="width:100%;border-collapse:collapse;margin:1rem 0;">
+<tr style="background:var(--ov-12);"><th style="padding:0.75rem;text-align:left;border:1px solid var(--ov-15);">Required field</th><th style="padding:0.75rem;text-align:left;border:1px solid var(--ov-15);">Complete before launch</th></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Service operator</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">[FULL LEGAL NAME / LEGAL ENTITY], operating as Mokza Studios</td></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Business address</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">[REGISTERED OR PRINCIPAL BUSINESS ADDRESS]</td></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Legal / support email</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">[MONITORED CONTACT EMAIL]</td></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Official website</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">https://mokza-studios.com [CONFIRM DOMAIN]</td></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Governing law and courts</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">[PROVINCE / STATE / COUNTRY AND COURTS - LEGAL REVIEW REQUIRED]</td></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Minimum age</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">[SET A MINIMUM AGE CONSISTENT WITH EACH TARGET MARKET AND APPLICABLE LAW]</td></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Privacy Policy URL</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">[PUBLISH A SEPARATE PRIVACY POLICY AND INSERT LINK]</td></tr>
+<tr><td style="padding:0.75rem;border:1px solid var(--ov-15);">Community rules URL</td><td style="padding:0.75rem;border:1px solid var(--ov-15);">[OPTIONAL - INSERT IF MAINTAINED SEPARATELY]</td></tr>
+</table>
+
+<div style="background:var(--ov-12);padding:1rem;border-left:4px solid var(--accent-error);margin:1.5rem 0;">
+<p><strong>DO NOT PUBLISH WITH PLACEHOLDERS</strong><br>
+The operator identity, contact details, governing law, age rule, privacy notice, and any paid-service terms must be confirmed. A Terms of Service document does not replace a Privacy Policy, cookie notice, or other notices required for the actual service and audience.</p>
+</div>
+
+<h2>1. Agreement and scope</h2>
+<p>These Terms of Service (the "Terms") govern your access to and use of the Mokza Studios website, public pages, accounts, community features, Mokza Nexus workspace, and related web-based applications and tools (collectively, the "Services"). The Services are offered by [FULL LEGAL NAME / LEGAL ENTITY], operating as Mokza Studios ("Mokza", "we", "us", or "our").</p>
+<p>By accessing or using the Services, creating an account, or selecting an "I agree" control where presented, you agree to these Terms. If you do not agree, do not use the Services. If you use the Services for an organization, you confirm that you are authorized to accept these Terms for that organization.</p>
+<p>These Terms apply together with any feature-specific terms, notices, and policies presented to you. If a feature-specific term conflicts with these Terms, the feature-specific term governs that feature only to the extent of the conflict.</p>
+
+<h2>2. The Services</h2>
+<p>The Services may include, depending on availability, configuration, account permissions, and release status:</p>
+<ul>
+<li>Public studio information, project and creation listings, announcements, contact and community pages, and suggestion forms.</li>
+<li>Mokza Nexus team features such as dashboards, chat, tasks, project boards, calendar/events, whiteboard, sprint coordination, wiki/SOP pages, analytics, time tracking, and Studio Drive.</li>
+<li>Productivity and developer tools such as Notepad, Calculator, Clock, DevForge, Snippets, and Password / Secret Generator.</li>
+<li>Mokza Nexus Mail interfaces and related communication tools.</li>
+<li>Account, profile, role, verification-badge, administration, and moderation functions.</li>
+<li>Future support or ticketing features and AI-assisted support, if and when enabled.</li>
+</ul>
+<p>Features may be added, changed, limited, suspended, or retired. Some features may be experimental, invite-only, staff-only, or available only to users with specific permissions. A feature appearing in a menu or interface does not guarantee that it is fully operational, continuously available, or suitable for a particular purpose.</p>
+
+<h2>3. Eligibility and accounts</h2>
+<p>You may use the Services only if you are legally capable of entering into a binding agreement and meet the minimum age and other eligibility requirements displayed for the relevant Service. Where applicable law requires parent or guardian involvement or consent, that requirement must be satisfied before use. Mokza may restrict access where it reasonably believes an account is ineligible.</p>
+<p>You must provide accurate account information, keep it reasonably current, protect your sign-in credentials, and promptly notify Mokza of suspected unauthorized access. You are responsible for activity performed through your account except to the extent caused by Mokza's breach of applicable law or these Terms. Do not share an account or impersonate another person.</p>
+<p>Authentication may be provided through third-party identity providers, such as Google or Discord, where enabled. Their own terms and privacy notices apply to those services. Mokza does not control third-party authentication availability.</p>
+
+<h2>4. Workspace roles and permissions</h2>
+<p>Mokza Nexus may use roles, ranks, permissions, invitations, or other access controls to determine which workspace features and administrative actions are available to an account. Examples of role labels in the current application include Apprentice, Developer, CoOwner, Owner, and Bot. Role labels and badges are indicators within the Services; they do not create an employment relationship, agency, partnership, or guarantee of identity beyond what Mokza expressly verifies.</p>
+<p>You must not attempt to bypass permissions, access another user's workspace or files without authorization, exploit administrative controls, or use a role or badge to misrepresent your authority. Mokza may change roles and permissions to protect the Services or manage the studio.</p>
+
+<h2>5. User content and workspace material</h2>
+<p>"User Content" means material you submit, upload, create, transmit, or make available through the Services, including text, suggestions, chat messages, files, code snippets, documents, images, whiteboards, project details, ticket content, and attachments.</p>
+<p>You retain ownership of User Content to the extent you own it. You grant Mokza a non-exclusive, worldwide, royalty-free license to host, store, reproduce, display, transmit, process, and make technical copies of your User Content only as reasonably necessary to operate, secure, support, maintain, and improve the Services; provide the features you request; enforce these Terms; and comply with law. This license ends when the relevant content is deleted, except for backups, records, legal obligations, dispute preservation, or other retention described in the Privacy Policy.</p>
+<p>You confirm that you have the rights and permissions needed to submit User Content and to grant this license. Do not upload confidential or personal information belonging to another person unless you are authorized to do so. Do not upload credentials, passwords, API keys, private tokens, payment card data, government identification numbers, or other highly sensitive information unless a feature expressly requires it and provides appropriate safeguards.</p>
+<p>You are responsible for maintaining your own copies of important content. Unless a feature expressly promises otherwise, the Services are not a guaranteed archival or backup service.</p>
+
+<h2>6. Acceptable use</h2>
+<p>You agree not to use the Services to:</p>
+<ul>
+<li>Violate applicable law, another person's rights, or a binding agreement.</li>
+<li>Harass, threaten, stalk, exploit, dox, discriminate against, or impersonate another person.</li>
+<li>Upload malware, malicious code, phishing content, spam, deceptive material, or content intended to disrupt systems or users.</li>
+<li>Gain unauthorized access, probe or scan systems without permission, interfere with security controls, or attempt to obtain data you are not authorized to access.</li>
+<li>Infringe copyrights, trademarks, trade secrets, privacy, publicity, or other rights.</li>
+<li>Abuse automation, bots, APIs, rate limits, ticket queues, or other platform resources.</li>
+<li>Use the Services to distribute illegal content, facilitate fraud, or encourage violence or other harmful conduct.</li>
+<li>Interfere with another user's access, manipulate roles or verification indicators, or misrepresent affiliation with Mokza.</li>
+<li>Reverse engineer, scrape, copy, resell, or exploit the Services except as permitted by law or expressly authorized by Mokza.</li>
+</ul>
+<p>Mokza may investigate suspected violations and take proportionate action, including content removal, feature restrictions, account suspension, or termination, subject to applicable law and any process described in the Privacy Policy or Community Rules.</p>
+
+<h2>7. Community, suggestions, and moderation</h2>
+<p>Public community and feedback features are provided to support constructive participation. Be respectful and submit only content relevant to the feature. Suggestions are voluntary; do not include confidential information or material you are not authorized to disclose.</p>
+<p>You grant Mokza permission to review and use suggestions to evaluate, develop, operate, or improve its Services, without an obligation to compensate you or implement a suggestion. This does not transfer ownership of any pre-existing intellectual property you include in a suggestion.</p>
+<p>Mokza may moderate, hide, remove, or restrict content and participation where reasonably necessary to protect users, the studio, or the Services. We are not required to monitor every item of User Content and do not guarantee that all content is accurate or appropriate.</p>
+
+<h2>8. Support tickets and support communications</h2>
+<p>If Mokza introduces a ticketing or support feature, you may be able to submit a request, select a category, provide details, attach files, communicate with support staff, and receive status updates. Ticket availability, categories, response targets, escalation paths, and service hours will be described in the feature or a separate support policy.</p>
+<p>A ticket is a support request, not an emergency service, legal notice, guarantee of a particular outcome, or promise of a response within a specific time unless Mokza expressly states otherwise. Do not submit passwords, access tokens, recovery codes, payment details, or unnecessary sensitive personal information in a ticket. Mokza may request relevant diagnostic details but will not ask you to reveal your password.</p>
+<p>You must provide truthful, relevant information and must not use tickets to harass staff, submit knowingly false claims, flood the queue, or bypass moderation or account restrictions. Mokza may consolidate, close, reclassify, or escalate tickets where reasonably appropriate.</p>
+
+<h2>9. AI-assisted features and future AI ticket assistant</h2>
+<p>Certain tools may offer AI-assisted functions, and Mokza may introduce an AI assistant for support tickets in the future. AI features are optional where the interface identifies them as optional and may not be available to every account. The AI ticket assistant, if launched, may summarize a request, classify or route a ticket, ask follow-up questions, search approved help materials, identify potentially relevant sections of these Terms, and draft suggested responses.</p>
+<p>AI-generated content may be incomplete, inaccurate, outdated, or inappropriate for your particular circumstances. It is provided for informational and support purposes only and is not a substitute for a decision by an authorized Mokza staff member. Unless Mokza clearly states otherwise in a feature notice, the AI assistant cannot make a final decision on an appeal, account suspension, refund, legal claim, security incident, or other matter requiring human judgment. You may request human review through the support process where available.</p>
+<p>Do not rely on an AI response as legal, financial, medical, security, or other professional advice. You remain responsible for reviewing AI-generated material before acting on it. AI responses do not amend these Terms, override an official policy, or create a binding promise by Mokza.</p>
+<p>When an AI feature processes ticket text, attachments, account details, or conversation history, Mokza will describe the relevant processing, purposes, service providers, retention, and available choices in the Privacy Policy and/or a just-in-time notice. AI use must be enabled only after the associated data handling and user notices have been reviewed and implemented. Do not submit highly sensitive information to an AI feature unless Mokza expressly provides an approved process for it.</p>
+
+<h2>10. Intellectual property and license</h2>
+<p>The Services, including Mokza names, logos, designs, badge artwork, software, layouts, documentation, and other Mokza-provided materials, are owned by Mokza or its licensors and are protected by applicable intellectual-property laws. Except for the limited right to use the Services as intended under these Terms, no rights are granted to you.</p>
+<p>Subject to your compliance with these Terms, Mokza grants you a limited, personal (or organization-scoped, where applicable), non-exclusive, non-transferable, revocable license to access and use the Services for their intended purposes. You may not remove proprietary notices or use Mokza branding in a way that implies sponsorship or endorsement without permission.</p>
+<p>If you send feedback about the Services, you grant Mokza a non-exclusive, worldwide, perpetual, irrevocable, royalty-free license to use and incorporate that feedback without restriction or compensation, excluding any personal information or third-party material that cannot lawfully be licensed.</p>
+
+<h2>11. Third-party services and integrations</h2>
+<p>The Services may connect to or rely on third-party providers for authentication, hosting, databases, file storage, email or communication functions, analytics, AI processing, or other integrations. The repository currently contains integration code for services including Firebase, Supabase, Google and Discord sign-in, and optional AI-provider configuration. Actual use may vary by deployment and feature.</p>
+<p>Third-party services are governed by their own terms and privacy notices. Mokza is not responsible for a third party's independent products, availability, security practices, or actions. You authorize the relevant connection only when you enable it or use a feature that clearly requires it. If a third-party service becomes unavailable, related Mokza features may be unavailable or limited.</p>
+
+<h2>12. Privacy and data</h2>
+<p>Your use of the Services is also subject to the Mokza Privacy Policy, which must be published separately and linked here: [PRIVACY POLICY URL]. The Privacy Policy should explain what information is collected, why it is used, who receives it, where it may be processed, how long it is kept, how it is protected, and how users can exercise applicable privacy rights.</p>
+<p>The Services may process account and profile information, workspace content, messages, files and file metadata, activity and diagnostic information, preferences, and support communications, depending on the features you use. The actual categories, purposes, recipients, retention periods, and cross-border processing must be accurately described in the Privacy Policy and any required notices.</p>
+<p>These Terms do not replace a privacy notice or create consent to data uses that have not been clearly disclosed. Where applicable law requires consent or a separate choice for a particular processing activity, Mokza will present the required notice and choice.</p>
+
+<h2>13. Security, availability, and data loss</h2>
+<p>Mokza uses technical and organizational measures intended to protect the Services, but no website, network, cloud provider, or storage system can be guaranteed completely secure or uninterrupted. You must use reasonable security practices, keep your devices and accounts secure, and report suspected vulnerabilities or unauthorized access through [SECURITY CONTACT]. Do not conduct security testing without written authorization.</p>
+<p>The Services may be unavailable due to maintenance, upgrades, provider outages, network issues, security events, or circumstances beyond Mokza's reasonable control. Unless expressly stated in a separate service commitment, Mokza does not promise a particular uptime, recovery time, or data-retention period.</p>
+
+<h2>14. Fees and payments</h2>
+<p>If a Service is offered for a fee, the applicable price, billing interval, taxes, renewal terms, cancellation rules, and refund terms will be disclosed before you make the purchase and may be set out in additional terms. No fee is due merely because a feature appears in the interface. Do not assume that a feature is free or paid unless the applicable checkout or feature notice says so.</p>
+
+<h2>15. Suspension and termination</h2>
+<p>You may stop using the Services at any time. Account deletion or data deletion requests must be made through [ACCOUNT / PRIVACY CONTACT OR FEATURE], subject to verification, legal obligations, security needs, and the retention rules described in the Privacy Policy.</p>
+<p>Mokza may suspend, restrict, or terminate access where reasonably necessary to enforce these Terms, protect users or the Services, respond to legal requirements, address security risks, or discontinue a feature. Where practical and legally permitted, Mokza will provide notice and an opportunity to resolve the issue. Certain content or records may remain in backups or be retained where required or permitted by law.</p>
+
+<h2>16. Disclaimers</h2>
+<p>To the maximum extent permitted by applicable law, the Services are provided "as is" and "as available". Mokza does not warrant that the Services will be uninterrupted, error-free, secure in every circumstance, compatible with every device, or suitable for every purpose. Content, project information, code examples, generated secrets, AI output, and third-party integrations must be independently reviewed before use.</p>
+<p>Nothing in these Terms excludes a warranty, right, or remedy that cannot lawfully be excluded or limited in your jurisdiction.</p>
+
+<h2>17. Limitation of liability</h2>
+<p>To the maximum extent permitted by applicable law, Mokza and its owners, team members, contractors, and service providers will not be liable for indirect, incidental, special, consequential, exemplary, or punitive damages, or for loss of profits, revenue, goodwill, data, or business opportunity arising from or related to your use of the Services.</p>
+<p>To the maximum extent permitted by applicable law, the total aggregate liability of Mokza for claims arising out of or relating to the Services or these Terms will not exceed the greater of (a) the amounts you paid directly to Mokza for the relevant Service during the 12 months before the event giving rise to the claim, or (b) [INSERT A LEGALLY REVIEWED FIXED AMOUNT]. If you use the Services without paying a fee, the fixed amount must be completed and reviewed for enforceability before publication.</p>
+<p>These limits do not apply to liability that cannot be limited under applicable law, including any non-waivable consumer rights or other mandatory protections.</p>
+
+<h2>18. Indemnity</h2>
+<p>To the extent permitted by applicable law, you agree to be responsible for third-party claims, losses, and reasonable costs arising from your unlawful conduct, your breach of these Terms, or your infringement of another person's rights. This clause does not require you to indemnify Mokza for losses caused by Mokza's own unlawful conduct or where such an obligation is prohibited by law.</p>
+
+<h2>19. Changes to the Services or Terms</h2>
+<p>Mokza may update the Services and these Terms. The current version will display its effective date and version number. For material changes, Mokza will provide notice through the website, account interface, email, or another reasonable channel where required. Where applicable law requires renewed consent, Mokza will request it before applying the change to the affected use. Continued use after an effective update constitutes acceptance only to the extent permitted by applicable law.</p>
+
+<h2>20. Governing law and disputes</h2>
+<p>These Terms and any dispute arising from them will be governed by the laws of [INSERT JURISDICTION], excluding conflict-of-law rules, subject to mandatory consumer-protection and other non-waivable laws that apply to you. The courts located in [INSERT COURT LOCATION] will have jurisdiction, subject to any mandatory right to bring a claim elsewhere.</p>
+<p>Before starting formal proceedings, you may contact Mokza at [LEGAL / SUPPORT EMAIL] to explain the issue and seek an informal resolution. Nothing in this clause limits rights that cannot lawfully be waived.</p>
+
+<h2>21. General terms</h2>
+<p>If any provision of these Terms is found unenforceable, it will be limited or removed only to the extent necessary, and the remaining provisions will continue. You may not assign these Terms without Mokza's prior written consent. Mokza may assign them as part of a reorganization, financing, merger, sale, or transfer of the relevant Services, subject to applicable law. These Terms, together with any documents expressly incorporated by reference, form the agreement concerning the Services. A failure to enforce a provision is not a waiver of that provision.</p>
+
+<h2>22. Contact</h2>
+<p>Questions about these Terms, support, or legal notices:</p>
+<p><strong>Mokza Studios</strong> [ FULL LEGAL NAME / LEGAL ENTITY ] [ BUSINESS ADDRESS ] [ LEGAL / SUPPORT EMAIL ]<br>
+Website: https://mokza-studios.com [CONFIRM]</p>
+
+<div style="background:var(--ov-12);padding:1rem;border-left:4px solid var(--accent-primary);margin:1.5rem 0;">
+<h3>Pre-publication legal and product checklist</h3>
+<ul>
+<li>Identify the legal operator and confirm the correct official business name, address, and contact channel.</li>
+<li>Choose the applicable governing law and dispute forum with legal advice; do not assume the operator location alone settles all consumer-law issues.</li>
+<li>Set the minimum-age policy for each market and design the registration flow accordingly.</li>
+<li>Publish a separate Privacy Policy that matches actual Firebase, Supabase, hosting, mail, analytics, and AI processing practices.</li>
+<li>Decide whether accounts, workspace access, AI functions, file storage, mail, or other features are free, paid, invite-only, or beta.</li>
+<li>Complete the liability cap and review warranty, indemnity, consumer, and cancellation language for enforceability.</li>
+<li>Confirm whether ticketing and AI ticket support are launched, future, opt-in, or staff-only; keep the conditional wording accurate.</li>
+<li>Ensure the actual consent flow records the correct Terms version and date, and request renewed consent for material changes when required.</li>
+<li>Have qualified counsel review the final Terms for every jurisdiction where the Services are offered.</li>
+</ul>
+</div>
+
+<div style="background:var(--ov-12);padding:1rem;border-left:4px solid var(--accent-warning);margin:1.5rem 0;">
+<p><strong>LEGAL DRAFT STATUS</strong><br>
+This draft is a starting point for review, not a guarantee of enforceability or compliance. Publication should wait until placeholders are completed and the contractual promises accurately match Mokza's deployed product, data flows, and support processes.</p>
+</div>`
   },
   translations: {
     en: {
