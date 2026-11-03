@@ -11,7 +11,7 @@ const TASKS_FILE = path.resolve(process.cwd(), 'server', 'data', 'tasks.json');
 const SUGGESTIONS_FILE = path.resolve(process.cwd(), 'server', 'data', 'suggestions.json');
 const CALL_STATE_FILE = path.resolve(process.cwd(), 'server', 'data', 'call-state.json');
 
-fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
+try { fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true }); } catch (_) {}
 
 // Helper: read JSON file
 function readJson(file, fallback) {
@@ -23,9 +23,9 @@ function readJson(file, fallback) {
   }
 }
 
-// Helper: write JSON file
+// Helper: write JSON file (no-op on read-only filesystems like Vercel)
 function writeJson(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+  try { fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8'); } catch (_) {}
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
