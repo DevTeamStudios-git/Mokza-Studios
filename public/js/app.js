@@ -1782,9 +1782,21 @@ function renderHubChat() {
   var cur = channelById(state.chatChannel);
   if (!canReadChannel(cur)) { state.chatChannel = '#general'; cur = channelById('#general'); }
   renderHubChatChannels();
+  var call = state.callState || {};
+  if (call.inCall) {
+    var hdr = document.getElementById('chatHdr');
+    if (hdr) {
+      var elapsed = call.startedAt ? Math.floor((Date.now() - call.startedAt) / 1000) : 0;
+      var h = Math.floor(elapsed / 3600), m = Math.floor((elapsed % 3600) / 60), s = elapsed % 60;
+      var timer = (h ? h + ':' : '') + (m < 10 && h ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+      hdr.innerHTML = '<span style="color:var(--accent-success)">● LIVE CALL</span> — ' + escHtml(timer) + ' · ' + (call.participants || []).length + ' participant' + (call.participants.length !== 1 ? 's' : '') + ' <span style="opacity:.6">— ' + escHtml(cur.id) + '</span>';
+    }
+  } else {
+    var hdr = document.getElementById('chatHdr');
+    if (hdr) hdr.innerHTML = escHtml(cur.id) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— ' + escHtml(cur.desc) + '</span>';
+  }
   renderHubChatMsgs();
   renderHubChatMembers();
-  var hdr = document.getElementById('chatHdr'); if (hdr) hdr.innerHTML = escHtml(cur.id) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— ' + escHtml(cur.desc) + '</span>';
   var inp = document.getElementById('chatInputEl');
   if (inp) {
     var ok = canWriteChannel(cur);
@@ -2112,6 +2124,18 @@ async function init() {
     logActivity('System', 'Website initialized');
     // Start realtime call state polling (admin.js provides startCallPolling)
     if (typeof startCallPolling === 'function') startCallPolling();
+    // Realtime chat sync: refresh messages when remote state changes
+    if (typeof window.__firestoreOps !== 'undefined' && window.__firestoreOps.subscribe) {
+      window.__firestoreOps.subscribe(function(remoteState) {
+        if (remoteState && remoteState.chatMessages) {
+          var remoteMsgs = remoteState.chatMessages || [];
+          if (remoteMsgs.length !== (state.chatMessages || []).length) {
+            state.chatMessages = remoteMsgs;
+            renderHubChatMsgs();
+          }
+        }
+      });
+    }
   } catch (err) {
     console.error('Init failed:', err);
   } finally {

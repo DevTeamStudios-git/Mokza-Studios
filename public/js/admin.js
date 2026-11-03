@@ -495,6 +495,8 @@ function startCallPolling() {
           state.videoEnabled = remote.videoEnabled;
           state.screenSharing = remote.screenSharing;
           if (state.adminMenuOpen && state.adminSection === 'chat' && typeof renderAdminContent === 'function') renderAdminContent();
+          // Also refresh hub chat view so call banner shows even outside admin panel
+          if (typeof renderHubChat === 'function') renderHubChat();
         }
       }
     } catch (e) { /* ignore - call state endpoint may not be ready */ }
