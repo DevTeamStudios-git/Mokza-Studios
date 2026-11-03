@@ -592,10 +592,10 @@ var SESSION_STARTED = Date.now();
 var DEFAULT_NAV = JSON.parse(JSON.stringify(state.navigationLinks));
 
 const USERS = {
-  'ThéoDevO': { passwordHash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner', permissions: 'ALL' },
-  'GabrielDevCoO': { passwordHash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner', permissions: 'ALL' },
-  'NeuraXIDev': { passwordHash: 'f74590b85aa9394eb675739ab1364e795059599bcc6bf31b1491268459ab02ee', rank: 'Developer', permissions: 'DEVELOPER' },
-  'AprenticeDev': { passwordHash: '7d94c0ca4536bae28c3de2a369bfe303a3f2a8081196ed5dab0578769c321487', rank: 'Apprentice', permissions: 'APPRENTICE' }
+  'ThéoDevO': { passwordHash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner', permissions: 'ALL', lastSeen: null },
+  'GabrielDevCoO': { passwordHash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner', permissions: 'ALL', lastSeen: null },
+  'NeuraXIDev': { passwordHash: 'f74590b85aa9394eb675739ab1364e795059599bcc6bf31b1491268459ab02ee', rank: 'Developer', permissions: 'DEVELOPER', lastSeen: null },
+  'AprenticeDev': { passwordHash: '7d94c0ca4536bae28c3de2a369bfe303a3f2a8081196ed5dab0578769c321487', rank: 'Apprentice', permissions: 'APPRENTICE', lastSeen: null }
 };
 
 const AUTH_MAX_ATTEMPTS = 5;
@@ -711,8 +711,21 @@ function isAuthLocked() {
 
 // ── USER AUTHENTICATION (OAuth + Dev Team) ──
 function showUserLoginModal() {
-  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>' + escHtml(t('authTitle')) + '</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">' + escHtml(t('authTabOAuth')) + '</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">' + escHtml(t('authTabDev')) + '</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">' + escHtml(t('authOAuthDesc')) + '</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> ' + escHtml(t('authDiscord')) + '</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ' + escHtml(t('authGoogle')) + '</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">' + escHtml(t('authTOSNotice')) + ' <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">' + escHtml(t('navTOS')) + '</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">' + escHtml(t('authSecurityCode')) + '</div><input type="password" id="securityCodeInput" class="input-base" placeholder="' + escHtml(t('authSecurityCodePlaceholder')) + '" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('authCredentials')) + '</div><input type="text" id="usernameInput" class="input-base" placeholder="' + escHtml(t('authUsernamePlaceholder')) + '" /><input type="password" id="passwordInput" class="input-base" placeholder="' + escHtml(t('authPasswordPlaceholder')) + '" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">' + escHtml(t('authLogin')) + '</button><button class="btn-ghost" onclick="closeAuthModal()">' + escHtml(t('authCancel')) + '</button></div></div></div></div>';
+  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>' + escHtml(t('authTitle')) + '</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">' + escHtml(t('authTabOAuth')) + '</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">' + escHtml(t('authTabDev')) + '</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">' + escHtml(t('authOAuthDesc')) + '</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> ' + escHtml(t('authDiscord')) + '</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ' + escHtml(t('authGoogle')) + '</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">' + escHtml(t('authTOSNotice')) + ' <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">' + escHtml(t('navTOS')) + '</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">' + escHtml(t('authSecurityCode')) + '</div><input type="password" id="securityCodeInput" class="input-base" placeholder="' + escHtml(t('authSecurityCodePlaceholder')) + '" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('authCredentials')) + '</div><input type="text" id="usernameInput" class="input-base" placeholder="' + escHtml(t('authUsernamePlaceholder')) + '" /><input type="password" id="passwordInput" class="input-base" placeholder="' + escHtml(t('authPasswordPlaceholder')) + '" /><div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="rememberMeCheckbox" style="width:auto;height:auto;" /><label for="rememberMeCheckbox" style="font-size:0.85rem;color:var(--text-secondary);cursor:pointer;">Remember Me</label></div><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">' + escHtml(t('authLogin')) + '</button><button class="btn-ghost" onclick="closeAuthModal()">' + escHtml(t('authCancel')) + '</button></div></div></div></div>';
   document.getElementById('authModal').classList.remove('hidden');
+  // Pre-fill remembered credentials
+  var remembered = localStorage.getItem('mokza_remembered_login');
+  if (remembered) {
+    try {
+      var data = JSON.parse(remembered);
+      var usernameInput = document.getElementById('usernameInput');
+      var passwordInput = document.getElementById('passwordInput');
+      var rememberCheckbox = document.getElementById('rememberMeCheckbox');
+      if (usernameInput) usernameInput.value = data.username || '';
+      if (passwordInput) passwordInput.value = data.password || '';
+      if (rememberCheckbox) rememberCheckbox.checked = true;
+    } catch (e) {}
+  }
 }
 
 function switchAuthTab(tab) {
@@ -774,6 +787,19 @@ async function handleAuthSubmit() {
   state.currentUser = { username: username, rank: user.rank, permissions: user.permissions };
   state.devModeActive = true;
   document.getElementById('devToggle').classList.add('active');
+  // Update user's lastSeen timestamp
+  USERS[username].lastSeen = Date.now();
+  // Handle Remember Me
+  var rememberMe = document.getElementById('rememberMeCheckbox') && document.getElementById('rememberMeCheckbox').checked;
+  if (rememberMe) {
+    try {
+      localStorage.setItem('mokza_remembered_login', JSON.stringify({ username: username, password: password }));
+    } catch (e) {}
+  } else {
+    try {
+      localStorage.removeItem('mokza_remembered_login');
+    } catch (e) {}
+  }
   closeAuthModal();
   showNotification('Welcome!', 'Logged in as ' + username + ' (' + user.rank + ')', 'success');
   logActivity('User Login', username + ' logged in');
@@ -796,6 +822,11 @@ function handleLogout() {
   state.devModeActive = false;
   state.editMode = false;
   document.getElementById('devToggle').classList.remove('active');
+  stopPresenceHeartbeat();
+  // Clear remembered credentials on logout for security
+  try {
+    localStorage.removeItem('mokza_remembered_login');
+  } catch (e) {}
   showNotification('Logged Out', 'Successfully logged out', 'info');
   logActivity('User Logout', name + ' logged out');
   updateAuthUI();
@@ -1492,10 +1523,30 @@ window.updateStaticTranslations = updateStaticTranslations;
 function openOfficeHub() {
   if (!state.currentUser) { showNotification('Login required', '', 'error'); return; }
   document.getElementById('officeHub').classList.add('open');
+  renderDMList();
   switchHubView('dashboard', null);
 }
 function closeOfficeHub() {
   document.getElementById('officeHub').classList.remove('open');
+}
+function renderDMList() {
+  var el = document.getElementById('dmList');
+  if (!el) return;
+  // Filter users with Apprentice+ rank
+  var apprenticePlusUsers = Object.keys(USERS).filter(function(n) {
+    var user = USERS[n];
+    var rankOrder = ['Apprentice', 'Developer', 'CoOwner', 'Owner'];
+    return rankOrder.indexOf(user.rank) >= 0;
+  });
+  el.innerHTML = apprenticePlusUsers.map(function(n) {
+    var user = USERS[n];
+    var isMe = state.currentUser && state.currentUser.username === n;
+    return '<button class="hub-nav-item" onclick="openDM(\'' + escHtml(n) + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' + escHtml(n) + verifiedBadge(user.rank) + (isMe ? ' <span style="opacity:.5;font-size:.7rem">(You)</span>' : '') + '</button>';
+  }).join('');
+}
+function openDM(username) {
+  state.chatChannel = '@' + username;
+  renderHubChat();
 }
 function switchHubView(view, btn) {
   document.querySelectorAll('.hub-view').forEach(function(el) { el.classList.remove('active'); el.style.display = 'none'; });
@@ -1516,8 +1567,14 @@ function joinVoiceChannel(name) {
   if (!state.currentUser) { showNotification('Login required', '', 'error'); return; }
   state.voiceChannel = name;
   state.callState.inCall = true;
-  state.callState.startedAt = Date.now();
-  state.callState.participants = [{ name: state.currentUser.username, mic: true, video: true, screen: false, joinedAt: Date.now() }];
+  state.callState.startedAt = state.callState.startedAt || Date.now();
+  // Add current user to participants (don't replace existing participants)
+  var existing = state.callState.participants || [];
+  var alreadyIn = existing.find(function(p) { return p.name === state.currentUser.username; });
+  if (!alreadyIn) {
+    existing.push({ name: state.currentUser.username, mic: true, video: true, screen: false, joinedAt: Date.now() });
+  }
+  state.callState.participants = existing;
   state.inCall = true; state.micEnabled = true; state.videoEnabled = true; state.screenSharing = false;
   saveCallState();
   // Highlight joined voice channel in sidebar
@@ -1534,6 +1591,7 @@ function startMeeting() {
   if (!canAccess('Apprentice')) { showNotification('Access Denied', 'Apprentice+ required to start a meeting', 'error'); return; }
   state.meetingActive = true;
   state.meetingStart = Date.now();
+  // Initialize meeting participants with current user as host
   state.meetingParticipants = [{ name: state.currentUser.username, mic: true, video: true, screen: false, hand: false, host: true }];
   state.callState.inCall = true;
   state.callState.startedAt = Date.now();
@@ -1667,6 +1725,10 @@ function renderMeetingModal() {
   var list = document.getElementById('meetingParticipantList');
   var count = document.getElementById('meetingParticipantCount');
   if (!list || !count) return;
+  // Sync meeting participants with call state participants for realtime consistency
+  if (state.callState && state.callState.participants) {
+    state.meetingParticipants = state.callState.participants;
+  }
   count.textContent = state.meetingParticipants.length;
   list.innerHTML = state.meetingParticipants.map(function(p) {
     var isMe = p.name === state.currentUser.username;
@@ -1750,9 +1812,17 @@ var CHANNELS = [
   { id: '#general', read: 'Apprentice', write: 'Developer', desc: 'Team chat' },
   { id: '#announcements', read: 'Apprentice', write: 'CoOwner', desc: 'Official announcements' },
   { id: '#bot-commands', read: 'Apprentice', write: 'Apprentice', desc: 'Run bot commands here' },
-  { id: '#staff-only', read: 'CoOwner', write: 'CoOwner', desc: 'Leadership only' }
+  { id: '#staff-only', read: 'CoOwner', write: 'CoOwner', desc: 'Leadership only' },
+  { id: '#admin-discussion', read: 'Apprentice', write: 'Apprentice', desc: 'General admin discussion' }
 ];
-function channelById(id) { return CHANNELS.find(function(c) { return c.id === id; }) || CHANNELS[0]; }
+function channelById(id) {
+  // Handle DM channels (starting with @)
+  if (id && id.startsWith('@')) {
+    var targetUser = id.substring(1);
+    return { id: id, read: 'Apprentice', write: 'Apprentice', desc: 'Direct message with ' + targetUser, isDM: true, target: targetUser };
+  }
+  return CHANNELS.find(function(c) { return c.id === id; }) || CHANNELS[0];
+}
 function canReadChannel(ch) { return !!state.currentUser && canAccess(ch.read); }
 function canWriteChannel(ch) { return !!state.currentUser && canAccess(ch.write); }
 
@@ -1793,7 +1863,13 @@ function renderHubChat() {
     }
   } else {
     var hdr = document.getElementById('chatHdr');
-    if (hdr) hdr.innerHTML = escHtml(cur.id) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— ' + escHtml(cur.desc) + '</span>';
+    if (hdr) {
+      if (cur.isDM) {
+        hdr.innerHTML = '@' + escHtml(cur.target) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— Direct Message</span>';
+      } else {
+        hdr.innerHTML = escHtml(cur.id) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— ' + escHtml(cur.desc) + '</span>';
+      }
+    }
   }
   renderHubChatMsgs();
   renderHubChatMembers();
@@ -1815,7 +1891,21 @@ function renderHubChatChannels() {
 function renderHubChatMsgs() {
   var el = document.getElementById('chatMsgsArea');
   if (!el) return;
-  var msgs = state.chatMessages.filter(function(m) { return (m.ch || '#general') === state.chatChannel; }).slice(-100);
+  var cur = channelById(state.chatChannel);
+  var msgs;
+  if (cur.isDM) {
+    // For DMs, show messages between current user and target user
+    var target = cur.target;
+    var me = state.currentUser ? state.currentUser.username : null;
+    msgs = state.chatMessages.filter(function(m) {
+      return m.ch === state.chatChannel && (
+        (m.from === me && m.to === target) ||
+        (m.from === target && m.to === me)
+      );
+    }).slice(-100);
+  } else {
+    msgs = state.chatMessages.filter(function(m) { return (m.ch || '#general') === state.chatChannel; }).slice(-100);
+  }
   if (!msgs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5;padding:2.5rem;font-size:.88rem">No messages yet. Say hello! 👋</div>'; return; }
   el.innerHTML = msgs.map(function(m) {
     var rankCls = m.isBot ? 'is-bot' : m.rank === 'Owner' ? 'is-owner' : m.rank === 'CoOwner' ? 'is-coowner' : '';
@@ -1826,7 +1916,14 @@ function renderHubChatMsgs() {
 function renderHubChatMembers() {
   var el = document.getElementById('chatMemberList');
   if (!el) return;
-  el.innerHTML = '<div class="chat-member-lbl">Online</div>' + (state.currentUser ? '<div class="chat-member-row"><span class="dot dot-green"></span>' + escHtml(state.currentUser.username) + verifiedBadge(state.currentUser.rank) + '</div>' : '') + '<div class="chat-member-row"><span class="dot dot-green"></span>DevTBot' + verifiedBadge('Bot', true) + '</div><div class="chat-member-lbl" style="margin-top:.4rem">Members</div>' + Object.keys(USERS).filter(function(n) { return n !== (state.currentUser && state.currentUser.username); }).map(function(n) {
+  var now = Date.now();
+  var ONLINE_THRESHOLD_MS = 300000; // 5 minutes
+  var isOnline = function(user) { return user.lastSeen && (now - user.lastSeen) < ONLINE_THRESHOLD_MS; };
+  var onlineUsers = Object.keys(USERS).filter(function(n) { return USERS[n].lastSeen && (now - USERS[n].lastSeen) < ONLINE_THRESHOLD_MS; });
+  var offlineUsers = Object.keys(USERS).filter(function(n) { return !USERS[n].lastSeen || (now - USERS[n].lastSeen) >= ONLINE_THRESHOLD_MS; });
+  el.innerHTML = '<div class="chat-member-lbl">Online</div>' + (state.currentUser ? '<div class="chat-member-row"><span class="dot dot-green"></span>' + escHtml(state.currentUser.username) + verifiedBadge(state.currentUser.rank) + '</div>' : '') + '<div class="chat-member-row"><span class="dot dot-green"></span>DevTBot' + verifiedBadge('Bot', true) + '</div>' + onlineUsers.filter(function(n) { return n !== (state.currentUser && state.currentUser.username); }).map(function(n) {
+    return '<div class="chat-member-row"><span class="dot dot-green"></span>' + escHtml(n) + verifiedBadge(USERS[n].rank) + '</div>';
+  }).join('') + '<div class="chat-member-lbl" style="margin-top:.4rem">Offline</div>' + offlineUsers.map(function(n) {
     return '<div class="chat-member-row" style="opacity:.6"><span class="dot dot-grey"></span>' + escHtml(n) + verifiedBadge(USERS[n].rank) + '</div>';
   }).join('');
 }
@@ -1838,7 +1935,11 @@ function sendChatMsg() {
   var text = ((inp && inp.value) || '').trim();
   if (!text) return;
   if (!canWriteChannel(ch)) { showNotification('No permission', 'You cannot write in ' + ch.id, 'error'); return; }
-  pushChat({ id: 'm' + Date.now(), from: state.currentUser.username, rank: state.currentUser.rank, text: text.slice(0, 1000), t: nowShort(), isBot: false, ch: ch.id });
+  var msg = { id: 'm' + Date.now(), from: state.currentUser.username, rank: state.currentUser.rank, text: text.slice(0, 1000), t: nowShort(), isBot: false, ch: ch.id };
+  if (ch.isDM) {
+    msg.to = ch.target;
+  }
+  pushChat(msg);
   inp.value = '';
   if (/^[\/!]/.test(text)) setTimeout(function() { devTBot(text.slice(1), ch.id); }, 350);
 }
@@ -2102,6 +2203,22 @@ function importWebsiteState() {
   input.click();
 }
 
+/* ── PRESENCE HEARTBEAT ── */
+var _presenceHeartbeatTimer = null;
+function startPresenceHeartbeat() {
+  if (_presenceHeartbeatTimer) return;
+  _presenceHeartbeatTimer = setInterval(function() {
+    if (state.currentUser && USERS[state.currentUser.username]) {
+      USERS[state.currentUser.username].lastSeen = Date.now();
+      // Refresh member list to show updated online status
+      if (typeof renderHubChatMembers === 'function') renderHubChatMembers();
+    }
+  }, 60000); // Update every 60 seconds
+}
+function stopPresenceHeartbeat() {
+  if (_presenceHeartbeatTimer) { clearInterval(_presenceHeartbeatTimer); _presenceHeartbeatTimer = null; }
+}
+
 /* ── INIT ── */
 async function init() {
   try {
@@ -2109,14 +2226,14 @@ async function init() {
     initLanguage();
     ensureDefaults();
     await loadFromFirestore();
-    
+
     // Check URL for page parameter
     var urlParams = new URLSearchParams(window.location.search);
     var pageParam = urlParams.get('page');
     if (pageParam && ['home', 'about', 'contact', 'community', 'roblox', 'creations', 'tos', 'workspace'].indexOf(pageParam) !== -1) {
       state.currentPage = pageParam;
     }
-    
+
     renderNavigation();
     updateStaticTranslations();
     renderPage();
@@ -2124,6 +2241,8 @@ async function init() {
     logActivity('System', 'Website initialized');
     // Start realtime call state polling (admin.js provides startCallPolling)
     if (typeof startCallPolling === 'function') startCallPolling();
+    // Start presence heartbeat to update user's lastSeen timestamp
+    startPresenceHeartbeat();
     // Realtime chat sync: refresh messages when remote state changes
     if (typeof window.__firestoreOps !== 'undefined' && window.__firestoreOps.subscribe) {
       window.__firestoreOps.subscribe(function(remoteState) {

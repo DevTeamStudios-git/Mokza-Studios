@@ -39,6 +39,7 @@ var ADMIN_SECTIONS = [
   { id: 'cloud', label: 'Cloud', icon: 'cloud', min: 'Apprentice' },
   { id: 'chat', label: 'Chat', icon: 'chat', min: 'Developer' },
   { id: 'users', label: 'Users', icon: 'people', min: 'Apprentice' },
+  { id: 'apprentice', label: 'Apprentice Accounts', icon: 'user-plus', min: 'CoOwner' },
   { id: 'messages', label: 'Messages', icon: 'inbox', min: 'Developer' },
   { id: 'suggestions', label: 'Suggestions', icon: 'sparkles', min: 'Apprentice' },
   { id: 'activity', label: 'Activity', icon: 'clipboard', min: 'Apprentice' },
@@ -69,7 +70,7 @@ function renderAdminContent() {
     return '<button class="admin-tab' + (s.id === state.adminSection ? ' active' : '') + '" onclick="changeAdminSection(\'' + s.id + '\')">' + svgIcon(s.icon, 15) + ' ' + s.label + '</button>';
   }).join('');
   var c = $('adminContent');
-  var fn = { overview: renderOverviewSection, announcements: renderAnnouncementsSection, navigation: renderNavigationSection, elements: renderElementsSection, cloud: renderCloudSection, chat: renderChatSection, users: renderUsersSection, messages: renderMessagesSection, suggestions: renderSuggestionsSection, activity: renderActivitySection, site: renderSiteSection }[state.adminSection];
+  var fn = { overview: renderOverviewSection, announcements: renderAnnouncementsSection, navigation: renderNavigationSection, elements: renderElementsSection, cloud: renderCloudSection, chat: renderChatSection, users: renderUsersSection, apprentice: renderApprenticeSection, messages: renderMessagesSection, suggestions: renderSuggestionsSection, activity: renderActivitySection, site: renderSiteSection }[state.adminSection];
   var st = c.scrollTop;
   fn(c);
   c.scrollTop = st;
@@ -497,6 +498,8 @@ function startCallPolling() {
           if (state.adminMenuOpen && state.adminSection === 'chat' && typeof renderAdminContent === 'function') renderAdminContent();
           // Also refresh hub chat view so call banner shows even outside admin panel
           if (typeof renderHubChat === 'function') renderHubChat();
+          // Refresh meeting modal if open to show updated participants
+          if (state.meetingActive && typeof renderMeetingModal === 'function') renderMeetingModal();
         }
       }
     } catch (e) { /* ignore - call state endpoint may not be ready */ }
@@ -524,6 +527,86 @@ function renderUsersSection(c) {
     var u = USERS[n], on = state.currentUser && state.currentUser.username === n;
     return '<div class="user-item"><div class="user-avatar">' + escHtml(n[0]) + '</div><div class="user-info"><div class="user-name">' + escHtml(n) + verifiedBadge(u.rank) + (on ? ' <span style="color:var(--accent-success)">●</span>' : '') + '</div><div class="user-rank">' + rankLabel(u.rank) + ' · ' + escHtml(u.permissions) + '</div></div></div>';
   }).join('') + '</div>';
+}
+function renderApprenticeSection(c) {
+  var apprenticeUsers = Object.keys(USERS).filter(function(n) { return USERS[n].rank === 'Apprentice'; });
+  c.innerHTML = '<h3>Apprentice Account Management</h3><p class="admin-role">Create and manage Apprentice accounts. Only CoOwner+ can access this section.</p>' +
+    '<div class="admin-btn-row" style="margin-bottom:1rem">' +
+    '<button class="btn-primary" onclick="showCreateApprenticeModal()">' + svgIcon('user-plus', 16) + ' Create Apprentice Account</button>' +
+    '</div>' +
+    '<h4>Existing Apprentice Accounts (' + apprenticeUsers.length + ')</h4>' +
+    (apprenticeUsers.length ? apprenticeUsers.map(function(n) {
+      var u = USERS[n];
+      return '<div class="admin-row" style="align-items:center"><div><strong>' + escHtml(n) + '</strong><div class="meta">Password: ••••••••</div></div><div class="admin-actions">' +
+        rowBtn('pencil', 'Reset Password', 'showResetPasswordModal(\'' + sid(n) + '\')') +
+        rowBtn('trash', 'Delete Account', 'deleteApprenticeAccount(\'' + sid(n) + '\')', true) +
+        '</div></div>';
+    }).join('') : '<p class="no-files">No Apprentice accounts yet.</p>');
+}
+function showCreateApprenticeModal() {
+  var html = '<label class="modal-label">Username</label><input type="text" id="apprenticeUsername" class="modal-input" placeholder="Enter username" maxlength="24" />' +
+    '<label class="modal-label">Password (leave empty to auto-generate)</label><input type="text" id="apprenticePassword" class="modal-input" placeholder="Auto-generated format: 1 letter + 1 number" maxlength="8" />' +
+    '<p class="modal-hint">If you leave the password empty, a random password will be generated using the 1-letter-1-number format.</p>' +
+    '<div class="modal-buttons"><button class="btn-primary" onclick="createApprenticeAccount()">Create Account</button><button class="btn-ghost" onclick="closeElementModal()">Cancel</button></div>';
+  openModal('Create Apprentice Account', html);
+}
+async function createApprenticeAccount() {
+  var username = val('apprenticeUsername').trim();
+  var password = val('apprenticePassword').trim();
+  if (!username) { showNotification('Error', 'Username is required', 'error'); return; }
+  if (USERS[username]) { showNotification('Error', 'Username already exists', 'error'); return; }
+  if (!password) {
+    // Generate random password: 1 letter + 1 number format
+    var letters = 'abcdefghijklmnopqrstuvwxyz';
+    var numbers = '0123456789';
+    var randomLetter = letters[Math.floor(Math.random() * letters.length)];
+    var randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
+    password = randomLetter + randomNumber;
+  }
+  var passwordHash = await sha256(password);
+  USERS[username] = { passwordHash: passwordHash, rank: 'Apprentice', permissions: 'APPRENTICE', lastSeen: null };
+  closeElementModal();
+  showNotification('Account Created', 'Apprentice account <b>' + escHtml(username) + '</b> created with password: <code>' + escHtml(password) + '</code>', 'success');
+  logActivity('Apprentice Created', 'Created Apprentice account: ' + username);
+  renderAdminContent();
+  saveToFirestore();
+}
+function showResetPasswordModal(username) {
+  var html = '<label class="modal-label">New Password (leave empty to auto-generate)</label><input type="text" id="newApprenticePassword" class="modal-input" placeholder="Auto-generated format: 1 letter + 1 number" maxlength="8" />' +
+    '<p class="modal-hint">If you leave the password empty, a random password will be generated using the 1-letter-1-number format.</p>' +
+    '<input type="hidden" id="resetUsername" value="' + escHtml(username) + '" />' +
+    '<div class="modal-buttons"><button class="btn-primary" onclick="resetApprenticePassword()">Reset Password</button><button class="btn-ghost" onclick="closeElementModal()">Cancel</button></div>';
+  openModal('Reset Password for ' + escHtml(username), html);
+}
+async function resetApprenticePassword() {
+  var username = val('resetUsername');
+  var password = val('newApprenticePassword').trim();
+  if (!USERS[username]) { showNotification('Error', 'User not found', 'error'); return; }
+  if (!password) {
+    // Generate random password: 1 letter + 1 number format
+    var letters = 'abcdefghijklmnopqrstuvwxyz';
+    var numbers = '0123456789';
+    var randomLetter = letters[Math.floor(Math.random() * letters.length)];
+    var randomNumber = numbers[Math.floor(Math.random() * numbers.length)];
+    password = randomLetter + randomNumber;
+  }
+  var passwordHash = await sha256(password);
+  USERS[username].passwordHash = passwordHash;
+  closeElementModal();
+  showNotification('Password Reset', 'Password for <b>' + escHtml(username) + '</b> reset to: <code>' + escHtml(password) + '</code>', 'success');
+  logActivity('Password Reset', 'Reset password for Apprentice: ' + username);
+  renderAdminContent();
+  saveToFirestore();
+}
+function deleteApprenticeAccount(username) {
+  if (!confirm('Are you sure you want to delete this Apprentice account? This action cannot be undone.')) return;
+  if (!USERS[username]) { showNotification('Error', 'User not found', 'error'); return; }
+  if (USERS[username].rank !== 'Apprentice') { showNotification('Error', 'Only Apprentice accounts can be deleted here', 'error'); return; }
+  delete USERS[username];
+  showNotification('Account Deleted', 'Apprentice account <b>' + escHtml(username) + '</b> has been deleted', 'success');
+  logActivity('Apprentice Deleted', 'Deleted Apprentice account: ' + username);
+  renderAdminContent();
+  saveToFirestore();
 }
 function renderActivitySection(c) {
   c.innerHTML = '<h3>Activity Log</h3>' + (state.activityLog.length ? state.activityLog.map(function(a) {
