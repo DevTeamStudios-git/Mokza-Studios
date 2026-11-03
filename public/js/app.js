@@ -711,21 +711,8 @@ function isAuthLocked() {
 
 // ── USER AUTHENTICATION (OAuth + Dev Team) ──
 function showUserLoginModal() {
-  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>' + escHtml(t('authTitle')) + '</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">' + escHtml(t('authTabOAuth')) + '</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">' + escHtml(t('authTabDev')) + '</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">' + escHtml(t('authOAuthDesc')) + '</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> ' + escHtml(t('authDiscord')) + '</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ' + escHtml(t('authGoogle')) + '</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">' + escHtml(t('authTOSNotice')) + ' <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">' + escHtml(t('navTOS')) + '</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">' + escHtml(t('authSecurityCode')) + '</div><input type="password" id="securityCodeInput" class="input-base" placeholder="' + escHtml(t('authSecurityCodePlaceholder')) + '" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('authCredentials')) + '</div><input type="text" id="usernameInput" class="input-base" placeholder="' + escHtml(t('authUsernamePlaceholder')) + '" /><input type="password" id="passwordInput" class="input-base" placeholder="' + escHtml(t('authPasswordPlaceholder')) + '" /><div style="margin-top:0.75rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="rememberMeCheckbox" style="width:auto;height:auto;" /><label for="rememberMeCheckbox" style="font-size:0.85rem;color:var(--text-secondary);cursor:pointer;">Remember Me</label></div><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">' + escHtml(t('authLogin')) + '</button><button class="btn-ghost" onclick="closeAuthModal()">' + escHtml(t('authCancel')) + '</button></div></div></div></div>';
+  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>' + escHtml(t('authTitle')) + '</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">' + escHtml(t('authTabOAuth')) + '</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">' + escHtml(t('authTabDev')) + '</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">' + escHtml(t('authOAuthDesc')) + '</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> ' + escHtml(t('authDiscord')) + '</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ' + escHtml(t('authGoogle')) + '</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">' + escHtml(t('authTOSNotice')) + ' <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">' + escHtml(t('navTOS')) + '</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">' + escHtml(t('authSecurityCode')) + '</div><input type="password" id="securityCodeInput" class="input-base" placeholder="' + escHtml(t('authSecurityCodePlaceholder')) + '" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('authCredentials')) + '</div><input type="text" id="usernameInput" class="input-base" placeholder="' + escHtml(t('authUsernamePlaceholder')) + '" /><input type="password" id="passwordInput" class="input-base" placeholder="' + escHtml(t('authPasswordPlaceholder')) + '" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">' + escHtml(t('authLogin')) + '</button><button class="btn-ghost" onclick="closeAuthModal()">' + escHtml(t('authCancel')) + '</button></div></div></div></div>';
   document.getElementById('authModal').classList.remove('hidden');
-  // Pre-fill remembered credentials
-  var remembered = localStorage.getItem('mokza_remembered_login');
-  if (remembered) {
-    try {
-      var data = JSON.parse(remembered);
-      var usernameInput = document.getElementById('usernameInput');
-      var passwordInput = document.getElementById('passwordInput');
-      var rememberCheckbox = document.getElementById('rememberMeCheckbox');
-      if (usernameInput) usernameInput.value = data.username || '';
-      if (passwordInput) passwordInput.value = data.password || '';
-      if (rememberCheckbox) rememberCheckbox.checked = true;
-    } catch (e) {}
-  }
 }
 
 function switchAuthTab(tab) {
@@ -789,17 +776,6 @@ async function handleAuthSubmit() {
   document.getElementById('devToggle').classList.add('active');
   // Update user's lastSeen timestamp
   USERS[username].lastSeen = Date.now();
-  // Handle Remember Me
-  var rememberMe = document.getElementById('rememberMeCheckbox') && document.getElementById('rememberMeCheckbox').checked;
-  if (rememberMe) {
-    try {
-      localStorage.setItem('mokza_remembered_login', JSON.stringify({ username: username, password: password }));
-    } catch (e) {}
-  } else {
-    try {
-      localStorage.removeItem('mokza_remembered_login');
-    } catch (e) {}
-  }
   closeAuthModal();
   showNotification('Welcome!', 'Logged in as ' + username + ' (' + user.rank + ')', 'success');
   logActivity('User Login', username + ' logged in');
@@ -822,11 +798,6 @@ function handleLogout() {
   state.devModeActive = false;
   state.editMode = false;
   document.getElementById('devToggle').classList.remove('active');
-  stopPresenceHeartbeat();
-  // Clear remembered credentials on logout for security
-  try {
-    localStorage.removeItem('mokza_remembered_login');
-  } catch (e) {}
   showNotification('Logged Out', 'Successfully logged out', 'info');
   logActivity('User Logout', name + ' logged out');
   updateAuthUI();
@@ -854,7 +825,7 @@ function toggleDevMode() {
 }
 
 /* ── PERSISTENCE (shared site data only — never sessions or personal UI state) ── */
-var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive'];
+var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive','chatMessages'];
 var LOCAL_KEY = 'mokza_state_v2';
 
 function persistable() {
@@ -898,11 +869,15 @@ function flashSaveIndicator(cls, text) {
   _saveIndicatorTimer = setTimeout(function() { el.className = ''; }, 1800);
 }
 
+var _saving = false;
 async function saveToFirestore() {
+  clearTimeout(_saveTimer); _saveTimer = null;
+  _saving = true;
   saveLocal();                       // always keep a local copy so nothing is lost if the API is down
   flashSaveIndicator('saving', 'Saving…');
   try {
-    await apiRequest('/website-state/save', { method: 'POST', body: { data: persistable() } });
+    var saved = await apiRequest('/website-state/save', { method: 'POST', body: { data: persistable() } });
+    if (saved && saved.updated_at) _remoteStamp = saved.updated_at;
     _apiOnline = true;
     flashSaveIndicator('saved', 'Saved');
   } catch (e) {
@@ -910,6 +885,7 @@ async function saveToFirestore() {
     console.warn('Cloud save failed (kept locally):', e.message);
     flashSaveIndicator('error', 'Saved locally');
   }
+  _saving = false;
 }
 
 async function loadFromFirestore() {
@@ -917,7 +893,7 @@ async function loadFromFirestore() {
   try {
     var result = await apiRequest('/website-state');
     _apiOnline = true;
-    if (result && result.state) { applyPersisted(result.state); }
+    if (result && result.state) { applyPersisted(result.state); _remoteStamp = result.state.updated_at || null; }
     
     // Load suggestions from API
     try {
@@ -1523,30 +1499,10 @@ window.updateStaticTranslations = updateStaticTranslations;
 function openOfficeHub() {
   if (!state.currentUser) { showNotification('Login required', '', 'error'); return; }
   document.getElementById('officeHub').classList.add('open');
-  renderDMList();
   switchHubView('dashboard', null);
 }
 function closeOfficeHub() {
   document.getElementById('officeHub').classList.remove('open');
-}
-function renderDMList() {
-  var el = document.getElementById('dmList');
-  if (!el) return;
-  // Filter users with Apprentice+ rank
-  var apprenticePlusUsers = Object.keys(USERS).filter(function(n) {
-    var user = USERS[n];
-    var rankOrder = ['Apprentice', 'Developer', 'CoOwner', 'Owner'];
-    return rankOrder.indexOf(user.rank) >= 0;
-  });
-  el.innerHTML = apprenticePlusUsers.map(function(n) {
-    var user = USERS[n];
-    var isMe = state.currentUser && state.currentUser.username === n;
-    return '<button class="hub-nav-item" onclick="openDM(\'' + escHtml(n) + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' + escHtml(n) + verifiedBadge(user.rank) + (isMe ? ' <span style="opacity:.5;font-size:.7rem">(You)</span>' : '') + '</button>';
-  }).join('');
-}
-function openDM(username) {
-  state.chatChannel = '@' + username;
-  renderHubChat();
 }
 function switchHubView(view, btn) {
   document.querySelectorAll('.hub-view').forEach(function(el) { el.classList.remove('active'); el.style.display = 'none'; });
@@ -1812,17 +1768,9 @@ var CHANNELS = [
   { id: '#general', read: 'Apprentice', write: 'Developer', desc: 'Team chat' },
   { id: '#announcements', read: 'Apprentice', write: 'CoOwner', desc: 'Official announcements' },
   { id: '#bot-commands', read: 'Apprentice', write: 'Apprentice', desc: 'Run bot commands here' },
-  { id: '#staff-only', read: 'CoOwner', write: 'CoOwner', desc: 'Leadership only' },
-  { id: '#admin-discussion', read: 'Apprentice', write: 'Apprentice', desc: 'General admin discussion' }
+  { id: '#staff-only', read: 'CoOwner', write: 'CoOwner', desc: 'Leadership only' }
 ];
-function channelById(id) {
-  // Handle DM channels (starting with @)
-  if (id && id.startsWith('@')) {
-    var targetUser = id.substring(1);
-    return { id: id, read: 'Apprentice', write: 'Apprentice', desc: 'Direct message with ' + targetUser, isDM: true, target: targetUser };
-  }
-  return CHANNELS.find(function(c) { return c.id === id; }) || CHANNELS[0];
-}
+function channelById(id) { return CHANNELS.find(function(c) { return c.id === id; }) || CHANNELS[0]; }
 function canReadChannel(ch) { return !!state.currentUser && canAccess(ch.read); }
 function canWriteChannel(ch) { return !!state.currentUser && canAccess(ch.write); }
 
@@ -1863,13 +1811,7 @@ function renderHubChat() {
     }
   } else {
     var hdr = document.getElementById('chatHdr');
-    if (hdr) {
-      if (cur.isDM) {
-        hdr.innerHTML = '@' + escHtml(cur.target) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— Direct Message</span>';
-      } else {
-        hdr.innerHTML = escHtml(cur.id) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— ' + escHtml(cur.desc) + '</span>';
-      }
-    }
+    if (hdr) hdr.innerHTML = escHtml(cur.id) + ' <span style="opacity:.5;font-weight:400;font-size:.8rem">— ' + escHtml(cur.desc) + '</span>';
   }
   renderHubChatMsgs();
   renderHubChatMembers();
@@ -1891,27 +1833,15 @@ function renderHubChatChannels() {
 function renderHubChatMsgs() {
   var el = document.getElementById('chatMsgsArea');
   if (!el) return;
-  var cur = channelById(state.chatChannel);
-  var msgs;
-  if (cur.isDM) {
-    // For DMs, show messages between current user and target user
-    var target = cur.target;
-    var me = state.currentUser ? state.currentUser.username : null;
-    msgs = state.chatMessages.filter(function(m) {
-      return m.ch === state.chatChannel && (
-        (m.from === me && m.to === target) ||
-        (m.from === target && m.to === me)
-      );
-    }).slice(-100);
-  } else {
-    msgs = state.chatMessages.filter(function(m) { return (m.ch || '#general') === state.chatChannel; }).slice(-100);
-  }
+  var msgs = state.chatMessages.filter(function(m) { return (m.ch || '#general') === state.chatChannel; }).slice(-100);
+  var nearBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) < 80;
+  var prevTop = el.scrollTop;
   if (!msgs.length) { el.innerHTML = '<div style="text-align:center;opacity:.5;padding:2.5rem;font-size:.88rem">No messages yet. Say hello! 👋</div>'; return; }
   el.innerHTML = msgs.map(function(m) {
     var rankCls = m.isBot ? 'is-bot' : m.rank === 'Owner' ? 'is-owner' : m.rank === 'CoOwner' ? 'is-coowner' : '';
     return '<div class="chat-message"><div class="chat-avatar" style="background:var(--accent-primary);color:var(--on-accent)">' + escHtml((m.from || '?')[0].toUpperCase()) + '</div><div class="chat-msg-body"><div class="chat-msg-meta"><span class="chat-author ' + rankCls + '">' + escHtml(m.from) + verifiedBadge(m.rank, m.isBot) + (m.isBot ? ' <span class="badge badge-gold">BOT</span>' : '') + '</span><span class="chat-time">' + escHtml(m.t || '') + '</span></div><div class="chat-text">' + fmtChat(m.text) + '</div>' + (m.embed ? '<div class="chat-embed">' + m.embed + '</div>' : '') + '</div></div>';
   }).join('');
-  el.scrollTop = el.scrollHeight;
+  el.scrollTop = nearBottom ? el.scrollHeight : prevTop;
 }
 function renderHubChatMembers() {
   var el = document.getElementById('chatMemberList');
@@ -1935,21 +1865,143 @@ function sendChatMsg() {
   var text = ((inp && inp.value) || '').trim();
   if (!text) return;
   if (!canWriteChannel(ch)) { showNotification('No permission', 'You cannot write in ' + ch.id, 'error'); return; }
-  var msg = { id: 'm' + Date.now(), from: state.currentUser.username, rank: state.currentUser.rank, text: text.slice(0, 1000), t: nowShort(), isBot: false, ch: ch.id };
-  if (ch.isDM) {
-    msg.to = ch.target;
-  }
-  pushChat(msg);
+  pushChat({ id: 'm' + Date.now(), from: state.currentUser.username, rank: state.currentUser.rank, text: text.slice(0, 1000), t: nowShort(), isBot: false, ch: ch.id });
   inp.value = '';
   if (/^[\/!]/.test(text)) setTimeout(function() { devTBot(text.slice(1), ch.id); }, 350);
 }
 function nowShort() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 function pushChat(msg) {
+  msg.pending = true;
   state.chatMessages.push(msg);
   if (state.chatMessages.length > 500) state.chatMessages = state.chatMessages.slice(-500);
+  refreshChatViews();
+  apiRequest('/chat', { method: 'POST', body: { id: msg.id, ch: msg.ch, from: msg.from, rank: msg.rank, text: msg.text, t: msg.t, isBot: !!msg.isBot, embed: msg.embed || null } })
+    .then(function(res) {
+      _apiOnline = true;
+      var m = byId(state.chatMessages, msg.id);
+      if (m) { delete m.pending; if (res && res.message && res.message.seq) m.seq = res.message.seq; }
+      pollChat();                       // pull anything the others sent meanwhile
+    })
+    .catch(function() {
+      var m = byId(state.chatMessages, msg.id);
+      if (m) { m.failed = true; }
+      showNotification('Message not sent', 'The server could not be reached. Check your connection.', 'error');
+    });
+}
+function refreshChatViews() {
   renderHubChatMsgs();
-  if (typeof state.adminMenuOpen !== 'undefined' && state.adminMenuOpen && state.adminSection === 'chat' && typeof renderAdminContent === 'function') renderAdminContent();
-  scheduleSave();
+  if (state.adminMenuOpen && state.adminSection === 'chat' && typeof refreshAdminChatMsgs === 'function') refreshAdminChatMsgs();
+}
+
+/* ── LIVE SYNC (no refresh needed) ──
+   Chat: one DB row per message; every browser asks "anything newer than seq N?" every few seconds.
+   Suggestions + shared site data: re-fetched on a timer and applied when the user is not mid-edit. */
+var _chatCursor = 0, _chatPollBusy = false, _lastReconcile = 0;
+function mergeChat(list) {
+  var changed = false;
+  list.forEach(function(m) {
+    var ex = byId(state.chatMessages, m.id);
+    if (ex) { if (!ex.seq && m.seq) { ex.seq = m.seq; delete ex.pending; changed = true; } return; }
+    state.chatMessages.push(m); changed = true;
+  });
+  if (changed) {
+    state.chatMessages.sort(function(a, b) { return (a.seq || Infinity) - (b.seq || Infinity); });
+    if (state.chatMessages.length > 500) state.chatMessages = state.chatMessages.slice(-500);
+  }
+  return changed;
+}
+async function pollChat() {
+  if (_chatPollBusy) return;
+  _chatPollBusy = true;
+  try {
+    var r = await apiRequest('/chat?after=' + _chatCursor);
+    _apiOnline = true;
+    var changed = false;
+    if (r && r.messages && r.messages.length) {
+      r.messages.forEach(function(m) { if (m.seq > _chatCursor) _chatCursor = m.seq; });
+      changed = mergeChat(r.messages);
+    }
+    // every ~8s, drop messages that were deleted elsewhere (/clear)
+    if (Date.now() - _lastReconcile > 8000) {
+      _lastReconcile = Date.now();
+      var idsRes = await apiRequest('/chat-ids');
+      if (idsRes && idsRes.ids) {
+        var keep = {}; idsRes.ids.forEach(function(i) { keep[i] = 1; });
+        var before = state.chatMessages.length;
+        state.chatMessages = state.chatMessages.filter(function(m) { return !m.seq || keep[m.id] || m.seq > _chatCursor; });
+        if (state.chatMessages.length !== before) changed = true;
+      }
+    }
+    if (changed) refreshChatViews();
+  } catch (e) { /* offline: try again next tick */ }
+  _chatPollBusy = false;
+}
+
+var _remoteStamp = null, _sharedBusy = false, _suggSig = null;
+function userIsEditing() {
+  var a = document.activeElement;
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return true;
+  var modals = ['elementModal', 'authModal'];
+  for (var i = 0; i < modals.length; i++) { var m = document.getElementById(modals[i]); if (m && !m.classList.contains('hidden') && m.offsetParent !== null) return true; }
+  return !!state.textEditMode;
+}
+function refreshAllViews() {
+  renderNavigation();
+  renderPage();
+  if (typeof updateStaticTranslations === 'function') updateStaticTranslations();
+  var hub = document.getElementById('officeHub');
+  if (hub && hub.classList.contains('open')) {
+    var act = document.querySelector('.hub-view.active');
+    var v = act ? act.id.replace('hub-view-', '') : 'dashboard';
+    if (v === 'dashboard') renderHubDash(); else if (v === 'activity') renderHubAct(); else if (v === 'tasks') renderHubTasks();
+  }
+  if (state.adminMenuOpen && typeof renderAdminContent === 'function' && state.adminSection !== 'chat') renderAdminContent();
+}
+async function pollShared() {
+  if (_sharedBusy) return;
+  _sharedBusy = true;
+  try {
+    var dirty = false;
+    // suggestions live in their own table
+    var sr = await apiRequest('/suggestions');
+    if (sr && sr.success && Array.isArray(sr.suggestions)) {
+      var sig = JSON.stringify(sr.suggestions.map(function(x) { return [x.id, x.status, x.delete_at || x.deleteAt || null]; }));
+      if (_suggSig !== null && sig !== _suggSig) { state.suggestions = sr.suggestions; dirty = true; }
+      else if (_suggSig === null) state.suggestions = sr.suggestions;
+      _suggSig = sig;
+    }
+    // everything else (announcements, tasks, projects, cards, nav, texts…) lives in the shared state row
+    var wr = await apiRequest('/website-state');
+    _apiOnline = true;
+    var stamp = wr && wr.state ? wr.state.updated_at : null;
+    if (stamp && _remoteStamp !== null && stamp !== _remoteStamp && !_saveTimer && !_saving) {
+      var keepSugg = state.suggestions;
+      applyPersisted(wr.state);
+      state.suggestions = keepSugg;     // suggestions are owned by their own table
+      dirty = true;
+    }
+    if (stamp && !_saveTimer && !_saving) _remoteStamp = stamp;
+    if (dirty && !userIsEditing()) refreshAllViews();
+    else if (dirty) _pendingRefresh = true;
+    else if (_pendingRefresh && !userIsEditing()) { _pendingRefresh = false; refreshAllViews(); }
+  } catch (e) { _apiOnline = false; }
+  _sharedBusy = false;
+}
+var _pendingRefresh = false;
+var _chatTimer = null, _sharedTimer = null;
+function startLiveSync() {
+  if (_chatTimer) return;
+  pollChat();
+  var tick = 0;
+  _chatTimer = setInterval(function() {
+    if (document.hidden) return;
+    var hubChat = document.querySelector('#officeHub.open #hub-view-chat.active');
+    var adminChat = state.adminMenuOpen && state.adminSection === 'chat';
+    // fast (2.5s) while a chat is on screen, slow (10s) otherwise
+    if (hubChat || adminChat || ++tick % 4 === 0) pollChat();
+  }, 2500);
+  _sharedTimer = setInterval(function() { if (!document.hidden) pollShared(); }, 5000);
+  document.addEventListener('visibilitychange', function() { if (!document.hidden) { pollChat(); pollShared(); } });
 }
 
 /* ── DEVTBOT — command registry (help is generated from this, so it can never be empty) ── */
@@ -2086,7 +2138,8 @@ defCmd('clear', { cat: 'Moderation', usage: '/clear [n|all]', desc: 'Delete mess
   var n = (c.argv[0] || 'all').toLowerCase() === 'all' ? inCh.length : Math.max(1, parseInt(c.argv[0], 10) || 0);
   var drop = inCh.slice(-n).map(function(m) { return m.id; });
   state.chatMessages = state.chatMessages.filter(function(m) { return drop.indexOf(m.id) === -1; });
-  renderHubChatMsgs(); scheduleSave(); c.reply('🧹 Cleared ' + drop.length + ' message(s)');
+  if (drop.length) apiRequest('/chat', { method: 'DELETE', body: { ids: drop } }).catch(function() {});
+  renderHubChatMsgs(); c.reply('🧹 Cleared ' + drop.length + ' message(s)');
 } });
 defCmd('raid', { cat: 'Moderation', usage: '/raid <on|off|status>', desc: 'Toggle raid mode (disables public submissions)', min: 'CoOwner', run: function(c) {
   var a = (c.argv[0] || 'status').toLowerCase();
@@ -2203,20 +2256,13 @@ function importWebsiteState() {
   input.click();
 }
 
-/* ── PRESENCE HEARTBEAT ── */
-var _presenceHeartbeatTimer = null;
+/* ── PRESENCE (this browser only: marks the signed-in user as recently seen) ── */
+var _presenceTimer = null;
 function startPresenceHeartbeat() {
-  if (_presenceHeartbeatTimer) return;
-  _presenceHeartbeatTimer = setInterval(function() {
-    if (state.currentUser && USERS[state.currentUser.username]) {
-      USERS[state.currentUser.username].lastSeen = Date.now();
-      // Refresh member list to show updated online status
-      if (typeof renderHubChatMembers === 'function') renderHubChatMembers();
-    }
-  }, 60000); // Update every 60 seconds
-}
-function stopPresenceHeartbeat() {
-  if (_presenceHeartbeatTimer) { clearInterval(_presenceHeartbeatTimer); _presenceHeartbeatTimer = null; }
+  if (_presenceTimer) return;
+  var beat = function() { if (state.currentUser && USERS[state.currentUser.username]) USERS[state.currentUser.username].lastSeen = Date.now(); };
+  beat();
+  _presenceTimer = setInterval(beat, 30000);
 }
 
 /* ── INIT ── */
@@ -2241,20 +2287,9 @@ async function init() {
     logActivity('System', 'Website initialized');
     // Start realtime call state polling (admin.js provides startCallPolling)
     if (typeof startCallPolling === 'function') startCallPolling();
-    // Start presence heartbeat to update user's lastSeen timestamp
+    // Live sync first, so a problem in anything below can never stop messages from refreshing
+    startLiveSync();
     startPresenceHeartbeat();
-    // Realtime chat sync: refresh messages when remote state changes
-    if (typeof window.__firestoreOps !== 'undefined' && window.__firestoreOps.subscribe) {
-      window.__firestoreOps.subscribe(function(remoteState) {
-        if (remoteState && remoteState.chatMessages) {
-          var remoteMsgs = remoteState.chatMessages || [];
-          if (remoteMsgs.length !== (state.chatMessages || []).length) {
-            state.chatMessages = remoteMsgs;
-            renderHubChatMsgs();
-          }
-        }
-      });
-    }
   } catch (err) {
     console.error('Init failed:', err);
   } finally {

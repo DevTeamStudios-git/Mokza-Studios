@@ -99,7 +99,7 @@ router.post('/website-state/save', async (req, res) => {
     // Always persist locally too
     writeJson(STATE_FILE, { ...payload, id: STATE_ID });
 
-    return res.json({ success: true, cloud: cloudOk, message: 'State saved' });
+    return res.json({ success: true, cloud: cloudOk, message: 'State saved', updated_at: savedAt });
   } catch (err) {
     console.error('[API] POST website-state/save error:', err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -522,6 +522,130 @@ router.post('/call-state', async (req, res) => {
     return res.json({ success: true, cloud: cloudOk, call: payload });
   } catch (err) {
     console.error('[API] POST call-state error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ═════════════════════════════════════════════
+// CHAT (one row per message; browsers poll for rows newer than their cursor)
+// ═════════════════════════════════════════════
+
+const CHAT_TABLE = 'chat_messages';
+const CHAT_FILE = path.resolve(process.cwd(), 'server', 'data', 'chat.json');
+const CHAT_MAX_TEXT = 1000;
+
+function chatRowToMsg(r) {
+  return {
+    seq: Number(r.seq),
+    id: r.client_id || String(r.id),
+    ch: r.channel,
+    from: r.from,
+    rank: r.rank,
+    text: r.text,
+    t: r.t,
+    isBot: !!r.is_bot,
+    embed: r.embed || null,
+    createdAt: r.created_at,
+  };
+}
+
+// GET /api/chat?after=<seq>&limit=<n>
+//   after=0 (or missing) -> the latest `limit` messages (oldest first)
+//   after=N              -> only messages with seq > N
+// Also returns `ids` (every id currently stored in the window) so browsers can drop deleted messages.
+router.get('/chat', async (req, res) => {
+  try {
+    const after = Math.max(0, parseInt(req.query.after, 10) || 0);
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 200));
+    let messages = null;
+    if (supabase) {
+      let q = supabase.from(CHAT_TABLE).select('*');
+      q = after > 0 ? q.gt('seq', after).order('seq', { ascending: true }).limit(limit)
+                    : q.order('seq', { ascending: false }).limit(limit);
+      const { data, error } = await q;
+      if (error) throw error;
+      messages = (data || []).map(chatRowToMsg);
+      if (after === 0) messages.reverse();
+    } else {
+      const all = readJson(CHAT_FILE, []);
+      messages = after > 0 ? all.filter((m) => m.seq > after).slice(0, limit) : all.slice(-limit);
+    }
+    const latest = messages.length ? messages[messages.length - 1].seq : after;
+    return res.json({ success: true, messages, latest });
+  } catch (err) {
+    console.error('[API] GET chat error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/chat  { id, ch, from, rank, text, t, isBot, embed }
+router.post('/chat', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const text = String(b.text || '').slice(0, CHAT_MAX_TEXT);
+    const from = String(b.from || '').slice(0, 60);
+    if (!text || !from) return res.status(400).json({ success: false, error: 'text and from are required' });
+    const row = {
+      client_id: String(b.id || 'm' + Date.now() + Math.random().toString(36).slice(2, 7)).slice(0, 80),
+      channel: String(b.ch || '#general').slice(0, 40),
+      from,
+      rank: b.rank ? String(b.rank).slice(0, 30) : null,
+      text,
+      t: b.t ? String(b.t).slice(0, 20) : null,
+      is_bot: !!b.isBot,
+      embed: b.embed && typeof b.embed === 'string' ? b.embed.slice(0, 8000) : (b.embed || null),
+    };
+    if (supabase) {
+      const { data, error } = await supabase
+        .from(CHAT_TABLE)
+        .upsert([row], { onConflict: 'client_id', ignoreDuplicates: true })
+        .select();
+      if (error) throw error;
+      return res.json({ success: true, message: data && data[0] ? chatRowToMsg(data[0]) : null });
+    }
+    const all = readJson(CHAT_FILE, []);
+    const seq = (all.length ? all[all.length - 1].seq : 0) + 1;
+    const msg = { seq, id: row.client_id, ch: row.channel, from, rank: row.rank, text, t: row.t, isBot: row.is_bot, embed: row.embed, createdAt: new Date().toISOString() };
+    all.push(msg);
+    writeJson(CHAT_FILE, all.slice(-1000));
+    return res.json({ success: true, message: msg });
+  } catch (err) {
+    console.error('[API] POST chat error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/chat  { ids: [...] }  — used by /clear
+router.delete('/chat', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(String).slice(0, 500) : [];
+    if (!ids.length) return res.status(400).json({ success: false, error: 'ids required' });
+    if (supabase) {
+      const { error } = await supabase.from(CHAT_TABLE).delete().in('client_id', ids);
+      if (error) throw error;
+    } else {
+      writeJson(CHAT_FILE, readJson(CHAT_FILE, []).filter((m) => ids.indexOf(m.id) === -1));
+    }
+    return res.json({ success: true, deleted: ids.length });
+  } catch (err) {
+    console.error('[API] DELETE chat error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/chat/ids?ch=<channel>  — ids currently stored (lets browsers drop messages deleted elsewhere)
+router.get('/chat-ids', async (req, res) => {
+  try {
+    let ids = [];
+    if (supabase) {
+      const { data, error } = await supabase.from(CHAT_TABLE).select('client_id').order('seq', { ascending: false }).limit(500);
+      if (error) throw error;
+      ids = (data || []).map((r) => r.client_id);
+    } else {
+      ids = readJson(CHAT_FILE, []).slice(-500).map((m) => m.id);
+    }
+    return res.json({ success: true, ids });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });

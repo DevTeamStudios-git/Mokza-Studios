@@ -19,7 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 300, // writes only: 300 per IP per 15 min
+  skip: (req) => req.method === 'GET' || req.method === 'HEAD', // live-sync polling must never be rate limited into failure
   message: 'Too many requests from this IP, please try again later.',
 });
 app.use(limiter);
