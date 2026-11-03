@@ -7,6 +7,9 @@ import apiRoutes from '../server/routes/api.js';
 
 const app = express();
 
+// Trust proxy so rate-limit and IP detection work behind Vercel
+app.set('trust proxy', true);
+
 // Middleware
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));

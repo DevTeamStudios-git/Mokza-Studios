@@ -8,6 +8,9 @@ import apiRoutes from './routes/api.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy so rate-limit and IP detection work behind proxies
+app.set('trust proxy', true);
+
 // Middleware
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '10mb' }));
