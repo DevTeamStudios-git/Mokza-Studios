@@ -65,11 +65,9 @@ window.__firestoreOps = {
    * @param {Object} data — full state object
    */
   save: async (data) => {
-    const token = process.env.ADMIN_API_TOKEN || localStorage.getItem('mokza_api_token') || '';
     return apiRequest('/website-state/save', {
       method: 'POST',
       body: { data },
-      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
     });
   },
 
