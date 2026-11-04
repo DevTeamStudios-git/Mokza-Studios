@@ -1337,7 +1337,6 @@ async function loadDriveFolder(path){
     const bc=document.getElementById('drive-breadcrumb-extra');if(bc)bc.textContent=path?` / ${path}`:'';
   }catch(e){if(grid)grid.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:32px;"><div class="empty-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m10.29 3.86-8.24 14.3A2 2 0 0 0 3.76 21h16.48a2 2 0 0 0 1.71-3l-8.24-14.3a2 2 0 0 0-3.42.16z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="empty-title">Could not load files</div><div class="empty-desc">${escHtml(e.message)}</div></div>`;}
 }
-}
 function renderDriveGrid(files){
   const grid=document.getElementById('drive-grid');if(!grid)return;
   if(files.length===0){grid.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:40px;"><div class="empty-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><div class="empty-title">No files yet</div><div class="empty-desc">Upload files or drag & drop them here.</div></div>`;return;}

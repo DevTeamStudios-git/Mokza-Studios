@@ -622,7 +622,7 @@ window.deleteSuggestion = deleteSuggestion;
 function renderSiteSection(c) {
   if (!canAccess('CoOwner')) { c.innerHTML = '<div class="admin-overview"><h3>Access Restricted</h3><p class="admin-role">CoOwner+ rank required.</p></div>'; return; }
   var n = Object.keys(state.textOverrides).length;
-  c.innerHTML = '<h3>Site settings</h3><label class="modal-label">Discord invite URL</label><input type="text" id="siteDiscord" class="modal-input" placeholder="https://discord.gg/…" value="' + escHtml(state.siteSettings.discordUrl || '') + '" /><label class="modal-label">Contact email</label><input type="text" id="siteEmail" class="modal-input" placeholder="contact@example.com" value="' + escHtml(state.siteSettings.contactEmail || '') + '" /><div class="admin-btn-row"><button class="btn-primary" onclick="saveSiteSettings()">Save settings</button></div>' +
+  c.innerHTML = '<h3>Site settings</h3><label class="modal-label">Discord invite URL</label><input type="text" id="siteDiscord" class="modal-input" placeholder="https://discord.gg/…" value="' + escHtml(state.siteSettings.discordUrl || '') + '" /><label class="modal-label">Contact email</label><input type="text" id="siteEmail" class="modal-input" placeholder="contact@example.com" value="' + escHtml(state.siteSettings.contactEmail || '') + '" /><label class="modal-label" style="display:flex;align-items:center;gap:.6rem;margin-top:1rem;"><input type="checkbox" id="siteAnimations" ' + (state.siteSettings.animationsEnabled ? 'checked' : '') + ' onchange="setAnimations(this.checked)" /><span>Enable animations (fade, slide, zoom effects)</span></label><div class="admin-btn-row"><button class="btn-primary" onclick="saveSiteSettings()">Save settings</button></div>' +
     '<h4>Edited texts</h4><p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:.8rem">' + n + ' text' + (n === 1 ? '' : 's') + ' customised with “Edit Texts” mode.</p>' + (n ? '<button class="btn-ghost" style="border:1px solid var(--ov-12)" onclick="resetTextOverrides()">Reset all edited texts</button>' : '') +
     '<h4>Raid mode</h4><label style="display:flex;align-items:center;gap:.6rem;color:var(--text-secondary)"><input type="checkbox" ' + (state.raidMode ? 'checked' : '') + ' onchange="setRaidMode(this.checked)" /> Disable public submissions (suggestions & contact form)</label>';
 }
@@ -632,9 +632,12 @@ function saveSiteSettings() {
   if (d && !/^https?:\/\//i.test(d)) { showNotification('Invalid URL', 'The Discord link must start with http(s)://', 'error'); return; }
   if (m && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) { showNotification('Invalid email', 'Please check the email address', 'error'); return; }
   state.siteSettings.discordUrl = d; state.siteSettings.contactEmail = m;
+  state.siteSettings.animationsEnabled = document.getElementById('siteAnimations').checked;
+  afterRender();
   logActivity('Settings Edited', 'Updated site settings'); showNotification('Saved', 'Site settings updated', 'success'); commit();
 }
 function setRaidMode(on) { if (!requireRank('CoOwner', 'Raid mode')) return; state.raidMode = !!on; logActivity('Raid Mode', 'Raid mode ' + (on ? 'ON' : 'OFF')); commit(); }
+function setAnimations(on) { if (!requireRank('CoOwner', 'Animations')) return; state.siteSettings.animationsEnabled = !!on; afterRender(); }
 
 /* ═════════════════════════ EDIT EVERY TEXT (CoOwner+) ═════════════════════════
    Any visible text on the public site (navbar, pages, footer) can be edited in

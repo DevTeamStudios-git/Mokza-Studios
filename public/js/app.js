@@ -36,7 +36,7 @@ const state = {
   contactMessages: [],
   projectRequests: [],
   textOverrides: {},
-  siteSettings: { discordUrl: '', contactEmail: '' },
+  siteSettings: { discordUrl: '', contactEmail: '', animationsEnabled: true },
   tosContent: {
     lastUpdated: new Date().toISOString(),
     content: `<h1>MOKZA STUDIOS</h1>
@@ -682,7 +682,14 @@ function safeUrl(u) { return typeof u === 'string' && /^(https?:\/\/|mailto:)/i.
 /* ids go into inline handlers: strip anything that could break out of a JS string */
 function sid(x) { return String(x == null ? '' : x).replace(/[^\w.-]/g, ''); }
 function byId(list, id) { return (list || []).find(function(x) { return sid(x.id) === sid(id); }); }
-function afterRender() { if (typeof applyTextOverrides === 'function') applyTextOverrides(); }
+function afterRender() { 
+  if (typeof applyTextOverrides === 'function') applyTextOverrides();
+  if (!state.siteSettings.animationsEnabled) {
+    document.body.classList.add('animations-disabled');
+  } else {
+    document.body.classList.remove('animations-disabled');
+  }
+}
 
 function showNotification(title, message, type = 'info') {
   const container = document.getElementById('notificationContainer');
@@ -1078,7 +1085,7 @@ function ensureDefaults() {
   ['announcements','suggestions','projects','tasks','chatMessages','activityLog','customElements','personalFiles','devCloudFiles','contactMessages','projectRequests'].forEach(function(k) { if (!Array.isArray(state[k])) state[k] = []; });
   if (!state.pageViews || typeof state.pageViews !== 'object') state.pageViews = {};
   if (!state.textOverrides || typeof state.textOverrides !== 'object') state.textOverrides = {};
-  if (!state.siteSettings || typeof state.siteSettings !== 'object') state.siteSettings = { discordUrl: '', contactEmail: '' };
+  if (!state.siteSettings || typeof state.siteSettings !== 'object') state.siteSettings = { discordUrl: '', contactEmail: '', animationsEnabled: true };
   if (!state.callState || typeof state.callState !== 'object') state.callState = { inCall: false, micEnabled: true, videoEnabled: true, screenSharing: false, startedAt: null, participants: [], updatedAt: null };
   if (state.voiceChannel === undefined) state.voiceChannel = null;
   if (state.meetingActive === undefined) state.meetingActive = false;

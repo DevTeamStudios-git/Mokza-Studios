@@ -193,6 +193,14 @@ select option {
 @keyframes slideInRight { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes loadBar { from { width: 0; } to { width: 100%; } }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+@keyframes slideInLeft { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 5px var(--accent-primary); } 50% { box-shadow: 0 0 20px var(--accent-primary), 0 0 30px var(--accent-primary); } }
+/* Animation controls */
+.animations-disabled * { animation: none !important; transition: none !important; }
+.animations-disabled .fade-up, .animations-disabled .fade-up-2, .animations-disabled .fade-up-3 { animation: none !important; opacity: 1 !important; transform: none !important; }
 /* Navbar */
 .navbar {
   position: sticky; top: 0; z-index: 50;
@@ -854,7 +862,7 @@ select option {
 .nav-actions .nav-btn:hover { background: var(--ov-12); color: var(--text-primary); }
 .nav-actions .nav-btn.on { background: var(--accent-primary); color: var(--on-accent); border-color: transparent; }
 .nav-actions .nav-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
-.verified-img { width: 24px; height: 24px; display: inline-block; vertical-align: -5px; margin-left: 6px; object-fit: contain; }
+.verified-img { width: 28px; height: 28px; display: inline-block; vertical-align: -6px; margin-left: 6px; object-fit: contain; }
 .chat-msg-body .chat-embed b { color: var(--text-primary); }
 .chat-embed { white-space: normal; line-height: 1.6; }
 .chat-channel-btn.active { background: var(--ov-08); color: var(--accent-primary); }
@@ -883,7 +891,11 @@ select option {
 .stat-box { background: var(--ov-05); border: 1px solid var(--ov-08); border-radius: var(--radius-md); padding: 1.1rem; text-align: center; }
 .stat-value { font-size: 2rem; font-weight: 800; color: var(--accent-primary); }
 .stat-box .stat-label { font-size: .8rem; color: var(--text-secondary); }
-.admin-btn-row { display: flex; gap: .7rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.admin-btn-row { display: flex; gap: .7rem; overflow-x: auto; padding-bottom: .5rem; margin-bottom: 1.2rem; scrollbar-width: thin; }
+.admin-btn-row::-webkit-scrollbar { height: 6px; }
+.admin-btn-row::-webkit-scrollbar-track { background: var(--ov-03); border-radius: 3px; }
+.admin-btn-row::-webkit-scrollbar-thumb { background: var(--ov-12); border-radius: 3px; }
+.admin-btn-row::-webkit-scrollbar-thumb:hover { background: var(--ov-15); }
 .user-list { display: flex; flex-direction: column; gap: .7rem; }
 .user-item { display: flex; align-items: center; gap: 1rem; padding: .9rem 1rem; background: var(--ov-05); border-radius: var(--radius-md); }
 .user-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--accent-primary); color: var(--on-accent); display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
