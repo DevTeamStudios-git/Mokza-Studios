@@ -34,7 +34,6 @@ const state = {
   personalFiles: [],
   devCloudFiles: [],
   contactMessages: [],
-  projectRequests: [],
   textOverrides: {},
   siteSettings: { discordUrl: '', contactEmail: '' },
   tosContent: {
@@ -588,7 +587,6 @@ This draft is a starting point for review, not a guarantee of enforceability or 
   meetingParticipants: [],
   /* Realtime team call state (shared across all users via /api/call-state) */
   callState: { inCall: false, micEnabled: true, videoEnabled: true, screenSharing: false, startedAt: null, participants: [], updatedAt: null },
-  /* Session / auth state */
   sessionToken: null,
   sessionExpiresAt: null,
   sessionUser: null,
@@ -739,6 +737,14 @@ function switchAuthTab(tab) {
 }
 
 function oauthLogin(provider) {
+  // TODO: Implement OAuth flow
+  // This requires backend OAuth endpoints and API keys
+  showNotification('Coming Soon', provider.charAt(0).toUpperCase() + provider.slice(1) + ' OAuth login will be available soon!', 'info');
+  console.log('[OAuth] Provider:', provider);
+  // Example implementation:
+  // window.location.href = '/api/auth/' + provider;
+}
+function oauthLogin(provider) {
   var rememberMe = document.getElementById('oauth-remember-me');
   if (rememberMe) state.rememberMe = rememberMe.checked;
   state.rememberMeDays = parseInt(document.getElementById('oauth-remember-days')?.value || '90', 10) || 90;
@@ -758,16 +764,13 @@ function handleOAuthCallback() {
   if (error) {
     showNotification('OAuth Error', provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : 'OAuth', 'error');
     showNotification('OAuth Error', msg || 'Unknown error', 'error');
-    // Clean URL
     window.history.replaceState({}, '', window.location.pathname);
     return;
   }
   if (token) {
-    // Store session token in localStorage for persistence
     state.sessionToken = token;
     state.sessionExpiresAt = Date.now() + (state.rememberMeDays || 90) * 86400000;
     saveToFirestore();
-    // Fetch user profile from backend
     apiRequest('/auth/me?token=' + token).then(function(res) {
       if (res && res.success && res.user) {
         state.sessionUser = res.user;
@@ -790,7 +793,6 @@ function handleOAuthCallback() {
       showNotification('Login Error', 'Failed to load user profile', 'error');
     });
   }
-  // Clean URL
   window.history.replaceState({}, '', window.location.pathname);
 }
 
@@ -798,7 +800,6 @@ function handleOAuthCallback() {
 function restoreSession() {
   var token = state.sessionToken;
   if (!token) {
-    // Try localStorage as fallback
     try {
       var raw = localStorage.getItem('mokza_auth_token');
       if (raw) {
@@ -819,7 +820,6 @@ function restoreSession() {
     } catch (e) { /* ignore */ }
   }
   if (state.sessionToken && state.sessionExpiresAt > Date.now()) {
-    // Session is valid, verify with backend
     apiRequest('/auth/me?token=' + state.sessionToken).then(function(res) {
       if (res && res.success && res.user) {
         state.sessionUser = res.user;
@@ -835,7 +835,6 @@ function restoreSession() {
         clearSession();
       }
     }).catch(function() {
-      // Backend unreachable, use cached user
       if (state.sessionUser) {
         state.currentUser = {
           username: state.sessionUser.username,
@@ -907,9 +906,7 @@ async function handleAuthSubmit() {
   state.currentUser = { username: username, rank: user.rank, permissions: user.permissions };
   state.devModeActive = true;
   document.getElementById('devToggle').classList.add('active');
-  // Update user's lastSeen timestamp
   USERS[username].lastSeen = Date.now();
-  // Store session with remember me
   var fakeToken = 'local_' + Date.now() + Math.random().toString(36).slice(2, 10);
   storeSession(fakeToken, {
     id: 'local_' + username,
@@ -944,7 +941,6 @@ function handleLogout() {
   state.devModeActive = false;
   state.editMode = false;
   document.getElementById('devToggle').classList.remove('active');
-  if (_presenceTimer) { clearInterval(_presenceTimer); _presenceTimer = null; }
   clearSession();
   showNotification('Logged Out', 'Successfully logged out', 'info');
   logActivity('User Logout', name + ' logged out');
@@ -973,7 +969,7 @@ function toggleDevMode() {
 }
 
 /* ── PERSISTENCE (shared site data only — never sessions or personal UI state) ── */
-var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive','chatMessages','projectRequests','sessionToken','sessionExpiresAt','sessionUser','rememberMe','rememberMeDays'];
+var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive','chatMessages','suggestions','sessionToken','sessionExpiresAt','sessionUser','rememberMe','rememberMeDays'];
 var LOCAL_KEY = 'mokza_state_v2';
 
 function persistable() {
@@ -1086,13 +1082,18 @@ function ensureDefaults() {
       }
     }
   });
-  ['announcements','suggestions','projects','tasks','chatMessages','activityLog','customElements','personalFiles','devCloudFiles','contactMessages','projectRequests'].forEach(function(k) { if (!Array.isArray(state[k])) state[k] = []; });
+  ['announcements','suggestions','projects','tasks','chatMessages','activityLog','customElements','personalFiles','devCloudFiles','contactMessages'].forEach(function(k) { if (!Array.isArray(state[k])) state[k] = []; });
   if (!state.pageViews || typeof state.pageViews !== 'object') state.pageViews = {};
   if (!state.textOverrides || typeof state.textOverrides !== 'object') state.textOverrides = {};
   if (!state.siteSettings || typeof state.siteSettings !== 'object') state.siteSettings = { discordUrl: '', contactEmail: '' };
   if (!state.callState || typeof state.callState !== 'object') state.callState = { inCall: false, micEnabled: true, videoEnabled: true, screenSharing: false, startedAt: null, participants: [], updatedAt: null };
   if (state.voiceChannel === undefined) state.voiceChannel = null;
   if (state.meetingActive === undefined) state.meetingActive = false;
+  if (state.sessionToken === undefined) state.sessionToken = null;
+  if (state.sessionExpiresAt === undefined) state.sessionExpiresAt = null;
+  if (state.sessionUser === undefined) state.sessionUser = null;
+  if (state.rememberMe === undefined) state.rememberMe = true;
+  if (state.rememberMeDays === undefined) state.rememberMeDays = 90;
   if (!Array.isArray(state.navigationLinks) || !state.navigationLinks.length) state.navigationLinks = JSON.parse(JSON.stringify(DEFAULT_NAV));
 }
 
@@ -1253,107 +1254,9 @@ function renderAbout() {
 function renderContact() {
   var mail = safeUrl('mailto:' + (state.siteSettings.contactEmail || ''));
   return pageHeader(t('contactTitle'), t('contactSubtitle')) +
-    '<div class="contact-tabs" style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">' +
-    '<button class="btn btn-primary" id="contactTabGeneral" onclick="switchContactTab(\'general\')">General Contact</button>' +
-    '<button class="btn btn-outline" id="contactTabProject" onclick="switchContactTab(\'project\')">Request a Project</button>' +
-    '</div>' +
-    '<div id="contactTabContent">' +
-    renderContactGeneral(mail) +
-    '</div>' +
+    '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:600px;margin:0 auto 2rem;"><div class="label-base">' + escHtml(t('contactNameLabel')) + '</div><input type="text" id="contactName" class="input-base" placeholder="' + escHtml(t('contactNamePlaceholder')) + '" maxlength="80" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactEmailLabel')) + '</div><input type="email" id="contactEmail" class="input-base" placeholder="' + escHtml(t('contactEmailPlaceholder')) + '" maxlength="120" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactMsgLabel')) + '</div><textarea id="contactMessage" class="input-base" placeholder="' + escHtml(t('contactMsgPlaceholder')) + '" rows="4" maxlength="2000"></textarea><button class="btn btn-primary" style="margin-top:1rem;width:100%;justify-content:center;" onclick="sendContactMessage()">' + escHtml(t('contactSend')) + '</button>' +
+    (state.siteSettings.contactEmail ? '<p style="margin-top:1rem;text-align:center;font-size:.85rem;opacity:.7">' + escHtml(t('contactDirect')) + ' <a href="' + escHtml(mail) + '" style="color:var(--accent-primary)">' + escHtml(state.siteSettings.contactEmail) + '</a></p>' : '') + '</div>' +
     pageElements('contact') + renderCardsSection('contact', t('addContactCard'));
-}
-function renderContactGeneral(mail) {
-  return '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:600px;margin:0 auto 2rem;"><div class="label-base">' + escHtml(t('contactNameLabel')) + '</div><input type="text" id="contactName" class="input-base" placeholder="' + escHtml(t('contactNamePlaceholder')) + '" maxlength="80" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactEmailLabel')) + '</div><input type="email" id="contactEmail" class="input-base" placeholder="' + escHtml(t('contactEmailPlaceholder')) + '" maxlength="120" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactMsgLabel')) + '</div><textarea id="contactMessage" class="input-base" placeholder="' + escHtml(t('contactMsgPlaceholder')) + '" rows="4" maxlength="2000"></textarea><button class="btn btn-primary" style="margin-top:1rem;width:100%;justify-content:center;" onclick="sendContactMessage()">' + escHtml(t('contactSend')) + '</button>' +
-    (state.siteSettings.contactEmail ? '<p style="margin-top:1rem;text-align:center;font-size:.85rem;opacity:.7">' + escHtml(t('contactDirect')) + ' <a href="' + escHtml(mail) + '" style="color:var(--accent-primary)">' + escHtml(state.siteSettings.contactEmail) + '</a></p>' : '') + '</div>';
-}
-function renderContactProject() {
-  return '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:700px;margin:0 auto 2rem;">' +
-    '<h2 style="color:var(--accent-primary);margin-bottom:0.5rem;">Request a Project</h2>' +
-    '<p style="margin-bottom:1.5rem;color:var(--text-secondary);">From an idea to a real product. Tell us what you envision, and let the Mokza Development Team help bring it to life.</p>' +
-    '<div class="label-base">Your Name</div><input type="text" id="projectName" class="input-base" placeholder="Enter your name" maxlength="80" />' +
-    '<div class="label-base" style="margin-top:1rem;">Email Address</div><input type="email" id="projectEmail" class="input-base" placeholder="your@email.com" maxlength="120" />' +
-    '<div class="label-base" style="margin-top:1rem;">Project Category</div>' +
-    '<select id="projectCategory" class="input-base">' +
-    '<option value="">Select a category...</option>' +
-    '<option value="Website">Website</option>' +
-    '<option value="Web Application">Web application</option>' +
-    '<option value="Desktop Application">Desktop application</option>' +
-    '<option value="Mobile Application">Mobile application</option>' +
-    '<option value="Game Development">Game development</option>' +
-    '<option value="Discord Bot">Discord bot / automation</option>' +
-    '<option value="API Backend">API / Backend development</option>' +
-    '<option value="Other">Other custom project</option>' +
-    '</select>' +
-    '<div class="label-base" style="margin-top:1rem;">Describe what you want us to create</div>' +
-    '<textarea id="projectDescription" class="input-base" placeholder="Tell us about your project idea, goals, and any specific requirements..." rows="5" maxlength="3000"></textarea>' +
-    '<div class="label-base" style="margin-top:1rem;">Estimated Budget</div>' +
-    '<select id="projectBudget" class="input-base">' +
-    '<option value="">Select your budget range...</option>' +
-    '<option value="Not sure">Not sure yet</option>' +
-    '<option value="Under $250">Under $250</option>' +
-    '<option value="$250-$1,000">$250–$1,000</option>' +
-    '<option value="$1,000-$5,000">$1,000–$5,000</option>' +
-    '<option value="Over $5,000">Over $5,000</option>' +
-    '</select>' +
-    '<div class="label-base" style="margin-top:1rem;">Desired Timeline</div>' +
-    '<select id="projectTimeline" class="input-base">' +
-    '<option value="">Select your timeline...</option>' +
-    '<option value="As soon as possible">As soon as possible</option>' +
-    '<option value="Within a month">Within a month</option>' +
-    '<option value="Within 3 months">Within 3 months</option>' +
-    '<option value="Flexible">Flexible</option>' +
-    '</select>' +
-    '<div class="label-base" style="margin-top:1rem;">Reference Links (optional)</div>' +
-    '<input type="text" id="projectReferences" class="input-base" placeholder="Links to examples, inspiration, or designs (comma-separated)" maxlength="500" />' +
-    '<p style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);">Provide URLs of websites or applications you like as reference.</p>' +
-    '<button class="btn btn-primary" style="margin-top:1.5rem;width:100%;justify-content:center;" onclick="sendProjectRequest()">Submit Project Request</button>' +
-    '</div>';
-}
-function switchContactTab(tab) {
-  var content = document.getElementById('contactTabContent');
-  var generalBtn = document.getElementById('contactTabGeneral');
-  var projectBtn = document.getElementById('contactTabProject');
-  if (!content) return;
-  if (tab === 'general') {
-    var mail = safeUrl('mailto:' + (state.siteSettings.contactEmail || ''));
-    content.innerHTML = renderContactGeneral(mail);
-    if (generalBtn) { generalBtn.className = 'btn btn-primary'; }
-    if (projectBtn) { projectBtn.className = 'btn btn-outline'; }
-  } else if (tab === 'project') {
-    content.innerHTML = renderContactProject();
-    if (generalBtn) { generalBtn.className = 'btn btn-outline'; }
-    if (projectBtn) { projectBtn.className = 'btn btn-primary'; }
-  }
-}
-function sendProjectRequest() {
-  if (state.raidMode && !state.currentUser) { showNotification('Unavailable', t('raidModeDesc'), 'error'); return; }
-  var name = document.getElementById('projectName').value.trim();
-  var email = document.getElementById('projectEmail').value.trim();
-  var category = document.getElementById('projectCategory').value;
-  var description = document.getElementById('projectDescription').value.trim();
-  var budget = document.getElementById('projectBudget').value;
-  var timeline = document.getElementById('projectTimeline').value;
-  var references = document.getElementById('projectReferences').value.trim();
-  if (!name || !email || !category || !description) { showNotification('Missing info', 'Please fill in all required fields.', 'error'); return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', 'Please enter a valid email address.', 'error'); return; }
-  state.projectRequests = state.projectRequests || [];
-  state.projectRequests.unshift({
-    id: 'proj_' + Date.now(),
-    name: name,
-    email: email,
-    category: category,
-    description: description,
-    budget: budget,
-    timeline: timeline,
-    references: references,
-    status: 'Pending',
-    timestamp: new Date().toISOString()
-  });
-  if (state.projectRequests.length > 100) state.projectRequests.length = 100;
-  logActivity('Project Request', 'New project request from ' + name + ' (' + category + ')');
-  saveToFirestore();
-  showNotification('Request Submitted', 'Thank you! We have received your project request and will review it soon.', 'success');
-  ['projectName', 'projectEmail', 'projectCategory', 'projectDescription', 'projectBudget', 'projectTimeline', 'projectReferences'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
 }
 
 function sendContactMessage() {
@@ -1515,18 +1418,15 @@ function approveSuggestion(id) {
     if (res && res.success) {
       showNotification('Approved', 'Suggestion has been approved', 'success');
     } else {
-      showNotification('Approved', 'Suggestion approved (cloud update failed)', 'warning');
+      showNotification('Not saved', 'The server did not confirm the approval.', 'error'); resyncSuggestions();
     }
-    saveToFirestore();
     renderPage();
     if (s.email) {
       sendSuggestionNotification(s, 'approved');
     }
   }).catch(function(err) {
     console.error('Suggestion approve error:', err);
-    showNotification('Approved', 'Suggestion approved (cloud update failed)', 'warning');
-    saveToFirestore();
-    renderPage();
+    showNotification('Not saved', 'The server did not confirm the approval.', 'error'); resyncSuggestions();
   });
 }
 
@@ -1551,30 +1451,20 @@ function denySuggestion(id) {
     }
   }).then(function(res) {
     if (res && res.success) {
-      showNotification('Denied', 'Suggestion has been denied and will auto-delete in 5 minutes', 'info');
+      showNotification('Denied', 'Suggestion denied. The server removes it automatically in 5 minutes.', 'info');
     } else {
-      showNotification('Denied', 'Suggestion denied (cloud update failed)', 'warning');
+      showNotification('Not saved', 'The server did not confirm the denial.', 'error'); resyncSuggestions();
     }
-    saveToFirestore();
     renderPage();
     if (s.email) {
       sendSuggestionNotification(s, 'denied');
     }
-    // Start auto-delete timer
-    setTimeout(function() {
-      deleteSuggestion(id);
-    }, 5 * 60 * 1000);
   }).catch(function(err) {
     console.error('Suggestion deny error:', err);
-    showNotification('Denied', 'Suggestion denied (cloud update failed)', 'warning');
-    saveToFirestore();
-    renderPage();
+    showNotification('Not saved', 'The server did not confirm the denial.', 'error'); resyncSuggestions();
     if (s.email) {
       sendSuggestionNotification(s, 'denied');
     }
-    setTimeout(function() {
-      deleteSuggestion(id);
-    }, 5 * 60 * 1000);
   });
 }
 
@@ -1592,21 +1482,20 @@ function deleteSuggestion(id) {
   apiRequest('/suggestions/' + id, {
     method: 'DELETE'
   }).then(function(res) {
-    if (res && res.success) {
-      showNotification('Deleted', 'Suggestion has been removed', 'success');
-    } else {
-      showNotification('Deleted', 'Suggestion removed (cloud delete failed)', 'warning');
-    }
-    saveToFirestore();
-    renderPage();
+    if (res && res.success) { showNotification('Deleted', 'Suggestion has been removed', 'success'); renderPage(); }
+    else { throw new Error('not confirmed'); }
   }).catch(function(err) {
     console.error('Suggestion delete error:', err);
-    showNotification('Deleted', 'Suggestion removed (cloud delete failed)', 'warning');
-    saveToFirestore();
-    renderPage();
+    showNotification('Not deleted', 'The server did not confirm the deletion. Restoring the list.', 'error');
+    resyncSuggestions();
   });
 }
 window.deleteSuggestion = deleteSuggestion;
+function resyncSuggestions() {
+  return apiRequest('/suggestions').then(function(r) {
+    if (r && r.success && Array.isArray(r.suggestions)) { state.suggestions = r.suggestions; _suggSig = null; renderPage(); }
+  }).catch(function() {});
+}
 
 // Email notification function (placeholder - requires email service integration)
 function sendSuggestionNotification(suggestion, status) {
@@ -2456,8 +2345,7 @@ function renderSettingsSection(id) {
     general: '<h3>' + svgIcon('gear', 20) + ' General</h3><div class="s-row"><div class="s-info"><div class="s-name">Theme</div><div class="s-desc">Light / Dark (personal)</div></div><div class="s-ctrl"><select class="s-select" onchange="applyHubTheme(this.value)"><option value="light" ' + (state.theme === 'light' ? 'selected' : '') + '>' + svgIcon('sun', 20) + ' Light</option><option value="dark" ' + (state.theme === 'dark' ? 'selected' : '') + '>' + svgIcon('moon', 20) + ' Dark</option></select></div></div>',
     security: '<h3>' + svgIcon('lock', 20) + ' Security</h3><div class="s-row"><div class="s-info"><div class="s-name">Raid Mode</div><div class="s-desc">Lock site to public</div></div><div class="s-ctrl"><label class="s-toggle"><input type="checkbox" ' + (state.raidMode ? 'checked' : '') + ' onchange="state.raidMode=this.checked;saveToFirestore()"><div class="s-toggle-track"></div></label>' + (canAccess('CoOwner') ? '' : '<span class="s-lock">' + svgIcon('lock', 20) + ' CoOwner+</span>') + '</div></div>',
     data: '<h3>' + svgIcon('save', 20) + ' Data & Backup</h3><div class="s-row"><div class="s-info"><div class="s-name">Export JSON</div><div class="s-desc">Download full site data</div></div><div class="s-ctrl"><button class="hub-qa-btn" onclick="exportWebsiteState()">' + svgIcon('inbox', 20) + ' Export</button>' + (canAccess('Developer') ? '' : '<span style="opacity:.38">Dev+</span>') + '</div></div><div class="s-row"><div class="s-info"><div class="s-name">Import JSON</div><div class="s-desc">Restore from backup</div></div><div class="s-ctrl"><button class="hub-qa-btn" onclick="importWebsiteState()">' + svgIcon('outbox', 20) + ' Import</button>' + (canAccess('CoOwner') ? '' : '<span style="opacity:.38">CoOwner+</span>') + '</div></div>',
-    devtools: '<h3>' + svgIcon('wrench', 20) + ' Developer Tools</h3><div class="s-row"><div class="s-info"><div class="s-name">Force Firestore Sync</div><div class="s-desc">Push all data to cloud now</div></div><div class="s-ctrl"><button class="hub-qa-btn" onclick="saveToFirestore();showNotification(\'Synced\',\'\',\'success\')">' + svgIcon('rocket', 20) + ' Sync</button>' + (canAccess('Developer') ? '' : '<span style="opacity:.38">Dev+</span>') + '</div></div>',
-    session: '<h3>' + svgIcon('clock', 20) + ' Session</h3><div class="s-row"><div class="s-info"><div class="s-name">Stay Connected</div><div class="s-desc">Remain signed in on this device</div></div><div class="s-ctrl"><label class="s-toggle"><input type="checkbox" ' + (state.rememberMe ? 'checked' : '') + ' onchange="state.rememberMe=this.checked;saveToFirestore()"><div class="s-toggle-track"></div></label></div></div><div class="s-row"><div class="s-info"><div class="s-name">Remember For</div><div class="s-desc">Days before re-login required</div></div><div class="s-ctrl"><select class="s-select" onchange="state.rememberMeDays=parseInt(this.value,10);saveToFirestore()"><option value="30" ' + (state.rememberMeDays === 30 ? 'selected' : '') + '>30 days</option><option value="90" ' + (state.rememberMeDays === 90 ? 'selected' : '') + '>90 days</option><option value="180" ' + (state.rememberMeDays === 180 ? 'selected' : '') + '>180 days</option><option value="365" ' + (state.rememberMeDays === 365 ? 'selected' : '') + '>1 year</option></select></div></div>'
+    devtools: '<h3>' + svgIcon('wrench', 20) + ' Developer Tools</h3><div class="s-row"><div class="s-info"><div class="s-name">Force Firestore Sync</div><div class="s-desc">Push all data to cloud now</div></div><div class="s-ctrl"><button class="hub-qa-btn" onclick="saveToFirestore();showNotification(\'Synced\',\'\',\'success\')">' + svgIcon('rocket', 20) + ' Sync</button>' + (canAccess('Developer') ? '' : '<span style="opacity:.38">Dev+</span>') + '</div></div>'
   };
   el.innerHTML = sections[id] || '<div style="opacity:.4">Section not found</div>';
 }

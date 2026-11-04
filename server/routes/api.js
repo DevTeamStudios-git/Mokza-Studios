@@ -11,6 +11,17 @@ const TASKS_FILE = path.resolve(process.cwd(), 'server', 'data', 'tasks.json');
 const SUGGESTIONS_FILE = path.resolve(process.cwd(), 'server', 'data', 'suggestions.json');
 const CALL_STATE_FILE = path.resolve(process.cwd(), 'server', 'data', 'call-state.json');
 
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
+const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://developpement-team.vercel.app/api/auth/discord/callback';
+
+// In-memory session store (production should use Redis/DB)
+const oauthSessions = new Map(); // state -> { provider, codeVerifier, createdAt }
+const userSessions = new Map(); // token -> { user, expiresAt }
+
 try { fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true }); } catch (_) {}
 
 // Helper: read JSON file
@@ -347,12 +358,31 @@ router.delete('/tasks/:id', async (req, res) => {
 
 const SUGGESTIONS_TABLE = 'suggestions';
 
+// The browser uses camelCase; the table uses snake_case. Only known columns are ever written.
+const SUGG_COLUMNS = {
+  id: 'id', author: 'author', email: 'email', text: 'text', timestamp: 'timestamp', status: 'status',
+  approvedBy: 'approved_by', approvedAt: 'approved_at', deniedBy: 'denied_by', deniedAt: 'denied_at', deleteAt: 'delete_at',
+  approved_by: 'approved_by', approved_at: 'approved_at', denied_by: 'denied_by', denied_at: 'denied_at', delete_at: 'delete_at',
+};
+function toSuggRow(input) {
+  const row = {};
+  Object.keys(input || {}).forEach((k) => { if (SUGG_COLUMNS[k] && input[k] !== undefined) row[SUGG_COLUMNS[k]] = input[k]; });
+  if (row.text) row.text = String(row.text).slice(0, 2000);
+  if (row.author) row.author = String(row.author).slice(0, 80);
+  return row;
+}
+function fromSuggRow(r) {
+  return { ...r, approvedBy: r.approved_by, approvedAt: r.approved_at, deniedBy: r.denied_by, deniedAt: r.denied_at, deleteAt: r.delete_at };
+}
+
 async function supabaseGetSuggestions() {
   if (!supabase) return null;
   try {
+    // denied suggestions are removed for good once their delete_at time has passed (works even if no browser is open)
+    await supabase.from(SUGGESTIONS_TABLE).delete().lt('delete_at', new Date().toISOString());
     const { data, error } = await supabase.from(SUGGESTIONS_TABLE).select('*').order('timestamp', { ascending: false });
     if (error) throw error;
-    return data || [];
+    return (data || []).map(fromSuggRow);
   } catch (e) {
     console.warn('[Supabase] Suggestions load failed:', e.message);
     return null;
@@ -362,9 +392,9 @@ async function supabaseGetSuggestions() {
 async function supabaseCreateSuggestion(suggestion) {
   if (!supabase) return null;
   try {
-    const { data, error } = await supabase.from(SUGGESTIONS_TABLE).insert([suggestion]).select();
+    const { data, error } = await supabase.from(SUGGESTIONS_TABLE).insert([toSuggRow(suggestion)]).select();
     if (error) throw error;
-    return data ? data[0] : null;
+    return data && data[0] ? fromSuggRow(data[0]) : null;
   } catch (e) {
     console.warn('[Supabase] Suggestion create failed:', e.message);
     return null;
@@ -374,9 +404,11 @@ async function supabaseCreateSuggestion(suggestion) {
 async function supabaseUpdateSuggestion(id, updates) {
   if (!supabase) return null;
   try {
-    const { data, error } = await supabase.from(SUGGESTIONS_TABLE).update(updates).eq('id', id).select();
+    const row = toSuggRow(updates); delete row.id;
+    row.updated_at = new Date().toISOString();
+    const { data, error } = await supabase.from(SUGGESTIONS_TABLE).update(row).eq('id', id).select();
     if (error) throw error;
-    return data ? data[0] : null;
+    return data && data[0] ? fromSuggRow(data[0]) : null;
   } catch (e) {
     console.warn('[Supabase] Suggestion update failed:', e.message);
     return null;
@@ -419,10 +451,12 @@ router.post('/suggestions', async (req, res) => {
     let cloudSuggestion = null;
     if (supabase) cloudSuggestion = await supabaseCreateSuggestion(suggestion);
 
-    const list = readJson(SUGGESTIONS_FILE, []);
-    list.unshift(cloudSuggestion || suggestion);
-    writeJson(SUGGESTIONS_FILE, list);
-
+    if (supabase && !cloudSuggestion) return res.status(502).json({ success: false, error: 'Database insert failed' });
+    if (!supabase) {
+      const list = readJson(SUGGESTIONS_FILE, []);
+      list.unshift(suggestion);
+      writeJson(SUGGESTIONS_FILE, list);
+    }
     return res.json({ success: true, suggestion: cloudSuggestion || suggestion });
   } catch (err) {
     console.error('[API] POST suggestions error:', err.message);
@@ -434,11 +468,12 @@ router.post('/suggestions', async (req, res) => {
 router.patch('/suggestions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
-
-    let cloudSuggestion = null;
-    if (supabase) cloudSuggestion = await supabaseUpdateSuggestion(id, updates);
-
+    const updates = req.body || {};
+    if (supabase) {
+      const updated = await supabaseUpdateSuggestion(id, updates);
+      if (!updated) return res.status(502).json({ success: false, error: 'Database update failed or suggestion not found' });
+      return res.json({ success: true, suggestion: updated });
+    }
     const list = readJson(SUGGESTIONS_FILE, []);
     const idx = list.findIndex(s => s.id === id);
     if (idx >= 0) {
@@ -457,14 +492,13 @@ router.patch('/suggestions/:id', async (req, res) => {
 router.delete('/suggestions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    let cloudOk = false;
-    if (supabase) cloudOk = await supabaseDeleteSuggestion(id);
-
-    const list = readJson(SUGGESTIONS_FILE, []);
-    const filtered = list.filter(s => s.id !== id);
-    writeJson(SUGGESTIONS_FILE, filtered);
-
-    return res.json({ success: true, cloud: cloudOk });
+    if (supabase) {
+      const ok = await supabaseDeleteSuggestion(id);
+      if (!ok) return res.status(502).json({ success: false, error: 'Database delete failed' });
+      return res.json({ success: true, cloud: true });
+    }
+    writeJson(SUGGESTIONS_FILE, readJson(SUGGESTIONS_FILE, []).filter(s => s.id !== id));
+    return res.json({ success: true, cloud: false });
   } catch (err) {
     console.error('[API] DELETE suggestions error:', err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -615,20 +649,44 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// DELETE /api/chat  { ids: [...] }  — used by /clear
+router.delete('/chat', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(String).slice(0, 500) : [];
+    if (!ids.length) return res.status(400).json({ success: false, error: 'ids required' });
+    if (supabase) {
+      const { error } = await supabase.from(CHAT_TABLE).delete().in('client_id', ids);
+      if (error) throw error;
+    } else {
+      writeJson(CHAT_FILE, readJson(CHAT_FILE, []).filter((m) => ids.indexOf(m.id) === -1));
+    }
+    return res.json({ success: true, deleted: ids.length });
+  } catch (err) {
+    console.error('[API] DELETE chat error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/chat/ids?ch=<channel>  — ids currently stored (lets browsers drop messages deleted elsewhere)
+router.get('/chat-ids', async (req, res) => {
+  try {
+    let ids = [];
+    if (supabase) {
+      const { data, error } = await supabase.from(CHAT_TABLE).select('client_id').order('seq', { ascending: false }).limit(500);
+      if (error) throw error;
+      ids = (data || []).map((r) => r.client_id);
+    } else {
+      ids = readJson(CHAT_FILE, []).slice(-500).map((m) => m.id);
+    }
+    return res.json({ success: true, ids });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // OAUTH (Google + Discord)
 // ══════════════════════════════════════════════════════════════════════════════
-
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
-const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
-const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
-const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://developpement-team.vercel.app/api/auth/discord/callback';
-
-// In-memory session store (production should use Redis/DB)
-const oauthSessions = new Map(); // state -> { provider, codeVerifier, createdAt }
-const userSessions = new Map(); // token -> { user, expiresAt }
 
 function generateState() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -764,7 +822,7 @@ router.get('/auth/discord/callback', async (req, res) => {
     const profileRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: 'Bearer ' + tokens.access_token }
     });
-    const profile = await profileRes.json();
+    const profile = await tokenRes.json();
     const user = {
       id: 'discord_' + profile.id,
       username: profile.username + (profile.discriminator ? '#' + profile.discriminator : ''),
@@ -802,41 +860,6 @@ router.post('/auth/logout', (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (token) userSessions.delete(token);
   return res.json({ success: true });
-});
-
-// DELETE /api/chat  { ids: [...] }  — used by /clear
-router.delete('/chat', async (req, res) => {
-  try {
-    const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(String).slice(0, 500) : [];
-    if (!ids.length) return res.status(400).json({ success: false, error: 'ids required' });
-    if (supabase) {
-      const { error } = await supabase.from(CHAT_TABLE).delete().in('client_id', ids);
-      if (error) throw error;
-    } else {
-      writeJson(CHAT_FILE, readJson(CHAT_FILE, []).filter((m) => ids.indexOf(m.id) === -1));
-    }
-    return res.json({ success: true, deleted: ids.length });
-  } catch (err) {
-    console.error('[API] DELETE chat error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// GET /api/chat/ids?ch=<channel>  — ids currently stored (lets browsers drop messages deleted elsewhere)
-router.get('/chat-ids', async (req, res) => {
-  try {
-    let ids = [];
-    if (supabase) {
-      const { data, error } = await supabase.from(CHAT_TABLE).select('client_id').order('seq', { ascending: false }).limit(500);
-      if (error) throw error;
-      ids = (data || []).map((r) => r.client_id);
-    } else {
-      ids = readJson(CHAT_FILE, []).slice(-500).map((m) => m.id);
-    }
-    return res.json({ success: true, ids });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
 });
 
 export default router;

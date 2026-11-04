@@ -8,7 +8,7 @@ import apiRoutes from '../server/routes/api.js';
 const app = express();
 
 // Trust proxy so rate-limit and IP detection work behind Vercel
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({ origin: '*' }));
