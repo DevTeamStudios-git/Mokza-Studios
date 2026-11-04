@@ -805,15 +805,15 @@ async function initAuth() {
         // Validate token with backend before trusting it
         const res = await apiRequest('/api/auth/me?token=' + data.token);
         if (res && res.success && res.user) {
-          state.sessionToken = data.token;
-          state.sessionExpiresAt = data.expiresAt;
-          state.sessionUser = res.user;
-          state.currentUser = {
+          S.sessionToken = data.token;
+          S.sessionExpiresAt = data.expiresAt;
+          S.sessionUser = res.user;
+          S.currentUser = {
             username: res.user.username,
             rank: res.user.rank,
             permissions: res.user.permissions
           };
-          state.devModeActive = true;
+          S.devModeActive = true;
           document.getElementById('devToggle').classList.add('active');
           showApp();
           return;
