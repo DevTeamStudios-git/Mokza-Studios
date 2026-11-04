@@ -820,7 +820,7 @@ async function supabaseDeleteFile(id) {
   } catch (e) { console.warn('[Supabase] File delete failed:', e.message); return false; }
 }
 
-router.get('/api/files', async (req, res) => {
+router.get('/files', async (req, res) => {
   try {
     let files = null;
     if (supabase) {
@@ -839,7 +839,7 @@ router.get('/api/files', async (req, res) => {
   }
 });
 
-router.post('/api/files/upload', async (req, res) => {
+router.post('/files/upload', async (req, res) => {
   try {
     const { filename, folder, data } = req.body;
     if (!filename || !data) {
@@ -854,7 +854,7 @@ router.post('/api/files/upload', async (req, res) => {
       type: '',
       uploadedAt: new Date().toISOString(),
       uploadedBy: req.headers.authorization || 'user',
-      downloadURL: '/api/files/download/' + ('file_' + Date.now())
+      downloadURL: '/files/download/' + ('file_' + Date.now())
     };
     if (supabase) {
       await supabaseGetFiles(); // ensure table exists
@@ -870,7 +870,7 @@ router.post('/api/files/upload', async (req, res) => {
   }
 });
 
-router.get('/api/files/:id/download', async (req, res) => {
+router.get('/files/:id/download', async (req, res) => {
   try {
     let file = null;
     if (supabase) {
@@ -890,7 +890,7 @@ router.get('/api/files/:id/download', async (req, res) => {
   }
 });
 
-router.delete('/api/files/:id', async (req, res) => {
+router.delete('/files/:id', async (req, res) => {
   try {
     let cloudOk = false;
     if (supabase) {
