@@ -615,6 +615,194 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// OAUTH (Google + Discord)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
+
+// In-memory session store (production should use Redis/DB)
+const oauthSessions = new Map(); // state -> { provider, codeVerifier, createdAt }
+const userSessions = new Map(); // token -> { user, expiresAt }
+
+function generateState() {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+function generateCodeVerifier() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function sha256Base64Url(str) {
+  const buf = crypto.subtle.digestSync('SHA-256', new TextEncoder().encode(str));
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// GET /api/auth/google — initiate Google OAuth
+router.get('/auth/google', (req, res) => {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
+    return res.status(500).json({ success: false, error: 'Google OAuth not configured' });
+  }
+  const state = generateState();
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = sha256Base64Url(codeVerifier);
+  oauthSessions.set(state, { provider: 'google', codeVerifier, createdAt: Date.now() });
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: GOOGLE_REDIRECT_URI,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    access_type: 'offline',
+    prompt: 'consent'
+  });
+  res.redirect('https://accounts.google.com/o/oauth2/v2/auth?' + params.toString());
+});
+
+// GET /api/auth/google/callback — Google OAuth callback
+router.get('/auth/google/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  if (error) return res.redirect('/#?oauth=error&provider=google&msg=' + encodeURIComponent(error));
+  const session = oauthSessions.get(state);
+  if (!session || session.provider !== 'google') {
+    return res.redirect('/#?oauth=error&provider=google&msg=invalid_state');
+  }
+  oauthSessions.delete(state);
+  try {
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: GOOGLE_REDIRECT_URI,
+        grant_type: 'authorization_code',
+        code_verifier: session.codeVerifier
+      })
+    });
+    const tokens = await tokenRes.json();
+    if (!tokens.access_token) throw new Error('No access token');
+    const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: 'Bearer ' + tokens.access_token }
+    });
+    const profile = await profileRes.json();
+    const user = {
+      id: 'google_' + profile.id,
+      username: profile.email || profile.name,
+      email: profile.email,
+      name: profile.name,
+      picture: profile.picture,
+      provider: 'google',
+      rank: 'Developer',
+      permissions: 'DEVELOPER',
+      verified: profile.verified_email
+    };
+    const token = generateState();
+    userSessions.set(token, { user, expiresAt: Date.now() + 7776000000 }); // 90 days
+    res.redirect('/#?oauth=success&token=' + token + '&provider=google&user=' + encodeURIComponent(user.username));
+  } catch (e) {
+    console.error('[OAuth] Google callback error:', e.message);
+    res.redirect('/#?oauth=error&provider=google&msg=' + encodeURIComponent(e.message));
+  }
+});
+
+// GET /api/auth/discord — initiate Discord OAuth
+router.get('/auth/discord', (req, res) => {
+  if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
+    return res.status(500).json({ success: false, error: 'Discord OAuth not configured' });
+  }
+  const state = generateState();
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = sha256Base64Url(codeVerifier);
+  oauthSessions.set(state, { provider: 'discord', codeVerifier, createdAt: Date.now() });
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: window.location.origin + '/api/auth/discord/callback',
+    response_type: 'code',
+    scope: 'identify email',
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256'
+  });
+  res.redirect('https://discord.com/api/oauth2/authorize?' + params.toString());
+});
+
+// GET /api/auth/discord/callback — Discord OAuth callback
+router.get('/auth/discord/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  if (error) return res.redirect('/#?oauth=error&provider=discord&msg=' + encodeURIComponent(error));
+  const session = oauthSessions.get(state);
+  if (!session || session.provider !== 'discord') {
+    return res.redirect('/#?oauth=error&provider=discord&msg=invalid_state');
+  }
+  oauthSessions.delete(state);
+  try {
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: DISCORD_CLIENT_ID,
+        client_secret: DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: window.location.origin + '/api/auth/discord/callback',
+        code_verifier: session.codeVerifier
+      })
+    });
+    const tokens = await tokenRes.json();
+    if (!tokens.access_token) throw new Error('No access token');
+    const profileRes = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: 'Bearer ' + tokens.access_token }
+    });
+    const profile = await profileRes.json();
+    const user = {
+      id: 'discord_' + profile.id,
+      username: profile.username + (profile.discriminator ? '#' + profile.discriminator : ''),
+      email: profile.email,
+      name: profile.username,
+      picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null,
+      provider: 'discord',
+      rank: 'Developer',
+      permissions: 'DEVELOPER',
+      verified: !!profile.verified
+    };
+    const token = generateState();
+    userSessions.set(token, { user, expiresAt: Date.now() + 7776000000 }); // 90 days
+    res.redirect('/#?oauth=success&token=' + token + '&provider=discord&user=' + encodeURIComponent(user.username));
+  } catch (e) {
+    console.error('[OAuth] Discord callback error:', e.message);
+    res.redirect('/#?oauth=error&provider=discord&msg=' + encodeURIComponent(e.message));
+  }
+});
+
+// GET /api/auth/me — get current user from token
+router.get('/auth/me', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+  if (!token) return res.status(401).json({ success: false, error: 'No token' });
+  const session = userSessions.get(token);
+  if (!session || session.expiresAt < Date.now()) {
+    userSessions.delete(token);
+    return res.status(401).json({ success: false, error: 'Token expired' });
+  }
+  return res.json({ success: true, user: session.user });
+});
+
+// POST /api/auth/logout — invalidate token
+router.post('/auth/logout', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token) userSessions.delete(token);
+  return res.json({ success: true });
+});
+
 // DELETE /api/chat  { ids: [...] }  — used by /clear
 router.delete('/chat', async (req, res) => {
   try {
