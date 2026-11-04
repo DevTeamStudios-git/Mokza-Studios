@@ -785,46 +785,43 @@ const NAV = [
 
 /* ══ BOOTSTRAP ══════════════════════════════════════════════ */
 async function initAuth() {
-  const state = S;
   document.getElementById('loading').classList.add('hidden');
-  // Check for OAuth callback in URL
-  const p = new URLSearchParams(window.location.search);
-  if (p.has('code') && p.has('discord')) {
-    handleDiscordCallback(p.get('code'));
-    return;
-  }
-  if (p.has('code') && p.has('state')) {
-    // Google OAuth callback - handled by redirect already
-    return;
-  }
-  // Try to restore session from localStorage
+  // Returning from Google/Discord: /workspace/#?oauth=success&token=...
+  try {
+    const h = new URLSearchParams((location.hash || '').replace(/^#\??/, ''));
+    if (h.get('oauth')) {
+      const status = h.get('oauth'), token = h.get('token'), msg = h.get('msg');
+      history.replaceState({}, '', location.pathname + location.search);
+      if (status === 'success' && token) {
+        const res = await apiRequest('/api/auth/me?token=' + encodeURIComponent(token)).catch(() => null);
+        if (res && res.success && res.user) { startSession(token, res.user); return; }
+        clearSession(); showLoginError('Login could not be verified. Please try again.'); return;
+      }
+      clearSession(); showLoginError('Sign-in failed' + (msg ? ': ' + msg : '') + '.'); return;
+    }
+  } catch (e) { /* fall through */ }
+  // Restore a saved session (same token the main site saves)
   try {
     const raw = localStorage.getItem('mokza_auth_token');
     if (raw) {
       const data = JSON.parse(raw);
-      if (data.expiresAt > Date.now()) {
-        // Validate token with backend before trusting it
-        const res = await apiRequest('/api/auth/me?token=' + data.token);
-        if (res && res.success && res.user) {
-          S.sessionToken = data.token;
-          S.sessionExpiresAt = data.expiresAt;
-          S.sessionUser = res.user;
-          S.currentUser = {
-            username: res.user.username,
-            rank: res.user.rank,
-            permissions: res.user.permissions
-          };
-          S.devModeActive = true;
-          document.getElementById('devToggle').classList.add('active');
-          showApp();
-          return;
-        }
+      if (data && data.token && data.expiresAt > Date.now()) {
+        const res = await apiRequest('/api/auth/me?token=' + encodeURIComponent(data.token)).catch(() => null);
+        if (res && res.success && res.user) { startSession(data.token, res.user, data.expiresAt); return; }
       }
     }
   } catch (e) { /* ignore */ }
-  // Clear invalid session
   clearSession();
-  showLogin();
+}
+
+function startSession(token, user, expiresAt) {
+  S.sessionToken = token;
+  S.sessionExpiresAt = expiresAt || Date.now() + 90 * 86400000;
+  S.sessionUser = user;
+  S.currentUser = { username: user.username, rank: user.rank, permissions: user.permissions };
+  S.user = { uid: user.id, displayName: user.name || user.username, email: user.email || '', photoURL: user.picture || '' };
+  try { localStorage.setItem('mokza_auth_token', JSON.stringify({ token, expiresAt: S.sessionExpiresAt, user })); } catch (e) {}
+  showApp();
 }
 
 async function apiRequest(path, options = {}) {
@@ -843,7 +840,7 @@ function clearSession() {
   S.sessionUser = null;
   S.currentUser = null;
   S.devModeActive = false;
-  document.getElementById('devToggle').classList.remove('active');
+  S.user = null;
   try { localStorage.removeItem('mokza_auth_token'); } catch (e) {}
   showLogin();
 }
@@ -864,33 +861,10 @@ function showApp() {
 
 /* ══ AUTH ═══════════════════════════════════════════════════ */
 async function loginGoogle() {
-  window.location.href = '/api/auth/google';
+  window.location.href = '/api/auth/google?return=' + encodeURIComponent(location.pathname);
 }
 function loginDiscord() {
-  const cid = S.discordClientId || prompt('Enter your Discord Client ID:');
-  if (!cid) return;
-  S.discordClientId = cid;
-  localStorage.setItem('nexus_discord_cid', cid);
-  window.location.href = '/api/auth/discord';
-}
-async function handleDiscordCallback(code) {
-  try {
-    const res = await fetch('/api/auth/discord/callback?code=' + code);
-    const result = await res.json();
-    if (res.success && res.user) {
-      S.sessionUser = res.user;
-      S.currentUser = {
-        username: res.user.username,
-        rank: res.user.rank,
-        permissions: res.user.permissions
-      };
-      S.devModeActive = true;
-      storeSession(result.token, res.user);
-      document.getElementById('devToggle').classList.add('active');
-      closeAuthModal();
-      showApp();
-    }
-  } catch(e) { showLogin(); showLoginError('Discord auth failed: ' + e.message); }
+  window.location.href = '/api/auth/discord?return=' + encodeURIComponent(location.pathname);
 }
 function showLoginError(msg) {
   const el = document.getElementById('login-error');
@@ -899,7 +873,6 @@ function showLoginError(msg) {
 async function logout() {
   try { await apiRequest('/auth/logout', { method: 'POST' }); } catch(e) {}
   clearSession();
-  showLogin();
 }
 
 /* ══ NAVIGATION ════════════════════════════════════════════ */

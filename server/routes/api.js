@@ -704,11 +704,12 @@ function readCookie(req, name) {
   const m = (req.headers.cookie || '').split(/;\s*/).find((c) => c.startsWith(name + '='));
   return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
 }
+function safeReturn(r) { return typeof r === 'string' && /^\/[A-Za-z0-9_\-\/\.]*$/.test(r) && !r.startsWith('//') ? r : '/'; }
 function startOAuth(req, res, provider, base, params) {
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
   // verifier travels in a signed, httpOnly cookie that survives the round trip to the provider
-  const cookie = sign({ state, provider, v: codeVerifier, exp: Date.now() + 10 * 60 * 1000 });
+  const cookie = sign({ state, provider, r: safeReturn(req.query.return), v: codeVerifier, exp: Date.now() + 10 * 60 * 1000 });
   res.setHeader('Set-Cookie', 'mokza_oauth=' + encodeURIComponent(cookie) + '; HttpOnly; Secure; SameSite=Lax; Path=/api/auth; Max-Age=600');
   const q = new URLSearchParams({ ...params, state, code_challenge: sha256Base64Url(codeVerifier), code_challenge_method: 'S256' });
   res.redirect(base + '?' + q.toString());
@@ -718,9 +719,9 @@ function takeSession(req, res, provider, state) {
   res.setHeader('Set-Cookie', 'mokza_oauth=; HttpOnly; Secure; SameSite=Lax; Path=/api/auth; Max-Age=0');
   return p && p.provider === provider && p.state === state ? p : null;
 }
-function finishLogin(res, user, provider) {
+function finishLogin(res, user, provider, ret) {
   const token = sign({ user, exp: Date.now() + 90 * 24 * 3600 * 1000 });
-  res.redirect('/#?oauth=success&token=' + encodeURIComponent(token) + '&provider=' + provider + '&user=' + encodeURIComponent(user.username));
+  res.redirect((ret || '/') + '#?oauth=success&token=' + encodeURIComponent(token) + '&provider=' + provider + '&user=' + encodeURIComponent(user.username));
 }
 
 router.get('/auth/google', (req, res) => {
@@ -743,7 +744,7 @@ router.get('/auth/google/callback', async (req, res) => {
     const tokens = await tokenRes.json();
     if (!tokens.access_token) throw new Error(tokens.error_description || tokens.error || 'No access token');
     const profile = await (await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: 'Bearer ' + tokens.access_token } })).json();
-    finishLogin(res, { id: 'google_' + profile.id, username: profile.email || profile.name, email: profile.email, name: profile.name, picture: profile.picture, provider: 'google', rank: 'Developer', permissions: 'DEVELOPER', verified: profile.verified_email }, 'google');
+    finishLogin(res, { id: 'google_' + profile.id, username: profile.email || profile.name, email: profile.email, name: profile.name, picture: profile.picture, provider: 'google', rank: 'Developer', permissions: 'DEVELOPER', verified: profile.verified_email }, 'google', session.r);
   } catch (e) {
     console.error('[OAuth] Google callback error:', e.message);
     res.redirect('/#?oauth=error&provider=google&msg=' + encodeURIComponent(e.message));
@@ -770,7 +771,7 @@ router.get('/auth/discord/callback', async (req, res) => {
     const tokens = await tokenRes.json();
     if (!tokens.access_token) throw new Error(tokens.error_description || tokens.error || 'No access token');
     const profile = await (await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + tokens.access_token } })).json();
-    finishLogin(res, { id: 'discord_' + profile.id, username: profile.username + (profile.discriminator && profile.discriminator !== '0' ? '#' + profile.discriminator : ''), email: profile.email, name: profile.username, picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null, provider: 'discord', rank: 'Developer', permissions: 'DEVELOPER', verified: !!profile.verified }, 'discord');
+    finishLogin(res, { id: 'discord_' + profile.id, username: profile.username + (profile.discriminator && profile.discriminator !== '0' ? '#' + profile.discriminator : ''), email: profile.email, name: profile.username, picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null, provider: 'discord', rank: 'Developer', permissions: 'DEVELOPER', verified: !!profile.verified }, 'discord', session.r);
   } catch (e) {
     console.error('[OAuth] Discord callback error:', e.message);
     res.redirect('/#?oauth=error&provider=discord&msg=' + encodeURIComponent(e.message));
@@ -854,7 +855,7 @@ router.post('/files/upload', async (req, res) => {
       type: '',
       uploadedAt: new Date().toISOString(),
       uploadedBy: req.headers.authorization || 'user',
-      downloadURL: '/files/download/' + ('file_' + Date.now())
+      downloadURL: '/api/files/download/' + ('file_' + Date.now())
     };
     if (supabase) {
       await supabaseGetFiles(); // ensure table exists

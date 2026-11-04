@@ -34,9 +34,8 @@ const state = {
   personalFiles: [],
   devCloudFiles: [],
   contactMessages: [],
-  projectRequests: [],
   textOverrides: {},
-  siteSettings: { discordUrl: '', contactEmail: '', animationsEnabled: true },
+  siteSettings: { discordUrl: '', contactEmail: '' },
   tosContent: {
     lastUpdated: new Date().toISOString(),
     content: `<h1>MOKZA STUDIOS</h1>
@@ -587,12 +586,7 @@ This draft is a starting point for review, not a guarantee of enforceability or 
   meetingStart: null,
   meetingParticipants: [],
   /* Realtime team call state (shared across all users via /api/call-state) */
-  callState: { inCall: false, micEnabled: true, videoEnabled: true, screenSharing: false, startedAt: null, participants: [], updatedAt: null },
-  sessionToken: null,
-  sessionExpiresAt: null,
-  sessionUser: null,
-  rememberMe: true,
-  rememberMeDays: 90
+  callState: { inCall: false, micEnabled: true, videoEnabled: true, screenSharing: false, startedAt: null, participants: [], updatedAt: null }
 };
 var SESSION_STARTED = Date.now();
 var DEFAULT_NAV = JSON.parse(JSON.stringify(state.navigationLinks));
@@ -682,14 +676,7 @@ function safeUrl(u) { return typeof u === 'string' && /^(https?:\/\/|mailto:)/i.
 /* ids go into inline handlers: strip anything that could break out of a JS string */
 function sid(x) { return String(x == null ? '' : x).replace(/[^\w.-]/g, ''); }
 function byId(list, id) { return (list || []).find(function(x) { return sid(x.id) === sid(id); }); }
-function afterRender() { 
-  if (typeof applyTextOverrides === 'function') applyTextOverrides();
-  if (!state.siteSettings.animationsEnabled) {
-    document.body.classList.add('animations-disabled');
-  } else {
-    document.body.classList.remove('animations-disabled');
-  }
-}
+function afterRender() { if (typeof applyTextOverrides === 'function') applyTextOverrides(); }
 
 function showNotification(title, message, type = 'info') {
   const container = document.getElementById('notificationContainer');
@@ -724,7 +711,7 @@ function isAuthLocked() {
 
 // ── USER AUTHENTICATION (OAuth + Dev Team) ──
 function showUserLoginModal() {
-  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>' + escHtml(t('authTitle')) + '</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">' + escHtml(t('authTabOAuth')) + '</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">' + escHtml(t('authTabDev')) + '</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">' + escHtml(t('authOAuthDesc')) + '</p><div style="margin-bottom:1rem;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="oauth-remember-me" ' + (state.rememberMe ? 'checked' : '') + ' style="margin:0;"><span>Stay connected</span></label><div style="margin-top:6px;font-size:0.85rem;color:var(--text-muted);">Remember for <select id="oauth-remember-days" style="padding:4px;border-radius:4px;background:var(--ov-05);color:var(--text-primary);border:1px solid var(--ov-12);"><option value="30">30 days</option><option value="90" selected>90 days</option><option value="180">180 days</option><option value="365">1 year</option></select></div></div><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> ' + escHtml(t('authDiscord')) + '</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ' + escHtml(t('authGoogle')) + '</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">' + escHtml(t('authTOSNotice')) + ' <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">' + escHtml(t('navTOS')) + '</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">' + escHtml(t('authSecurityCode')) + '</div><input type="password" id="securityCodeInput" class="input-base" placeholder="' + escHtml(t('authSecurityCodePlaceholder')) + '" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('authCredentials')) + '</div><input type="text" id="usernameInput" class="input-base" placeholder="' + escHtml(t('authUsernamePlaceholder')) + '" /><input type="password" id="passwordInput" class="input-base" placeholder="' + escHtml(t('authPasswordPlaceholder')) + '" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">' + escHtml(t('authLogin')) + '</button><button class="btn-ghost" onclick="closeAuthModal()">' + escHtml(t('authCancel')) + '</button></div></div></div></div>';
+  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>' + escHtml(t('authTitle')) + '</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body"><div class="auth-tabs"><button class="auth-tab active" onclick="switchAuthTab(\'oauth\')">' + escHtml(t('authTabOAuth')) + '</button><button class="auth-tab" onclick="switchAuthTab(\'dev\')">' + escHtml(t('authTabDev')) + '</button></div><div id="oauthSection" class="auth-section"><p style="margin-bottom:1.5rem;color:var(--text-secondary)">' + escHtml(t('authOAuthDesc')) + '</p><button class="btn btn-primary" style="width:100%;margin-bottom:0.75rem;background:#5865F2;border:none;" onclick="oauthLogin(\'discord\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0 .032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084.028 19.868 19.868 0 0 0 6.017-3.03.077.077 0 0 0 .032-.054c.5-1.4.87-2.841 1.065-4.286a.077.077 0 0 0-.04-.058 18.704 18.704 0 0 0-5.922-3.03.077.077 0 0 0-.084-.028 19.747 19.747 0 0 0-5.993 3.03.07.07 0 0 0-.032.054c.46 1.45.81 2.891 1.065 4.286a.077.077 0 0 0-.04.058 18.953 18.953 0 0 0-5.922 3.03.077.077 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057z"/></svg> ' + escHtml(t('authDiscord')) + '</button><button class="btn btn-primary" style="width:100%;background:#4285F4;border:none;" onclick="oauthLogin(\'google\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right:0.5rem;vertical-align:text-bottom;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ' + escHtml(t('authGoogle')) + '</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">' + escHtml(t('authTOSNotice')) + ' <a href="#" onclick="changePage(\'tos\');closeAuthModal();return false;">' + escHtml(t('navTOS')) + '</a></p></div><div id="devSection" class="auth-section hidden"><div class="label-base">' + escHtml(t('authSecurityCode')) + '</div><input type="password" id="securityCodeInput" class="input-base" placeholder="' + escHtml(t('authSecurityCodePlaceholder')) + '" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('authCredentials')) + '</div><input type="text" id="usernameInput" class="input-base" placeholder="' + escHtml(t('authUsernamePlaceholder')) + '" /><input type="password" id="passwordInput" class="input-base" placeholder="' + escHtml(t('authPasswordPlaceholder')) + '" /><div class="modal-footer"><button class="btn-primary" onclick="handleAuthSubmit()">' + escHtml(t('authLogin')) + '</button><button class="btn-ghost" onclick="closeAuthModal()">' + escHtml(t('authCancel')) + '</button></div></div></div></div>';
   document.getElementById('authModal').classList.remove('hidden');
 }
 
@@ -745,134 +732,15 @@ function switchAuthTab(tab) {
 }
 
 function oauthLogin(provider) {
-  var rememberMe = document.getElementById('oauth-remember-me');
-  if (rememberMe) state.rememberMe = rememberMe.checked;
-  state.rememberMeDays = parseInt(document.getElementById('oauth-remember-days')?.value || '90', 10) || 90;
-  saveToFirestore();
-  window.location.href = '/api/auth/' + provider;
+  // TODO: Implement OAuth flow
+  // This requires backend OAuth endpoints and API keys
+  showNotification('Coming Soon', provider.charAt(0).toUpperCase() + provider.slice(1) + ' OAuth login will be available soon!', 'info');
+  console.log('[OAuth] Provider:', provider);
+  // Example implementation:
+  // window.location.href = '/api/auth/' + provider;
 }
 window.oauthLogin = oauthLogin;
 window.switchAuthTab = switchAuthTab;
-
-/* ── OAUTH CALLBACK HANDLING ── */
-function handleOAuthCallback() {
-  var params = new URLSearchParams(window.location.search);
-  var token = params.get('token');
-  var provider = params.get('provider');
-  var error = params.get('error');
-  var msg = params.get('msg');
-  if (error) {
-    showNotification('OAuth Error', provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : 'OAuth', 'error');
-    showNotification('OAuth Error', msg || 'Unknown error', 'error');
-    window.history.replaceState({}, '', window.location.pathname);
-    return;
-  }
-  if (token) {
-    state.sessionToken = token;
-    state.sessionExpiresAt = Date.now() + (state.rememberMeDays || 90) * 86400000;
-    saveToFirestore();
-    apiRequest('/auth/me?token=' + token).then(function(res) {
-      if (res && res.success && res.user) {
-        state.sessionUser = res.user;
-        state.currentUser = {
-          username: res.user.username,
-          rank: res.user.rank,
-          permissions: res.user.permissions
-        };
-        state.devModeActive = true;
-        document.getElementById('devToggle').classList.add('active');
-        closeAuthModal();
-        showNotification('Welcome!', 'Logged in as ' + res.user.username + ' (' + res.user.rank + ')', 'success');
-        logActivity('User Login (OAuth ' + provider + ')', res.user.username + ' via ' + provider);
-        updateAuthUI();
-        renderPage();
-        saveToFirestore();
-      }
-    }).catch(function(e) {
-      console.error('[OAuth] Failed to fetch user:', e.message);
-      showNotification('Login Error', 'Failed to load user profile', 'error');
-    });
-  }
-  window.history.replaceState({}, '', window.location.pathname);
-}
-
-/* ── SESSION MANAGEMENT ── */
-function restoreSession() {
-  var token = state.sessionToken;
-  if (!token) {
-    try {
-      var raw = localStorage.getItem('mokza_auth_token');
-      if (raw) {
-        var data = JSON.parse(raw);
-        if (data.expiresAt > Date.now()) {
-          state.sessionToken = data.token;
-          state.sessionExpiresAt = data.expiresAt;
-          state.sessionUser = data.user;
-          state.currentUser = {
-            username: data.user.username,
-            rank: data.user.rank,
-            permissions: data.user.permissions
-          };
-          state.devModeActive = true;
-          document.getElementById('devToggle').classList.add('active');
-        }
-      }
-    } catch (e) { /* ignore */ }
-  }
-  if (state.sessionToken && state.sessionExpiresAt > Date.now()) {
-    apiRequest('/auth/me?token=' + state.sessionToken).then(function(res) {
-      if (res && res.success && res.user) {
-        state.sessionUser = res.user;
-        state.currentUser = {
-          username: res.user.username,
-          rank: res.user.rank,
-          permissions: res.user.permissions
-        };
-        state.devModeActive = true;
-        document.getElementById('devToggle').classList.add('active');
-        updateAuthUI();
-      } else {
-        clearSession();
-      }
-    }).catch(function() {
-      if (state.sessionUser) {
-        state.currentUser = {
-          username: state.sessionUser.username,
-          rank: state.sessionUser.rank,
-          permissions: state.sessionUser.permissions
-        };
-        state.devModeActive = true;
-        document.getElementById('devToggle').classList.add('active');
-        updateAuthUI();
-      }
-    });
-  }
-}
-
-function clearSession() {
-  state.sessionToken = null;
-  state.sessionExpiresAt = null;
-  state.sessionUser = null;
-  state.currentUser = null;
-  state.devModeActive = false;
-  document.getElementById('devToggle').classList.remove('active');
-  try { localStorage.removeItem('mokza_auth_token'); } catch (e) {}
-  updateAuthUI();
-}
-
-function storeSession(token, user) {
-  state.sessionToken = token;
-  state.sessionExpiresAt = Date.now() + (state.rememberMeDays || 90) * 86400000;
-  state.sessionUser = user;
-  saveToFirestore();
-  try {
-    localStorage.setItem('mokza_auth_token', JSON.stringify({
-      token: token,
-      expiresAt: state.sessionExpiresAt,
-      user: user
-    }));
-  } catch (e) {}
-}
 
 async function handleAuthSubmit() {
   if (isAuthLocked()) {
@@ -906,19 +774,8 @@ async function handleAuthSubmit() {
   state.currentUser = { username: username, rank: user.rank, permissions: user.permissions };
   state.devModeActive = true;
   document.getElementById('devToggle').classList.add('active');
+  // Update user's lastSeen timestamp
   USERS[username].lastSeen = Date.now();
-  var fakeToken = 'local_' + Date.now() + Math.random().toString(36).slice(2, 10);
-  storeSession(fakeToken, {
-    id: 'local_' + username,
-    username: username,
-    email: username,
-    name: username,
-    picture: null,
-    provider: 'local',
-    rank: user.rank,
-    permissions: user.permissions,
-    verified: true
-  });
   closeAuthModal();
   showNotification('Welcome!', 'Logged in as ' + username + ' (' + user.rank + ')', 'success');
   logActivity('User Login', username + ' logged in');
@@ -941,7 +798,6 @@ function handleLogout() {
   state.devModeActive = false;
   state.editMode = false;
   document.getElementById('devToggle').classList.remove('active');
-  clearSession();
   showNotification('Logged Out', 'Successfully logged out', 'info');
   logActivity('User Logout', name + ' logged out');
   updateAuthUI();
@@ -969,7 +825,7 @@ function toggleDevMode() {
 }
 
 /* ── PERSISTENCE (shared site data only — never sessions or personal UI state) ── */
-var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive','chatMessages','suggestions','projectRequests','sessionToken','sessionExpiresAt','sessionUser','rememberMe','rememberMeDays'];
+var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive','chatMessages','suggestions'];
 var LOCAL_KEY = 'mokza_state_v2';
 
 function persistable() {
@@ -1082,18 +938,13 @@ function ensureDefaults() {
       }
     }
   });
-  ['announcements','suggestions','projects','tasks','chatMessages','activityLog','customElements','personalFiles','devCloudFiles','contactMessages','projectRequests'].forEach(function(k) { if (!Array.isArray(state[k])) state[k] = []; });
+  ['announcements','suggestions','projects','tasks','chatMessages','activityLog','customElements','personalFiles','devCloudFiles','contactMessages'].forEach(function(k) { if (!Array.isArray(state[k])) state[k] = []; });
   if (!state.pageViews || typeof state.pageViews !== 'object') state.pageViews = {};
   if (!state.textOverrides || typeof state.textOverrides !== 'object') state.textOverrides = {};
-  if (!state.siteSettings || typeof state.siteSettings !== 'object') state.siteSettings = { discordUrl: '', contactEmail: '', animationsEnabled: true };
+  if (!state.siteSettings || typeof state.siteSettings !== 'object') state.siteSettings = { discordUrl: '', contactEmail: '' };
   if (!state.callState || typeof state.callState !== 'object') state.callState = { inCall: false, micEnabled: true, videoEnabled: true, screenSharing: false, startedAt: null, participants: [], updatedAt: null };
   if (state.voiceChannel === undefined) state.voiceChannel = null;
   if (state.meetingActive === undefined) state.meetingActive = false;
-  if (state.sessionToken === undefined) state.sessionToken = null;
-  if (state.sessionExpiresAt === undefined) state.sessionExpiresAt = null;
-  if (state.sessionUser === undefined) state.sessionUser = null;
-  if (state.rememberMe === undefined) state.rememberMe = true;
-  if (state.rememberMeDays === undefined) state.rememberMeDays = 90;
   if (!Array.isArray(state.navigationLinks) || !state.navigationLinks.length) state.navigationLinks = JSON.parse(JSON.stringify(DEFAULT_NAV));
 }
 
@@ -1254,107 +1105,9 @@ function renderAbout() {
 function renderContact() {
   var mail = safeUrl('mailto:' + (state.siteSettings.contactEmail || ''));
   return pageHeader(t('contactTitle'), t('contactSubtitle')) +
-    '<div class="contact-tabs" style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">' +
-    '<button class="btn btn-primary" id="contactTabGeneral" onclick="switchContactTab(\'general\')">General Contact</button>' +
-    '<button class="btn btn-outline" id="contactTabProject" onclick="switchContactTab(\'project\')">Request a Project</button>' +
-    '</div>' +
-    '<div id="contactTabContent">' +
-    renderContactGeneral(mail) +
-    '</div>' +
+    '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:600px;margin:0 auto 2rem;"><div class="label-base">' + escHtml(t('contactNameLabel')) + '</div><input type="text" id="contactName" class="input-base" placeholder="' + escHtml(t('contactNamePlaceholder')) + '" maxlength="80" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactEmailLabel')) + '</div><input type="email" id="contactEmail" class="input-base" placeholder="' + escHtml(t('contactEmailPlaceholder')) + '" maxlength="120" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactMsgLabel')) + '</div><textarea id="contactMessage" class="input-base" placeholder="' + escHtml(t('contactMsgPlaceholder')) + '" rows="4" maxlength="2000"></textarea><button class="btn btn-primary" style="margin-top:1rem;width:100%;justify-content:center;" onclick="sendContactMessage()">' + escHtml(t('contactSend')) + '</button>' +
+    (state.siteSettings.contactEmail ? '<p style="margin-top:1rem;text-align:center;font-size:.85rem;opacity:.7">' + escHtml(t('contactDirect')) + ' <a href="' + escHtml(mail) + '" style="color:var(--accent-primary)">' + escHtml(state.siteSettings.contactEmail) + '</a></p>' : '') + '</div>' +
     pageElements('contact') + renderCardsSection('contact', t('addContactCard'));
-}
-function renderContactGeneral(mail) {
-  return '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:600px;margin:0 auto 2rem;"><div class="label-base">' + escHtml(t('contactNameLabel')) + '</div><input type="text" id="contactName" class="input-base" placeholder="' + escHtml(t('contactNamePlaceholder')) + '" maxlength="80" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactEmailLabel')) + '</div><input type="email" id="contactEmail" class="input-base" placeholder="' + escHtml(t('contactEmailPlaceholder')) + '" maxlength="120" /><div class="label-base" style="margin-top:1rem;">' + escHtml(t('contactMsgLabel')) + '</div><textarea id="contactMessage" class="input-base" placeholder="' + escHtml(t('contactMsgPlaceholder')) + '" rows="4" maxlength="2000"></textarea><button class="btn btn-primary" style="margin-top:1rem;width:100%;justify-content:center;" onclick="sendContactMessage()">' + escHtml(t('contactSend')) + '</button>' +
-    (state.siteSettings.contactEmail ? '<p style="margin-top:1rem;text-align:center;font-size:.85rem;opacity:.7">' + escHtml(t('contactDirect')) + ' <a href="' + escHtml(mail) + '" style="color:var(--accent-primary)">' + escHtml(state.siteSettings.contactEmail) + '</a></p>' : '') + '</div>';
-}
-function renderContactProject() {
-  return '<div class="card-bg" style="padding:2rem;border-radius:var(--radius-lg);max-width:700px;margin:0 auto 2rem;">' +
-    '<h2 style="color:var(--accent-primary);margin-bottom:0.5rem;">Request a Project</h2>' +
-    '<p style="margin-bottom:1.5rem;color:var(--text-secondary);">From an idea to a real product. Tell us what you envision, and let the Mokza Development Team help bring it to life.</p>' +
-    '<div class="label-base">Your Name</div><input type="text" id="projectName" class="input-base" placeholder="Enter your name" maxlength="80" />' +
-    '<div class="label-base" style="margin-top:1rem;">Email Address</div><input type="email" id="projectEmail" class="input-base" placeholder="your@email.com" maxlength="120" />' +
-    '<div class="label-base" style="margin-top:1rem;">Project Category</div>' +
-    '<select id="projectCategory" class="input-base">' +
-    '<option value="">Select a category...</option>' +
-    '<option value="Website">Website</option>' +
-    '<option value="Web Application">Web application</option>' +
-    '<option value="Desktop Application">Desktop application</option>' +
-    '<option value="Mobile Application">Mobile application</option>' +
-    '<option value="Game Development">Game development</option>' +
-    '<option value="Discord Bot">Discord bot / automation</option>' +
-    '<option value="API Backend">API / Backend development</option>' +
-    '<option value="Other">Other custom project</option>' +
-    '</select>' +
-    '<div class="label-base" style="margin-top:1rem;">Describe what you want us to create</div>' +
-    '<textarea id="projectDescription" class="input-base" placeholder="Tell us about your project idea, goals, and any specific requirements..." rows="5" maxlength="3000"></textarea>' +
-    '<div class="label-base" style="margin-top:1rem;">Estimated Budget</div>' +
-    '<select id="projectBudget" class="input-base">' +
-    '<option value="">Select your budget range...</option>' +
-    '<option value="Not sure">Not sure yet</option>' +
-    '<option value="Under $250">Under $250</option>' +
-    '<option value="$250-$1,000">$250–$1,000</option>' +
-    '<option value="$1,000-$5,000">$1,000–$5,000</option>' +
-    '<option value="Over $5,000">Over $5,000</option>' +
-    '</select>' +
-    '<div class="label-base" style="margin-top:1rem;">Desired Timeline</div>' +
-    '<select id="projectTimeline" class="input-base">' +
-    '<option value="">Select your timeline...</option>' +
-    '<option value="As soon as possible">As soon as possible</option>' +
-    '<option value="Within a month">Within a month</option>' +
-    '<option value="Within 3 months">Within 3 months</option>' +
-    '<option value="Flexible">Flexible</option>' +
-    '</select>' +
-    '<div class="label-base" style="margin-top:1rem;">Reference Links (optional)</div>' +
-    '<input type="text" id="projectReferences" class="input-base" placeholder="Links to examples, inspiration, or designs (comma-separated)" maxlength="500" />' +
-    '<p style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);">Provide URLs of websites or applications you like as reference.</p>' +
-    '<button class="btn btn-primary" style="margin-top:1.5rem;width:100%;justify-content:center;" onclick="sendProjectRequest()">Submit Project Request</button>' +
-    '</div>';
-}
-function switchContactTab(tab) {
-  var content = document.getElementById('contactTabContent');
-  var generalBtn = document.getElementById('contactTabGeneral');
-  var projectBtn = document.getElementById('contactTabProject');
-  if (!content) return;
-  if (tab === 'general') {
-    var mail = safeUrl('mailto:' + (state.siteSettings.contactEmail || ''));
-    content.innerHTML = renderContactGeneral(mail);
-    if (generalBtn) { generalBtn.className = 'btn btn-primary'; }
-    if (projectBtn) { projectBtn.className = 'btn btn-outline'; }
-  } else if (tab === 'project') {
-    content.innerHTML = renderContactProject();
-    if (generalBtn) { generalBtn.className = 'btn btn-outline'; }
-    if (projectBtn) { projectBtn.className = 'btn btn-primary'; }
-  }
-}
-function sendProjectRequest() {
-  if (state.raidMode && !state.currentUser) { showNotification('Unavailable', t('raidModeDesc'), 'error'); return; }
-  var name = document.getElementById('projectName').value.trim();
-  var email = document.getElementById('projectEmail').value.trim();
-  var category = document.getElementById('projectCategory').value;
-  var description = document.getElementById('projectDescription').value.trim();
-  var budget = document.getElementById('projectBudget').value;
-  var timeline = document.getElementById('projectTimeline').value;
-  var references = document.getElementById('projectReferences').value.trim();
-  if (!name || !email || !category || !description) { showNotification('Missing info', 'Please fill in all required fields.', 'error'); return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showNotification('Invalid email', 'Please enter a valid email address.', 'error'); return; }
-  state.projectRequests = state.projectRequests || [];
-  state.projectRequests.unshift({
-    id: 'proj_' + Date.now(),
-    name: name,
-    email: email,
-    category: category,
-    description: description,
-    budget: budget,
-    timeline: timeline,
-    references: references,
-    status: 'Pending',
-    timestamp: new Date().toISOString()
-  });
-  if (state.projectRequests.length > 100) state.projectRequests.length = 100;
-  logActivity('Project Request', 'New project request from ' + name + ' (' + category + ')');
-  saveToFirestore();
-  showNotification('Request Submitted', 'Thank you! We have received your project request and will review it soon.', 'success');
-  ['projectName', 'projectEmail', 'projectCategory', 'projectDescription', 'projectBudget', 'projectTimeline', 'projectReferences'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
 }
 
 function sendContactMessage() {
@@ -2518,10 +2271,6 @@ async function init() {
     renderPage();
     updateAuthUI();
     logActivity('System', 'Website initialized');
-    // Handle OAuth callback (redirect from Google/Discord)
-    handleOAuthCallback();
-    // Restore existing session from localStorage / state
-    restoreSession();
     // Start realtime call state polling (admin.js provides startCallPolling)
     if (typeof startCallPolling === 'function') startCallPolling();
     // Live sync first, so a problem in anything below can never stop messages from refreshing
