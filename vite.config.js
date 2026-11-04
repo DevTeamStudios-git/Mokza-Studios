@@ -32,5 +32,6 @@ export default defineConfig({
         'workspace-snippets': './workspace/mokza-snippets.html',
       },
     },
+    assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.svg', '**/*.gif'],
   },
 });
