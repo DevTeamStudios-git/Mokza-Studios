@@ -39,6 +39,7 @@ var ADMIN_SECTIONS = [
   { id: 'cloud', label: 'Cloud', icon: 'cloud', min: 'Apprentice' },
   { id: 'chat', label: 'Chat', icon: 'chat', min: 'Developer' },
   { id: 'users', label: 'Users', icon: 'people', min: 'Apprentice' },
+  { id: 'projects', label: 'Project Requests', icon: 'briefcase', min: 'Apprentice' },
   { id: 'messages', label: 'Messages', icon: 'inbox', min: 'Developer' },
   { id: 'suggestions', label: 'Suggestions', icon: 'sparkles', min: 'Apprentice' },
   { id: 'activity', label: 'Activity', icon: 'clipboard', min: 'Apprentice' },
@@ -69,7 +70,7 @@ function renderAdminContent() {
     return '<button class="admin-tab' + (s.id === state.adminSection ? ' active' : '') + '" onclick="changeAdminSection(\'' + s.id + '\')">' + svgIcon(s.icon, 15) + ' ' + s.label + '</button>';
   }).join('');
   var c = $('adminContent');
-  var fn = { overview: renderOverviewSection, announcements: renderAnnouncementsSection, navigation: renderNavigationSection, elements: renderElementsSection, cloud: renderCloudSection, chat: renderChatSection, users: renderUsersSection, messages: renderMessagesSection, suggestions: renderSuggestionsSection, activity: renderActivitySection, site: renderSiteSection }[state.adminSection];
+  var fn = { overview: renderOverviewSection, announcements: renderAnnouncementsSection, navigation: renderNavigationSection, elements: renderElementsSection, cloud: renderCloudSection, chat: renderChatSection, users: renderUsersSection, projects: renderProjectsSection, messages: renderMessagesSection, suggestions: renderSuggestionsSection, activity: renderActivitySection, site: renderSiteSection }[state.adminSection];
   var st = c.scrollTop;
   fn(c);
   c.scrollTop = st;
@@ -535,6 +536,59 @@ function renderUsersSection(c) {
     return '<div class="user-item"><div class="user-avatar">' + escHtml(n[0]) + '</div><div class="user-info"><div class="user-name">' + escHtml(n) + verifiedBadge(u.rank) + (on ? ' <span style="color:var(--accent-success)">●</span>' : '') + '</div><div class="user-rank">' + rankLabel(u.rank) + ' · ' + escHtml(u.permissions) + '</div></div></div>';
   }).join('') + '</div>';
 }
+function renderProjectsSection(c) {
+  var projects = state.projectRequests || [];
+  c.innerHTML = '<h3>Project Requests (' + projects.length + ')</h3>' + (projects.length ? projects.map(function(p) {
+    var statusBadge = p.status === 'Pending' ? '<span style="color:var(--accent-warning);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(251,191,36,0.15)">⏳ Pending</span>' : p.status === 'Under Review' ? '<span style="color:var(--accent-primary);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(59,130,246,0.15)">🔍 Under Review</span>' : p.status === 'Quoted' ? '<span style="color:var(--accent-success);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(56,239,125,0.15)">💰 Quoted</span>' : p.status === 'Accepted' ? '<span style="color:var(--accent-success);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(56,239,125,0.15)">✓ Accepted</span>' : p.status === 'Rejected' ? '<span style="color:var(--accent-error);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(245,87,108,0.15)">✗ Rejected</span>' : p.status === 'In Development' ? '<span style="color:var(--accent-primary);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(59,130,246,0.15)">🔨 In Development</span>' : p.status === 'Completed' ? '<span style="color:var(--accent-success);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(56,239,125,0.15)">✓ Completed</span>' : '<span style="color:var(--text-muted);font-size:0.75rem;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(128,128,128,0.15)">' + escHtml(p.status) + '</span>';
+    var actions = rowBtn('eye', 'View Details', 'viewProjectDetails(\'' + sid(p.id) + '\')') + (canAccess('CoOwner') ? rowBtn('pencil', 'Update Status', 'updateProjectStatus(\'' + sid(p.id) + '\')') : '') + rowBtn('trash', 'Delete', 'deleteProjectRequest(\'' + sid(p.id) + '\')', true);
+    return '<div class="admin-row" style="align-items:flex-start"><div><div style="margin:.4rem 0"><strong>' + escHtml(p.name) + '</strong> ' + statusBadge + '</div><div style="margin:.4rem 0;color:var(--text-secondary);font-size:.9rem"><strong>Category:</strong> ' + escHtml(p.category) + '</div><div style="margin:.4rem 0;color:var(--text-secondary);font-size:.9rem"><strong>Budget:</strong> ' + escHtml(p.budget || 'Not specified') + ' · <strong>Timeline:</strong> ' + escHtml(p.timeline || 'Not specified') + '</div><div style="margin:.4rem 0;color:var(--text-secondary);font-size:.85rem">' + escHtml(p.description).substring(0, 150) + (p.description.length > 150 ? '...' : '') + '</div><div class="meta">' + escHtml(new Date(p.timestamp).toLocaleString()) + (p.email ? ' · ' + escHtml(p.email) : '') + '</div></div><div class="admin-actions">' + actions + '</div></div>';
+  }).join('') : '<p class="no-files">No project requests yet.</p>');
+}
+function viewProjectDetails(id) {
+  var p = byId(state.projectRequests, id);
+  if (!p) return;
+  var html = '<div style="max-height:400px;overflow-y:auto;"><div><strong>Name:</strong> ' + escHtml(p.name) + '</div><div><strong>Email:</strong> ' + escHtml(p.email) + '</div><div><strong>Category:</strong> ' + escHtml(p.category) + '</div><div><strong>Budget:</strong> ' + escHtml(p.budget || 'Not specified') + '</div><div><strong>Timeline:</strong> ' + escHtml(p.timeline || 'Not specified') + '</div><div><strong>Status:</strong> ' + escHtml(p.status) + '</div><div style="margin-top:0.5rem"><strong>Description:</strong></div><div style="background:var(--ov-05);padding:0.75rem;border-radius:var(--radius-md);font-size:0.9rem">' + escHtml(p.description) + '</div>' + (p.references ? '<div style="margin-top:0.5rem"><strong>References:</strong></div><div style="background:var(--ov-05);padding:0.75rem;border-radius:var(--radius-md);font-size:0.9rem">' + escHtml(p.references) + '</div>' : '') + '<div class="meta" style="margin-top:0.5rem">Submitted: ' + escHtml(new Date(p.timestamp).toLocaleString()) + '</div></div>';
+  openModal('Project Request Details', html);
+}
+function updateProjectStatus(id) {
+  if (!requireRank('CoOwner', 'Updating project status')) return;
+  var p = byId(state.projectRequests, id);
+  if (!p) return;
+  var html = '<label class="modal-label">Update Status</label><select id="projectStatus" class="modal-input">' +
+    '<option value="Pending"' + (p.status === 'Pending' ? ' selected' : '') + '>Pending</option>' +
+    '<option value="Under Review"' + (p.status === 'Under Review' ? ' selected' : '') + '>Under Review</option>' +
+    '<option value="Quoted"' + (p.status === 'Quoted' ? ' selected' : '') + '>Quoted</option>' +
+    '<option value="Accepted"' + (p.status === 'Accepted' ? ' selected' : '') + '>Accepted</option>' +
+    '<option value="Rejected"' + (p.status === 'Rejected' ? ' selected' : '') + '>Rejected</option>' +
+    '<option value="In Development"' + (p.status === 'In Development' ? ' selected' : '') + '>In Development</option>' +
+    '<option value="Completed"' + (p.status === 'Completed' ? ' selected' : '') + '>Completed</option>' +
+    '</select>' +
+    '<input type="hidden" id="projectId" value="' + escHtml(id) + '" />' +
+    '<div class="modal-buttons"><button class="btn-primary" onclick="saveProjectStatus()">Update Status</button><button class="btn-ghost" onclick="closeElementModal()">Cancel</button></div>';
+  openModal('Update Project Status', html);
+}
+function saveProjectStatus() {
+  var id = val('projectId');
+  var status = val('projectStatus');
+  var p = byId(state.projectRequests, id);
+  if (!p) return;
+  p.status = status;
+  closeElementModal();
+  showNotification('Status Updated', 'Project request status updated to ' + escHtml(status), 'success');
+  logActivity('Project Status', 'Updated project request status to ' + status);
+  renderAdminContent();
+  commit();
+}
+function deleteProjectRequest(id) {
+  if (!requireRank('Apprentice', 'Deleting project requests')) return;
+  var p = byId(state.projectRequests, id);
+  if (!p || !confirm('Delete this project request?')) return;
+  state.projectRequests = state.projectRequests.filter(function(x) { return x !== p; });
+  showNotification('Deleted', 'Project request deleted', 'success');
+  logActivity('Project Deleted', 'Deleted project request from ' + p.name);
+  renderAdminContent();
+  commit();
+}
 function renderActivitySection(c) {
   c.innerHTML = '<h3>Activity Log</h3>' + (state.activityLog.length ? state.activityLog.map(function(a) {
     var ic = a.action.indexOf('Login') !== -1 ? '🔓' : a.action.indexOf('Logout') !== -1 ? '🔒' : a.action.indexOf('Added') !== -1 || a.action.indexOf('Created') !== -1 ? '➕' : a.action.indexOf('Deleted') !== -1 ? '🗑️' : a.action.indexOf('Edited') !== -1 ? '✏️' : '📝';
@@ -568,7 +622,7 @@ window.deleteSuggestion = deleteSuggestion;
 function renderSiteSection(c) {
   if (!canAccess('CoOwner')) { c.innerHTML = '<div class="admin-overview"><h3>Access Restricted</h3><p class="admin-role">CoOwner+ rank required.</p></div>'; return; }
   var n = Object.keys(state.textOverrides).length;
-  c.innerHTML = '<h3>Site settings</h3><label class="modal-label">Discord invite URL</label><input type="text" id="siteDiscord" class="modal-input" placeholder="https://discord.gg/…" value="' + escHtml(state.siteSettings.discordUrl || '') + '" /><label class="modal-label">Contact email</label><input type="text" id="siteEmail" class="modal-input" placeholder="contact@example.com" value="' + escHtml(state.siteSettings.contactEmail || '') + '" /><div class="admin-btn-row"><button class="btn-primary" onclick="saveSiteSettings()">Save settings</button></div>' +
+  c.innerHTML = '<h3>Site settings</h3><label class="modal-label">Discord invite URL</label><input type="text" id="siteDiscord" class="modal-input" placeholder="https://discord.gg/…" value="' + escHtml(state.siteSettings.discordUrl || '') + '" /><label class="modal-label">Contact email</label><input type="text" id="siteEmail" class="modal-input" placeholder="contact@example.com" value="' + escHtml(state.siteSettings.contactEmail || '') + '" /><label class="modal-label" style="display:flex;align-items:center;gap:.6rem;margin-top:1rem;"><input type="checkbox" id="siteAnimations" ' + (state.siteSettings.animationsEnabled ? 'checked' : '') + ' onchange="setAnimations(this.checked)" /><span>Enable animations (fade, slide, zoom effects)</span></label><div class="admin-btn-row"><button class="btn-primary" onclick="saveSiteSettings()">Save settings</button></div>' +
     '<h4>Edited texts</h4><p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:.8rem">' + n + ' text' + (n === 1 ? '' : 's') + ' customised with “Edit Texts” mode.</p>' + (n ? '<button class="btn-ghost" style="border:1px solid var(--ov-12)" onclick="resetTextOverrides()">Reset all edited texts</button>' : '') +
     '<h4>Raid mode</h4><label style="display:flex;align-items:center;gap:.6rem;color:var(--text-secondary)"><input type="checkbox" ' + (state.raidMode ? 'checked' : '') + ' onchange="setRaidMode(this.checked)" /> Disable public submissions (suggestions & contact form)</label>';
 }
@@ -578,9 +632,12 @@ function saveSiteSettings() {
   if (d && !/^https?:\/\//i.test(d)) { showNotification('Invalid URL', 'The Discord link must start with http(s)://', 'error'); return; }
   if (m && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) { showNotification('Invalid email', 'Please check the email address', 'error'); return; }
   state.siteSettings.discordUrl = d; state.siteSettings.contactEmail = m;
+  state.siteSettings.animationsEnabled = document.getElementById('siteAnimations').checked;
+  afterRender();
   logActivity('Settings Edited', 'Updated site settings'); showNotification('Saved', 'Site settings updated', 'success'); commit();
 }
 function setRaidMode(on) { if (!requireRank('CoOwner', 'Raid mode')) return; state.raidMode = !!on; logActivity('Raid Mode', 'Raid mode ' + (on ? 'ON' : 'OFF')); commit(); }
+function setAnimations(on) { if (!requireRank('CoOwner', 'Animations')) return; state.siteSettings.animationsEnabled = !!on; afterRender(); }
 
 /* ═════════════════════════ EDIT EVERY TEXT (CoOwner+) ═════════════════════════
    Any visible text on the public site (navbar, pages, footer) can be edited in

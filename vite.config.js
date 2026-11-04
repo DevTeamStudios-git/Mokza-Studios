@@ -1,4 +1,10 @@
 import { defineConfig } from 'vite';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig({
   root: '.',
@@ -32,5 +38,30 @@ export default defineConfig({
         'workspace-snippets': './workspace/mokza-snippets.html',
       },
     },
+    assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.svg', '**/*.gif'],
   },
+  plugins: [
+    {
+      name: 'copy-badges',
+      closeBundle() {
+        const badgeFiles = ['badge-gold.png', 'badge-blue.png'];
+        const assetsDir = resolve(__dirname, 'dist', 'assets');
+        
+        if (!existsSync(assetsDir)) {
+          mkdirSync(assetsDir, { recursive: true });
+        }
+        
+        badgeFiles.forEach(file => {
+          const src = resolve(__dirname, 'assets', file);
+          const dest = resolve(assetsDir, file);
+          if (existsSync(src)) {
+            copyFileSync(src, dest);
+            console.log(`[copy-badges] Copied ${file} to dist/assets`);
+          } else {
+            console.warn(`[copy-badges] Source file not found: ${src}`);
+          }
+        });
+      }
+    }
+  ]
 });
