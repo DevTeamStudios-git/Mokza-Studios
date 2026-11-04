@@ -624,6 +624,7 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
+const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://developpement-team.vercel.app/api/auth/discord/callback';
 
 // In-memory session store (production should use Redis/DB)
 const oauthSessions = new Map(); // state -> { provider, codeVerifier, createdAt }
@@ -726,7 +727,7 @@ router.get('/auth/discord', (req, res) => {
   oauthSessions.set(state, { provider: 'discord', codeVerifier, createdAt: Date.now() });
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
-    redirect_uri: window.location.origin + '/api/auth/discord/callback',
+    redirect_uri: DISCORD_REDIRECT_URI,
     response_type: 'code',
     scope: 'identify email',
     state,
@@ -754,7 +755,7 @@ router.get('/auth/discord/callback', async (req, res) => {
         client_secret: DISCORD_CLIENT_SECRET,
         grant_type: 'authorization_code',
         code,
-        redirect_uri: window.location.origin + '/api/auth/discord/callback',
+        redirect_uri: DISCORD_REDIRECT_URI,
         code_verifier: session.codeVerifier
       })
     });
