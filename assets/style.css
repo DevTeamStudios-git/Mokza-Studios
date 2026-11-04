@@ -160,7 +160,7 @@ img { max-width: 100%; display: block; }
 .verified-badge {
   display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
-.verified-badge img { width: 16px; height: 16px; flex-shrink: 0; }
+.verified-img { width: 16px; height: 16px; flex-shrink: 0; }
 .verified-badge span { font-size: 10px; font-weight: 800; }
 .verified-badge.blue { color: #1D9BF0; }
 .verified-badge.gold { color: #F59E0B; }

@@ -737,14 +737,6 @@ function switchAuthTab(tab) {
 }
 
 function oauthLogin(provider) {
-  // TODO: Implement OAuth flow
-  // This requires backend OAuth endpoints and API keys
-  showNotification('Coming Soon', provider.charAt(0).toUpperCase() + provider.slice(1) + ' OAuth login will be available soon!', 'info');
-  console.log('[OAuth] Provider:', provider);
-  // Example implementation:
-  // window.location.href = '/api/auth/' + provider;
-}
-function oauthLogin(provider) {
   var rememberMe = document.getElementById('oauth-remember-me');
   if (rememberMe) state.rememberMe = rememberMe.checked;
   state.rememberMeDays = parseInt(document.getElementById('oauth-remember-days')?.value || '90', 10) || 90;
