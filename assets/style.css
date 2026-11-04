@@ -148,6 +148,25 @@ img { max-width: 100%; display: block; }
 }
 .input-base:focus { outline: none; border-color: var(--accent-primary); }
 .input-base::placeholder { color: var(--text-muted); }
+/* Select dropdown styling */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3Epath fill='%239CA3AF' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.65rem auto;
+  padding-right: 2rem;
+}
+select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 0.5rem;
+}
+[data-theme="light"] select option {
+  background: #fff;
+  color: #000;
+}
 .label-base { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem; }
 .badge {
   display: inline-flex; align-items: center; gap: 0.35rem;
@@ -426,8 +445,9 @@ img { max-width: 100%; display: block; }
 .suggestions-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.75rem; }
 .suggestions-description { color: var(--text-secondary); font-size: 1rem; margin-bottom: 0; }
 .suggestion-form { max-width: 700px; margin: 0 auto 2.5rem; }
-.suggestion-form textarea { width: 100%; min-height: 120px; resize: vertical; }
-.suggestion-form .btn { width: 100%; margin-top: 1rem; }
+.suggestion-form textarea { width: 100%; min-height: 120px; resize: vertical; margin-bottom: 1rem; }
+.suggestion-form .input-base { margin-bottom: 1rem; }
+.suggestion-form .btn { width: 100%; margin-top: 0.5rem; }
 .suggestion-list { max-height: 340px; overflow-y: auto; padding-right: 0.5rem; }
 .suggestion-item {
   background: var(--ov-03); border: 1px solid var(--ov-06);
@@ -455,6 +475,30 @@ img { max-width: 100%; display: block; }
 .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--ov-06); display: flex; gap: 0.75rem; justify-content: flex-end; }
 .modal-close { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: var(--transition-fast); }
 .modal-close:hover { color: var(--text-primary); background: var(--ov-05); }
+/* Auth Tabs */
+.auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.auth-tab {
+  flex: 1; padding: 0.75rem 1rem; border: 2px solid var(--ov-08);
+  border-radius: var(--radius-md); background: var(--ov-05);
+  color: var(--text-secondary); font-weight: 600; font-size: 0.95rem;
+  cursor: pointer; transition: var(--transition-fast);
+}
+.auth-tab:hover { background: var(--ov-08); color: var(--text-primary); }
+.auth-tab.active {
+  background: var(--accent-primary); border-color: var(--accent-primary);
+  color: var(--on-accent); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+.auth-section { display: none; }
+.auth-section.hidden { display: none; }
+.auth-section:not(.hidden) { display: block; }
+/* Contact Tabs */
+.contact-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.contact-tabs .btn { flex: 1; min-width: 140px; }
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--ov-03); }
+::-webkit-scrollbar-thumb { background: var(--ov-12); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ov-15); }
 /* Admin Panel */
 .admin-panel {
   position: fixed; right: -520px; top: 0; bottom: 0; width: 520px;
@@ -810,7 +854,7 @@ img { max-width: 100%; display: block; }
 .nav-actions .nav-btn:hover { background: var(--ov-12); color: var(--text-primary); }
 .nav-actions .nav-btn.on { background: var(--accent-primary); color: var(--on-accent); border-color: transparent; }
 .nav-actions .nav-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
-.verified-img { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; margin-left: 4px; object-fit: contain; }
+.verified-img { width: 24px; height: 24px; display: inline-block; vertical-align: -5px; margin-left: 6px; object-fit: contain; }
 .chat-msg-body .chat-embed b { color: var(--text-primary); }
 .chat-embed { white-space: normal; line-height: 1.6; }
 .chat-channel-btn.active { background: var(--ov-08); color: var(--accent-primary); }
