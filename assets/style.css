@@ -984,3 +984,6 @@ body.text-edit-on .edit-banner { display: block; }
 /* admin panel slide-in (override legacy fixed offset) */
 .admin-panel { right: 0; transform: translateX(105%); visibility: hidden; transition: transform .3s ease, visibility .3s; z-index: 200; box-shadow: -8px 0 30px rgba(0,0,0,.25); }
 .admin-panel.open { transform: none; visibility: visible; }
+
+#wsFrameWrap:fullscreen{background:var(--bg-primary,#0b0d14);}
+#wsFrameWrap:fullscreen iframe{height:100vh !important;border-radius:0 !important;}

@@ -1444,11 +1444,20 @@ function renderProjectsGrid() {
   afterRender();
 }
 
+function toggleWorkspaceFullscreen() {
+  var el = document.getElementById('wsFrameWrap');
+  if (!el) return;
+  if (document.fullscreenElement) { document.exitFullscreen(); return; }
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req) req.call(el);
+}
+window.toggleWorkspaceFullscreen = toggleWorkspaceFullscreen;
+
 function renderWorkspace() {
   if (!state.currentUser) {
     return '<div class="card-bg" style="padding:3rem;text-align:center;max-width:600px;margin:0 auto;"><div class="empty-icon">' + svgIcon('lock', 20) + '</div><h3>' + escHtml(t('workspaceStaffTitle')) + '</h3><p style="margin-bottom:1.5rem;">' + escHtml(t('workspaceStaffDesc')) + '</p><button class="btn btn-primary" onclick="showAuthModal()">' + escHtml(t('signIn')) + '</button></div>';
   }
-  return '<div class="page-header"><h1 class="page-title">' + escHtml(t('workspaceTitle')) + '</h1><p class="page-subtitle">' + escHtml(t('workspaceSubtitle')) + '</p></div><div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;"><button class="btn btn-primary" onclick="closeOfficeHub();openOfficeHub()">' + svgIcon('building', 20) + ' ' + escHtml(t('openOfficeHub')) + '</button><button class="btn btn-outline" onclick="switchHubView(\'chat\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('chat', 20) + ' ' + escHtml(t('teamChat')) + '</button><button class="btn btn-outline" onclick="switchHubView(\'tasks\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('memo', 20) + ' ' + escHtml(t('taskBoard')) + '</button></div><iframe src="workspace/index.html" title="Mokza Nexus Workspace" style="width:100%;height:600px;border:none;border-radius:var(--radius-lg);"></iframe>';
+  return '<div class="page-header"><h1 class="page-title">' + escHtml(t('workspaceTitle')) + '</h1><p class="page-subtitle">' + escHtml(t('workspaceSubtitle')) + '</p></div><div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem;"><button class="btn btn-primary" onclick="closeOfficeHub();openOfficeHub()">' + svgIcon('building', 20) + ' ' + escHtml(t('openOfficeHub')) + '</button><button class="btn btn-outline" onclick="switchHubView(\'chat\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('chat', 20) + ' ' + escHtml(t('teamChat')) + '</button><button class="btn btn-outline" onclick="switchHubView(\'tasks\',this);closeOfficeHub();openOfficeHub()">' + svgIcon('memo', 20) + ' ' + escHtml(t('taskBoard')) + '</button><button class="btn btn-outline" onclick="toggleWorkspaceFullscreen()" title="Fullscreen">&#x26F6; Fullscreen</button></div><div id="wsFrameWrap"><iframe id="wsFrame" src="workspace/index.html" title="Mokza Nexus Workspace" allow="fullscreen; clipboard-write" allowfullscreen style="width:100%;height:600px;border:none;border-radius:var(--radius-lg);"></iframe></div>';
 }
 
 function submitSuggestion() {
