@@ -2,6 +2,7 @@ import express from 'express';
 import { supabase } from '../supabase/client.js';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const router = express.Router();
 
@@ -13,14 +14,12 @@ const CALL_STATE_FILE = path.resolve(process.cwd(), 'server', 'data', 'call-stat
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'https://developpement-team.vercel.app/api/auth/google/callback';
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://developpement-team.vercel.app/api/auth/discord/callback';
-
-// In-memory session store (production should use Redis/DB)
-const oauthSessions = new Map(); // state -> { provider, codeVerifier, createdAt }
-const userSessions = new Map(); // token -> { user, expiresAt }
+// Serverless functions don't share memory, so state and sessions are signed tokens, not Maps.
+const AUTH_SECRET = process.env.AUTH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || GOOGLE_CLIENT_SECRET || 'dev-only-secret';
 
 try { fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true }); } catch (_) {}
 
@@ -684,182 +683,109 @@ router.get('/chat-ids', async (req, res) => {
   }
 });
 
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// OAUTH (Google + Discord)
-// ══════════════════════════════════════════════════════════════════════════════
+// OAUTH (Google + Discord) — stateless: works on Vercel serverless
+// ═══════════════════════════════════════════════════════════════════════════════
 
-function generateState() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+const b64u = (b) => Buffer.from(b).toString('base64url');
+const sign = (payload) => { const body = b64u(JSON.stringify(payload)); return body + '.' + crypto.createHmac('sha256', AUTH_SECRET).update(body).digest('base64url'); };
+function verify(tok) {
+  if (!tok || typeof tok !== 'string' || tok.indexOf('.') < 0) return null;
+  const [body, sig] = tok.split('.');
+  const good = crypto.createHmac('sha256', AUTH_SECRET).update(body).digest('base64url');
+  if (sig.length !== good.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(good))) return null;
+  try { const p = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')); return p.exp && p.exp > Date.now() ? p : null; } catch (_) { return null; }
 }
-
-function generateCodeVerifier() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map(b => b.toString(16).padStart(2, '0')).join('');
+const generateState = () => crypto.randomBytes(16).toString('hex');
+const generateCodeVerifier = () => crypto.randomBytes(32).toString('base64url');
+const sha256Base64Url = (str) => crypto.createHash('sha256').update(str).digest('base64url');
+function readCookie(req, name) {
+  const m = (req.headers.cookie || '').split(/;\s*/).find((c) => c.startsWith(name + '='));
+  return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
 }
-
-function sha256Base64Url(str) {
-  const buf = crypto.subtle.digestSync('SHA-256', new TextEncoder().encode(str));
-  return btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-// GET /api/auth/google — initiate Google OAuth
-router.get('/auth/google', (req, res) => {
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
-    return res.status(500).json({ success: false, error: 'Google OAuth not configured' });
-  }
+function startOAuth(req, res, provider, base, params) {
   const state = generateState();
   const codeVerifier = generateCodeVerifier();
-  const codeChallenge = sha256Base64Url(codeVerifier);
-  oauthSessions.set(state, { provider: 'google', codeVerifier, createdAt: Date.now() });
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: GOOGLE_REDIRECT_URI,
-    response_type: 'code',
-    scope: 'openid email profile',
-    state,
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256',
-    access_type: 'offline',
-    prompt: 'consent'
+  // verifier travels in a signed, httpOnly cookie that survives the round trip to the provider
+  const cookie = sign({ state, provider, v: codeVerifier, exp: Date.now() + 10 * 60 * 1000 });
+  res.setHeader('Set-Cookie', 'mokza_oauth=' + encodeURIComponent(cookie) + '; HttpOnly; Secure; SameSite=Lax; Path=/api/auth; Max-Age=600');
+  const q = new URLSearchParams({ ...params, state, code_challenge: sha256Base64Url(codeVerifier), code_challenge_method: 'S256' });
+  res.redirect(base + '?' + q.toString());
+}
+function takeSession(req, res, provider, state) {
+  const p = verify(readCookie(req, 'mokza_oauth'));
+  res.setHeader('Set-Cookie', 'mokza_oauth=; HttpOnly; Secure; SameSite=Lax; Path=/api/auth; Max-Age=0');
+  return p && p.provider === provider && p.state === state ? p : null;
+}
+function finishLogin(res, user, provider) {
+  const token = sign({ user, exp: Date.now() + 90 * 24 * 3600 * 1000 });
+  res.redirect('/#?oauth=success&token=' + encodeURIComponent(token) + '&provider=' + provider + '&user=' + encodeURIComponent(user.username));
+}
+
+router.get('/auth/google', (req, res) => {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) return res.status(500).json({ success: false, error: 'Google OAuth not configured' });
+  startOAuth(req, res, 'google', 'https://accounts.google.com/o/oauth2/v2/auth', {
+    client_id: GOOGLE_CLIENT_ID, redirect_uri: GOOGLE_REDIRECT_URI, response_type: 'code', scope: 'openid email profile', prompt: 'select_account',
   });
-  res.redirect('https://accounts.google.com/o/oauth2/v2/auth?' + params.toString());
 });
 
-// GET /api/auth/google/callback — Google OAuth callback
 router.get('/auth/google/callback', async (req, res) => {
   const { code, state, error } = req.query;
   if (error) return res.redirect('/#?oauth=error&provider=google&msg=' + encodeURIComponent(error));
-  const session = oauthSessions.get(state);
-  if (!session || session.provider !== 'google') {
-    return res.redirect('/#?oauth=error&provider=google&msg=invalid_state');
-  }
-  oauthSessions.delete(state);
+  const session = takeSession(req, res, 'google', state);
+  if (!session) return res.redirect('/#?oauth=error&provider=google&msg=invalid_state');
   try {
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code,
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
-        redirect_uri: GOOGLE_REDIRECT_URI,
-        grant_type: 'authorization_code',
-        code_verifier: session.codeVerifier
-      })
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ code, client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET, redirect_uri: GOOGLE_REDIRECT_URI, grant_type: 'authorization_code', code_verifier: session.v }),
     });
     const tokens = await tokenRes.json();
-    if (!tokens.access_token) throw new Error('No access token');
-    const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: 'Bearer ' + tokens.access_token }
-    });
-    const profile = await profileRes.json();
-    const user = {
-      id: 'google_' + profile.id,
-      username: profile.email || profile.name,
-      email: profile.email,
-      name: profile.name,
-      picture: profile.picture,
-      provider: 'google',
-      rank: 'Developer',
-      permissions: 'DEVELOPER',
-      verified: profile.verified_email
-    };
-    const token = generateState();
-    userSessions.set(token, { user, expiresAt: Date.now() + 7776000000 }); // 90 days
-    res.redirect('/#?oauth=success&token=' + token + '&provider=google&user=' + encodeURIComponent(user.username));
+    if (!tokens.access_token) throw new Error(tokens.error_description || tokens.error || 'No access token');
+    const profile = await (await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: 'Bearer ' + tokens.access_token } })).json();
+    finishLogin(res, { id: 'google_' + profile.id, username: profile.email || profile.name, email: profile.email, name: profile.name, picture: profile.picture, provider: 'google', rank: 'Developer', permissions: 'DEVELOPER', verified: profile.verified_email }, 'google');
   } catch (e) {
     console.error('[OAuth] Google callback error:', e.message);
     res.redirect('/#?oauth=error&provider=google&msg=' + encodeURIComponent(e.message));
   }
 });
 
-// GET /api/auth/discord — initiate Discord OAuth
 router.get('/auth/discord', (req, res) => {
-  if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
-    return res.status(500).json({ success: false, error: 'Discord OAuth not configured' });
-  }
-  const state = generateState();
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = sha256Base64Url(codeVerifier);
-  oauthSessions.set(state, { provider: 'discord', codeVerifier, createdAt: Date.now() });
-  const params = new URLSearchParams({
-    client_id: DISCORD_CLIENT_ID,
-    redirect_uri: DISCORD_REDIRECT_URI,
-    response_type: 'code',
-    scope: 'identify email',
-    state,
-    code_challenge: codeChallenge,
-    code_challenge_method: 'S256'
+  if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) return res.status(500).json({ success: false, error: 'Discord OAuth not configured' });
+  startOAuth(req, res, 'discord', 'https://discord.com/api/oauth2/authorize', {
+    client_id: DISCORD_CLIENT_ID, redirect_uri: DISCORD_REDIRECT_URI, response_type: 'code', scope: 'identify email',
   });
-  res.redirect('https://discord.com/api/oauth2/authorize?' + params.toString());
 });
 
-// GET /api/auth/discord/callback — Discord OAuth callback
 router.get('/auth/discord/callback', async (req, res) => {
   const { code, state, error } = req.query;
   if (error) return res.redirect('/#?oauth=error&provider=discord&msg=' + encodeURIComponent(error));
-  const session = oauthSessions.get(state);
-  if (!session || session.provider !== 'discord') {
-    return res.redirect('/#?oauth=error&provider=discord&msg=invalid_state');
-  }
-  oauthSessions.delete(state);
+  const session = takeSession(req, res, 'discord', state);
+  if (!session) return res.redirect('/#?oauth=error&provider=discord&msg=invalid_state');
   try {
     const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: DISCORD_CLIENT_ID,
-        client_secret: DISCORD_CLIENT_SECRET,
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: DISCORD_REDIRECT_URI,
-        code_verifier: session.codeVerifier
-      })
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: DISCORD_CLIENT_ID, client_secret: DISCORD_CLIENT_SECRET, grant_type: 'authorization_code', code, redirect_uri: DISCORD_REDIRECT_URI, code_verifier: session.v }),
     });
     const tokens = await tokenRes.json();
-    if (!tokens.access_token) throw new Error('No access token');
-    const profileRes = await fetch('https://discord.com/api/users/@me', {
-      headers: { Authorization: 'Bearer ' + tokens.access_token }
-    });
-    const profile = await tokenRes.json();
-    const user = {
-      id: 'discord_' + profile.id,
-      username: profile.username + (profile.discriminator ? '#' + profile.discriminator : ''),
-      email: profile.email,
-      name: profile.username,
-      picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null,
-      provider: 'discord',
-      rank: 'Developer',
-      permissions: 'DEVELOPER',
-      verified: !!profile.verified
-    };
-    const token = generateState();
-    userSessions.set(token, { user, expiresAt: Date.now() + 7776000000 }); // 90 days
-    res.redirect('/#?oauth=success&token=' + token + '&provider=discord&user=' + encodeURIComponent(user.username));
+    if (!tokens.access_token) throw new Error(tokens.error_description || tokens.error || 'No access token');
+    const profile = await (await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + tokens.access_token } })).json();
+    finishLogin(res, { id: 'discord_' + profile.id, username: profile.username + (profile.discriminator && profile.discriminator !== '0' ? '#' + profile.discriminator : ''), email: profile.email, name: profile.username, picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null, provider: 'discord', rank: 'Developer', permissions: 'DEVELOPER', verified: !!profile.verified }, 'discord');
   } catch (e) {
     console.error('[OAuth] Discord callback error:', e.message);
     res.redirect('/#?oauth=error&provider=discord&msg=' + encodeURIComponent(e.message));
   }
 });
 
-// GET /api/auth/me — get current user from token
-router.get('/auth/me', async (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+router.get('/auth/me', (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token;
   if (!token) return res.status(401).json({ success: false, error: 'No token' });
-  const session = userSessions.get(token);
-  if (!session || session.expiresAt < Date.now()) {
-    userSessions.delete(token);
-    return res.status(401).json({ success: false, error: 'Token expired' });
-  }
-  return res.json({ success: true, user: session.user });
+  const p = verify(token);
+  if (!p) return res.status(401).json({ success: false, error: 'Token expired' });
+  return res.json({ success: true, user: p.user });
 });
 
-// POST /api/auth/logout — invalidate token
-router.post('/auth/logout', (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (token) userSessions.delete(token);
-  return res.json({ success: true });
-});
+router.post('/auth/logout', (req, res) => res.json({ success: true }));
 
 export default router;
+
