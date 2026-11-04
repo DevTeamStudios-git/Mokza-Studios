@@ -802,21 +802,47 @@ async function initAuth() {
     if (raw) {
       const data = JSON.parse(raw);
       if (data.expiresAt > Date.now()) {
-        state.sessionToken = data.token;
-        state.sessionExpiresAt = data.expiresAt;
-        state.sessionUser = data.user;
-        state.currentUser = {
-          username: data.user.username,
-          rank: data.user.rank,
-          permissions: data.user.permissions
-        };
-        state.devModeActive = true;
-        document.getElementById('devToggle').classList.add('active');
-        showApp();
-        return;
+        // Validate token with backend before trusting it
+        const res = await apiRequest('/api/auth/me?token=' + data.token);
+        if (res && res.success && res.user) {
+          state.sessionToken = data.token;
+          state.sessionExpiresAt = data.expiresAt;
+          state.sessionUser = res.user;
+          state.currentUser = {
+            username: res.user.username,
+            rank: res.user.rank,
+            permissions: res.user.permissions
+          };
+          state.devModeActive = true;
+          document.getElementById('devToggle').classList.add('active');
+          showApp();
+          return;
+        }
       }
     }
   } catch (e) { /* ignore */ }
+  // Clear invalid session
+  clearSession();
+  showLogin();
+}
+
+async function apiRequest(path, options = {}) {
+  options = options || {};
+  options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (options.body && typeof options.body !== 'string') options.body = JSON.stringify(options.body);
+  const res = await fetch('/api' + path, options);
+  if (!res.ok) throw new Error('API ' + res.status);
+  return res.json();
+}
+
+function clearSession() {
+  state.sessionToken = null;
+  state.sessionExpiresAt = null;
+  state.sessionUser = null;
+  state.currentUser = null;
+  state.devModeActive = false;
+  document.getElementById('devToggle').classList.remove('active');
+  try { localStorage.removeItem('mokza_auth_token'); } catch (e) {}
   showLogin();
 }
 
