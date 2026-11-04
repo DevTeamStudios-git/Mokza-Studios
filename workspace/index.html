@@ -706,28 +706,15 @@ nav{flex:1;padding:8px;display:flex;flex-direction:column;gap:2px;overflow-y:aut
 <div id="modal-slot"></div>
 <input type="file" id="drive-file-input" multiple style="display:none" onchange="handleDriveUpload(event)">
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<script src="/api-client.js"></script>
 <script>
-if (typeof firebase === 'undefined') {
-  document.getElementById('loading').innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:36px;margin-bottom:16px;">⚠️</div><div style="color:#FB7185;font-size:14px;margin-bottom:10px;">Firebase failed to load.</div><div style="color:#6A8099;font-size:12px;max-width:320px;">Open this file using a local server (e.g. <code style="background:#162032;padding:2px 6px;border-radius:3px;">python -m http.server</code>) instead of directly from the file system.</div></div>';
-  throw new Error('Firebase CDN blocked — serve via HTTP server.');
+/* ══ INIT ── */
+if (!window.__firestoreOps) {
+  document.getElementById('loading').innerHTML = '<div style="text-align:center;padding:40px;"><div style="font-size:36px;margin-bottom:16px;">⚠️</div><div style="color:#FB7185;font-size:14px;margin-bottom:10px;">API Client failed to load.</div></div>';
+  throw new Error('API Client blocked — serve via HTTP server.');
 }
 
-const FB = {
-  apiKey:"AIzaSyBL1wtqD2PGwyN7uqXLEBtBTkL_KsWD6jY",
-  authDomain:"mokza-workspace.firebaseapp.com",
-  projectId:"mokza-workspace",
-  storageBucket:"mokza-workspace.firebasestorage.app",
-  messagingSenderId:"703578091967",
-  appId:"1:703578091967:web:91238f997c723984d4b10a"
-};
-firebase.initializeApp(FB);
-const auth    = firebase.auth();
-const db      = firebase.firestore();
-const storage = firebase.storage();
+/* Firebase removed - using API client instead */
 
 /* ══ STATE ══════════════════════════════════════════════════ */
 const S = {
@@ -799,15 +786,43 @@ const NAV = [
 ];
 
 /* ══ BOOTSTRAP ══════════════════════════════════════════════ */
-auth.onAuthStateChanged(user => {
+async function initAuth() {
   document.getElementById('loading').classList.add('hidden');
-  if (user) { S.user = user; showApp(); }
-  else {
-    const p = new URLSearchParams(window.location.search);
-    if (p.has('code') && p.has('discord')) handleDiscordCallback(p.get('code'));
-    else showLogin();
+  // Check for OAuth callback in URL
+  const p = new URLSearchParams(window.location.search);
+  if (p.has('code') && p.has('discord')) {
+    handleDiscordCallback(p.get('code'));
+    return;
   }
-});
+  if (p.has('code') && p.has('state')) {
+    // Google OAuth callback - handled by redirect already
+    return;
+  }
+  // Try to restore session from localStorage
+  try {
+    const raw = localStorage.getItem('mokza_auth_token');
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.expiresAt > Date.now()) {
+        state.sessionToken = data.token;
+        state.sessionExpiresAt = data.expiresAt;
+        state.sessionUser = data.user;
+        state.currentUser = {
+          username: data.user.username,
+          rank: data.user.rank,
+          permissions: data.user.permissions
+        };
+        state.devModeActive = true;
+        document.getElementById('devToggle').classList.add('active');
+        showApp();
+        return;
+      }
+    }
+  } catch (e) { /* ignore */ }
+  showLogin();
+}
+
+initAuth();
 
 function showLogin() {
   document.getElementById('login-screen').classList.remove('hidden');
@@ -823,25 +838,32 @@ function showApp() {
 
 /* ══ AUTH ═══════════════════════════════════════════════════ */
 async function loginGoogle() {
-  try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-  catch(e) { showLoginError(e.message); }
+  window.location.href = '/api/auth/google';
 }
 function loginDiscord() {
   const cid = S.discordClientId || prompt('Enter your Discord Client ID:');
   if (!cid) return;
   S.discordClientId = cid;
   localStorage.setItem('nexus_discord_cid', cid);
-  const redirect = window.location.origin + window.location.pathname;
-  window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${cid}&redirect_uri=${encodeURIComponent(redirect)}&response_type=code&scope=identify%20email&state=discord`;
+  window.location.href = '/api/auth/discord';
 }
 async function handleDiscordCallback(code) {
-  const cfUrl = S.discordCfUrl;
-  if (!cfUrl) { showLogin(); showLoginError('Discord Cloud Function URL not set in Settings.'); return; }
   try {
-    const res = await fetch(cfUrl, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,redirect:window.location.origin+window.location.pathname})});
-    const {firebaseToken} = await res.json();
-    await auth.signInWithCustomToken(firebaseToken);
-    window.history.replaceState({}, '', window.location.pathname);
+    const res = await fetch('/api/auth/discord/callback?code=' + code);
+    const result = await res.json();
+    if (res.success && res.user) {
+      state.sessionUser = res.user;
+      state.currentUser = {
+        username: res.user.username,
+        rank: res.user.rank,
+        permissions: res.user.permissions
+      };
+      state.devModeActive = true;
+      storeSession(result.token, res.user);
+      document.getElementById('devToggle').classList.add('active');
+      closeAuthModal();
+      showApp();
+    }
   } catch(e) { showLogin(); showLoginError('Discord auth failed: ' + e.message); }
 }
 function showLoginError(msg) {
@@ -849,8 +871,9 @@ function showLoginError(msg) {
   el.textContent = msg; el.style.display = 'block';
 }
 async function logout() {
-  S.listeners.forEach(u => u()); S.listeners = [];
-  await auth.signOut(); showLogin();
+  try { await apiRequest('/auth/logout', { method: 'POST' }); } catch(e) {}
+  clearSession();
+  showLogin();
 }
 
 /* ══ NAVIGATION ════════════════════════════════════════════ */
@@ -883,33 +906,50 @@ function updateTopbar() {
 }
 
 /* ══ FIRESTORE ══════════════════════════════════════════════ */
-function uid() { return S.user?.uid || 'anon'; }
-function col(name) { return db.collection(`workspaces/${uid()}/${name}`); }
+function uid() { return state.currentUser?.username || 'anon'; }
+function col(name) { return null; }
 
 function setupFirestoreListeners() {
-  const u1 = col('tasks').orderBy('createdAt','desc').onSnapshot(snap => {
-    S.tasks = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if (['tasks','dashboard'].includes(S.view)) renderView();
-  });
-  const u2 = db.collection('workspace_chat').orderBy('sentAt','asc').limit(200).onSnapshot(snap => {
-    S.messages = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if (S.view === 'chat') renderView();
-  });
-  const u3 = col('kanban').onSnapshot(snap => {
-    S.kanban = {todo:[],progress:[],review:[],done:[]};
-    snap.docs.forEach(d => {
-      const item = {id:d.id,...d.data()};
-      if (S.kanban[item.col]) S.kanban[item.col].push(item);
-    });
-    if (S.view === 'projects') renderView();
-  });
-  const u4 = col('events').orderBy('start','asc').onSnapshot(snap => {
-    S.events = snap.docs.map(d=>({id:d.id,...d.data()}));
-    if (S.view === 'calendar') renderView();
-  });
+  // Load tasks via API
+  apiRequest('/tasks')
+    .then(res => {
+      S.tasks = res.tasks || [];
+      if (['tasks','dashboard'].includes(S.view)) renderView();
+    })
+    .catch(e => console.warn('Tasks load failed:', e.message));
+  
+  // Load chat messages via API  
+  apiRequest('/chat-ids').then(res => { /* chat IDs loaded */ })
+    .catch(e => console.warn('Chat IDs load failed:', e.message));
+  
+  // Load announcements via API
+  apiRequest('/announcements')
+    .then(res => {
+      S.announcements = res.announcements || [];
+    })
+    .catch(e => console.warn('Announcements load failed:', e.message));
+  
+  // Load tasks via API (also for kanban)
+  apiRequest('/tasks')
+    .then(res => {
+      S.kanban = {todo:[],progress:[],review:[],done:[]};
+      (res.tasks || []).forEach(t => {
+        if (S.kanban[t.col]) S.kanban[t.col].push(t);
+      });
+      if (S.view === 'projects') renderView();
+    })
+    .catch(e => console.warn('Tasks/Kanban load failed:', e.message));
+  
+  // Load events via API
+  apiRequest('/events')
+    .then(res => {
+      S.events = res.events || [];
+      if (S.view === 'calendar') renderView();
+    })
+    .catch(e => console.warn('Events load failed:', e.message));
+  
   document.getElementById('fb-indicator').innerHTML =
-    `<div class="fb-dot" style="background:var(--mint);animation:blink 3s ease-in-out infinite;"></div><span style="color:var(--mint);font-size:11px;">Firebase</span>`;
-  S.listeners = [u1,u2,u3,u4];
+    `<div class="fb-dot" style="background:var(--mint);animation:blink 3s ease-in-out infinite;"></div><span style="color:var(--mint);font-size:11px;">Supabase</span>`;
 }
 
 /* ══ VIEW ROUTER ════════════════════════════════════════════ */
@@ -1041,8 +1081,11 @@ function initChat() { document.getElementById('chat-end')?.scrollIntoView(); }
 async function sendChatMsg() {
   const inp=document.getElementById('chat-input'), text=inp?.value?.trim();
   if(!text)return; inp.value='';
-  const u=S.user;
-  await db.collection('workspace_chat').add({text,senderId:u.uid,senderName:u.displayName||u.email||'Anonymous',color:'#5E6AD2',sentAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const u=state.currentUser;
+  await apiRequest('/api/chat', {
+    method: 'POST',
+    body: { id: 'm' + Date.now(), from: u.username, rank: u.rank, text: text.slice(0, 1000), ch: '#general' }
+  });
 }
 
 /* ══ TASKS ══════════════════════════════════════════════════ */
@@ -1070,10 +1113,17 @@ function taskRow(t) {
 async function addTask() {
   const inp=document.getElementById('task-input'), prio=document.getElementById('task-prio');
   const text=inp?.value?.trim(); if(!text)return; inp.value='';
-  await col('tasks').add({text,priority:prio?.value||'medium',done:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await apiRequest('/api/tasks', {
+    method: 'POST',
+    body: { title: text, priority: prio?.value||'medium', done: false, createdAt: new Date().toISOString() }
+  });
 }
-async function toggleTask(id,done) { await col('tasks').doc(id).update({done:!done}); }
-async function deleteTask(id) { await col('tasks').doc(id).delete(); }
+async function toggleTask(id,done) {
+  await apiRequest('/api/tasks/' + id, { method: 'PATCH', body: { done: !done } });
+}
+async function deleteTask(id) {
+  await apiRequest('/api/tasks/' + id, { method: 'DELETE' });
+}
 
 /* ══ KANBAN ═════════════════════════════════════════════════ */
 function renderProjects() {
@@ -1129,7 +1179,10 @@ function closeAddForm(colId) { const f=document.getElementById(`add-form-${colId
 async function quickAddCard(colId) {
   const inp=document.getElementById(`add-inp-${colId}`), title=inp?.value?.trim();
   if(!title)return; inp.value=''; closeAddForm(colId);
-  await col('kanban').add({title,col:colId,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await apiRequest('/api/tasks', {
+    method: 'POST',
+    body: { title, col: colId, createdAt: new Date().toISOString() }
+  });
 }
 
 let _kmCardId=null, _kmColId=null;
@@ -1151,27 +1204,27 @@ function closeKanbanModal() { document.getElementById('kanban-modal-bg').classLi
 async function saveKanbanCard() {
   const title=document.getElementById('km-title').value.trim();
   if(!title){document.getElementById('km-title').focus();return;}
-  const data={title,desc:document.getElementById('km-desc').value.trim(),priority:document.getElementById('km-priority').value,col:document.getElementById('km-col').value,tag:document.getElementById('km-tag').value,due:document.getElementById('km-due').value,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
-  if(_kmCardId){await col('kanban').doc(_kmCardId).update(data);pushNotification(`Card updated: "${title}"`,'kanban');}
-  else{data.createdAt=firebase.firestore.FieldValue.serverTimestamp();await col('kanban').add(data);pushNotification(`Card created: "${title}"`,'kanban');}
+  const data={title,desc:document.getElementById('km-desc').value.trim(),priority:document.getElementById('km-priority').value,col:document.getElementById('km-col').value,tag:document.getElementById('km-tag').value,due:document.getElementById('km-due').value,updatedAt:new Date().toISOString()};
+  if(_kmCardId){await apiRequest('/api/tasks/' + _kmCardId, { method: 'PATCH', body: data });pushNotification(`Card updated: "${title}"`,'kanban');}
+  else{await apiRequest('/api/tasks', { method: 'POST', body: { ...data, createdAt: new Date().toISOString() } });pushNotification(`Card created: "${title}"`,'kanban');}
   closeKanbanModal();
 }
 async function deleteKanbanCard() {
   if(!_kmCardId)return;
   const card=Object.values(S.kanban).flat().find(c=>c.id===_kmCardId);
   if(!confirm(`Delete "${card?.title||'this card'}"?`))return;
-  await col('kanban').doc(_kmCardId).delete(); closeKanbanModal();
+  await apiRequest('/api/tasks/' + _kmCardId, { method: 'DELETE' }); closeKanbanModal();
 }
 async function confirmDeleteCard(cardId) {
   const card=Object.values(S.kanban).flat().find(c=>c.id===cardId);
   if(!confirm(`Delete "${card?.title||'this card'}"?`))return;
-  await col('kanban').doc(cardId).delete();
+  await apiRequest('/api/tasks/' + cardId, { method: 'DELETE' });
 }
-function quickMoveCard(cardId,currentCol) {
+async function quickMoveCard(cardId,currentCol) {
   const order=['todo','progress','review','done'];
   const next=order[(order.indexOf(currentCol)+1)%order.length];
   const card=Object.values(S.kanban).flat().find(c=>c.id===cardId);
-  col('kanban').doc(cardId).update({col:next});
+  await apiRequest('/api/tasks/' + cardId, { method: 'PATCH', body: { col: next } });
   pushNotification(`"${card?.title}" → ${next}`,'kanban');
 }
 function aiKanbanReview() {
@@ -1209,7 +1262,10 @@ async function saveEvent(y,m,day){
   const title=document.getElementById('ev-title')?.value?.trim(); if(!title)return;
   const time=document.getElementById('ev-time')?.value||'', tag=document.getElementById('ev-tag')?.value||'dev';
   const start=new Date(y,m,day,...(time?time.split(':').map(Number):[0,0]));
-  await col('events').add({title,time,tag,start:firebase.firestore.Timestamp.fromDate(start)});
+  await apiRequest('/api/events', {
+    method: 'POST',
+    body: { title, time, tag, start: start.toISOString() }
+  });
   closeModal();
 }
 function closeModal(){document.getElementById('modal-slot').innerHTML='';}
@@ -1278,10 +1334,11 @@ async function loadDriveFolder(path){
   S.filesPath=path;const grid=document.getElementById('drive-grid');if(!grid)return;
   grid.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:24px;"><div class="empty-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></div><div class="empty-title">Loading...</div></div>`;
   try{
-    const snap=await db.collection(`users/${uid()}/files`).where('folder','==',path).orderBy('uploadedAt','desc').get();
-    S.files=snap.docs.map(d=>({id:d.id,...d.data()}));renderDriveGrid(S.files);updateStorageStats();
+    const res = await apiRequest('/api/files?folder=' + encodeURIComponent(path || ''));
+    S.files = res.files || [];renderDriveGrid(S.files);updateStorageStats();
     const bc=document.getElementById('drive-breadcrumb-extra');if(bc)bc.textContent=path?` / ${path}`:'';
   }catch(e){if(grid)grid.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:32px;"><div class="empty-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m10.29 3.86-8.24 14.3A2 2 0 0 0 3.76 21h16.48a2 2 0 0 0 1.71-3l-8.24-14.3a2 2 0 0 0-3.42.16z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="empty-title">Could not load files</div><div class="empty-desc">${escHtml(e.message)}</div></div>`;}
+}
 }
 function renderDriveGrid(files){
   const grid=document.getElementById('drive-grid');if(!grid)return;
@@ -1296,22 +1353,39 @@ async function uploadDriveFile(file){
   const prog=document.getElementById('upload-progress'),pn=document.getElementById('upload-filename'),pp=document.getElementById('upload-pct'),pb=document.getElementById('upload-progress-fill');
   if(prog)prog.classList.add('show');if(pn)pn.textContent=`Uploading ${file.name}...`;
   try{
-    const path=`users/${uid()}/${S.filesPath?S.filesPath+'/':''}${Date.now()}_${file.name}`;
-    const ref=storage.ref(path),task=ref.put(file);
-    task.on('state_changed',snap=>{const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*100);if(pp)pp.textContent=`${pct}%`;if(pb)pb.style.width=`${pct}%`;});
-    const snap=await task;const downloadURL=await snap.ref.getDownloadURL();
-    await db.collection(`users/${uid()}/files`).add({name:file.name,size:file.size,type:file.type||'application/octet-stream',storagePath:path,downloadURL,folder:S.filesPath,uploadedAt:firebase.firestore.FieldValue.serverTimestamp()});
-    pushNotification(`Uploaded "${file.name}"`,'task');loadDriveFolder(S.filesPath);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async (e) => {
+      const base64 = e.target.result.split(',')[1];
+      const res = await apiRequest('/api/files/upload', {
+        method: 'POST',
+        body: { filename: file.name, folder: S.filesPath || '', data: base64, type: file.type }
+      });
+      if (res && res.success) {
+        pushNotification(`Uploaded "${file.name}"`,'task');
+        loadDriveFolder(S.filesPath);
+      } else {
+        throw new Error(res.error || 'Upload failed');
+      }
+    };
+    reader.onerror = () => { throw new Error('Failed to read file'); };
   }catch(e){pushNotification(`Upload failed: ${e.message}`,'info');}
   finally{if(prog)setTimeout(()=>prog.classList.remove('show'),1200);}
 }
 async function deleteDriveFile(id,name){
   if(!confirm(`Delete "${name}"?`))return;
-  try{const meta=S.files.find(f=>f.id===id);if(meta?.storagePath)await storage.ref(meta.storagePath).delete();await db.collection(`users/${uid()}/files`).doc(id).delete();pushNotification(`Deleted "${name}"`,'info');loadDriveFolder(S.filesPath);}catch(e){alert('Delete failed: '+e.message);}
+  try{
+    await apiRequest('/api/files/' + id, { method: 'DELETE' });
+    pushNotification(`Deleted "${name}"`,'info');loadDriveFolder(S.filesPath);
+  }catch(e){alert('Delete failed: '+e.message);}
 }
-async function downloadDriveFile(id){const f=S.files.find(f=>f.id===id);if(!f?.downloadURL)return;const a=document.createElement('a');a.href=f.downloadURL;a.download=f.name;a.target='_blank';a.click();}
-async function copyDriveLink(id){const f=S.files.find(f=>f.id===id);if(!f?.downloadURL)return;await navigator.clipboard.writeText(f.downloadURL);pushNotification(`Link copied for "${f.name}"`,'info');}
-function openDriveFile(id){const f=S.files.find(f=>f.id===id);if(f?.downloadURL)window.open(f.downloadURL,'_blank');}
+async function downloadDriveFile(id){
+  const f=S.files.find(f=>f.id===id);
+  if(!f)return;
+  window.location.href = `/api/files/${id}/download`;
+}
+async function copyDriveLink(id){const f=S.files.find(f=>f.id===id);if(!f)return;await navigator.clipboard.writeText(`/api/files/${id}/download`);pushNotification(`Link copied for "${f.name}"`,'info');}
+function openDriveFile(id){const f=S.files.find(f=>f.id===id);if(f)window.open(`/api/files/${id}/download`,'_blank');}
 function createDriveFolder(){const name=prompt('Folder name:');if(!name?.trim())return;pushNotification(`Folder "${name}" created`,'info');}
 function initDriveDropZone(){const zone=document.getElementById('drive-drop-zone');if(!zone)return;zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('active');});zone.addEventListener('dragleave',()=>zone.classList.remove('active'));zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('active');Array.from(e.dataTransfer.files).forEach(f=>uploadDriveFile(f));});}
 
@@ -1401,7 +1475,7 @@ service cloud.firestore {
 function saveCalcUrl(){const url=document.getElementById('calc-url-input')?.value?.trim();S.calcUrl=url;localStorage.setItem('nexus_calc_url',url);alert('Calculator URL saved!');}
 function saveGroqKey(){const key=document.getElementById('groq-key-input')?.value?.trim();S.groqKey=key;localStorage.setItem('nexus_groq_key',key);alert('Groq API key saved!');}
 function saveDiscordSettings(){S.discordClientId=document.getElementById('discord-cid')?.value?.trim()||'';S.discordCfUrl=document.getElementById('discord-cf')?.value?.trim()||'';localStorage.setItem('nexus_discord_cid',S.discordClientId);localStorage.setItem('nexus_discord_cf',S.discordCfUrl);alert('Discord settings saved!');}
-async function updateDisplayName(){const name=prompt('New display name:',S.user?.displayName||'');if(!name?.trim())return;await S.user.updateProfile({displayName:name.trim()});S.user=auth.currentUser;updateTopbar();}
+async function updateDisplayName(){const name=prompt('New display name:',state.currentUser?.username||'');if(!name?.trim())return;state.currentUser.username=name.trim();updateTopbar();}
 
 /* ══ SPRINT ROOM ════════════════════════════════════════════ */
 function renderSprintRoom() {
@@ -1563,14 +1637,11 @@ async function submitStandup() {
   if (!y && !t) { alert('Fill in at least Yesterday or Today fields.'); return; }
   const text = `✅ Yesterday: ${y||'—'}\n🎯 Today: ${t||'—'}\n🚨 Blockers: ${b||'None'}`;
   if (!S.standups) S.standups = [];
-  S.standups.unshift({ text, time: Date.now(), author: (S.user?.displayName||'You').split(' ')[0] });
+  S.standups.unshift({ text, time: Date.now(), author: (state.currentUser?.username||'Team') });
   // Post to team chat
-  await db.collection('workspace_chat').add({
-    text:`📋 Standup — ${(S.user?.displayName||'Team').split(' ')[0]}\n${text}`,
-    senderId: S.user.uid,
-    senderName: S.user.displayName||'Team',
-    color:'#5E6AD2',
-    sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+  await apiRequest('/api/chat', {
+    method: 'POST',
+    body: { id: 'm' + Date.now(), from: state.currentUser?.username || 'Team', rank: state.currentUser?.rank || 'Developer', text: `📋 Standup — ${(state.currentUser?.username||'Team')}\n${text}`, ch: '#general' }
   });
   pushNotification('Standup posted to #general!', 'info');
   navigate('sprint');
@@ -2159,15 +2230,17 @@ function renderAdmin(){return`
   </div>
   <div class="card" style="padding:16px;margin-top:14px;"><div class="card-header"><span class="card-title">Workspace Actions</span></div><div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="btn secondary" onclick="pushNotifToAll()">📣 Broadcast Notification</button><button class="btn secondary" onclick="navigate('settings')">⚙ Workspace Settings</button><button class="btn" style="background:var(--rose);border:none;" onclick="if(confirm('Delete ALL shared chat messages? Cannot be undone.'))nukeChat()">🗑 Clear Chat History</button></div></div>`;}
 function initAdmin(){
-  db.collection('presence').where('online','==',true).get().then(snap=>{
-    const users=snap.docs.map(d=>d.data());const el=document.getElementById('admin-user-list');const cnt=document.getElementById('admin-users-count');
-    if(!el)return;if(cnt)cnt.textContent=users.length;
+  apiRequest('/api/chat-ids').then(res => {
+    const ids = res.ids || [];
+    const users = Object.values(S.kanban).flat().map(c => ({ name: c.title, done: c.done }));
+    const el=document.getElementById('admin-user-list');const cnt=document.getElementById('admin-users-count');
+    if(!el)return;if(cnt)cnt.textContent=ids.length;
     if(users.length===0){el.innerHTML=`<div class="empty" style="padding:24px 8px;"><div class="empty-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="empty-title">No members online</div></div>`;return;}
     el.innerHTML=users.map((u,i)=>`<div class="user-row"><div class="avatar" style="background:var(--indigo);width:32px;height:32px;">${(u.name||'?')[0].toUpperCase()}</div><div style="flex:1;"><div style="font-size:13px;font-weight:600;">${escHtml(u.name||'Unknown')}</div><div style="font-size:11px;color:var(--muted);">Last seen: just now</div></div><span class="role-badge ${i===0?'owner':'member'}">${i===0?'OWNER':'MEMBER'}</span></div>`).join('');
   }).catch(()=>{});
 }
-async function nukeChat(){const snap=await db.collection('workspace_chat').limit(500).get();const batch=db.batch();snap.docs.forEach(d=>batch.delete(d.ref));await batch.commit();pushNotification('Chat history cleared by admin.','admin');}
-async function pushNotifToAll(){const msg=prompt('Broadcast message:');if(!msg?.trim())return;await db.collection('workspace_chat').add({text:`📣 [ADMIN] ${msg.trim()}`,senderId:S.user.uid,senderName:S.user.displayName||'Admin',color:'#F59E0B',sentAt:firebase.firestore.FieldValue.serverTimestamp()});pushNotification(`Admin broadcast: "${msg.trim()}"`,'admin');alert('Broadcast sent!');}
+async function nukeChat(){await apiRequest('/api/chat', { method: 'DELETE', body: { ids: [] } });pushNotification('Chat history cleared by admin.','admin');}
+async function pushNotifToAll(){const msg=prompt('Broadcast message:');if(!msg?.trim())return;await apiRequest('/api/chat', { method: 'POST', body: { id: 'msg_' + Date.now(), from: state.currentUser?.username || 'Admin', rank: state.currentUser?.rank || 'CoOwner', text: `📣 [ADMIN] ${msg.trim()}`, ch: '#general' } });pushNotification(`Admin broadcast: "${msg.trim()}"`,'admin');alert('Broadcast sent!');}
 
 /* ══ NOTIFICATIONS ══════════════════════════════════════════ */
 function toggleNotifPanel(){const panel=document.getElementById('notif-panel'),isOpen=panel.classList.contains('open');panel.classList.toggle('open',!isOpen);if(!isOpen){S.notifications.forEach(n=>n.unread=false);document.getElementById('notif-dot').style.display='none';renderNotifList();}}
@@ -2214,7 +2287,7 @@ function resultHtml(r,i){return`<div class="search-result${i===_searchIdx?' sele
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openSearch();}if(e.key==='Escape'&&document.getElementById('search-overlay').classList.contains('open'))closeSearch();});
 
 /* ══ DRAG-AND-DROP KANBAN ════════════════════════════════════ */
-function col_fn(name){return db.collection(`workspaces/${uid()}/${name}`);}
+function col_fn(name){return { id: name, name: name };}
 function initKanban(){
   document.querySelectorAll('.kanban-card[draggable="true"]').forEach(card=>{
     card.addEventListener('dragstart',e=>{e.dataTransfer.setData('cardId',card.dataset.id);e.dataTransfer.setData('fromCol',card.dataset.col);setTimeout(()=>card.classList.add('dragging'),0);});
@@ -2236,16 +2309,11 @@ function initKanban(){
 
 /* ══ PRESENCE ════════════════════════════════════════════════ */
 function startPresence(){
-  const u=S.user;if(!u)return;
-  const ref=db.collection('presence').doc(u.uid);
-  ref.set({name:u.displayName||u.email?.split('@')[0]||'Anonymous',online:true,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-  setInterval(()=>ref.set({lastSeen:firebase.firestore.FieldValue.serverTimestamp(),online:true},{merge:true}),60000);
-  window.addEventListener('beforeunload',()=>ref.set({online:false,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));
-  db.collection('presence').where('online','==',true).onSnapshot(snap=>{
-    const list=document.getElementById('presence-list');if(!list)return;
-    const users=snap.docs.map(d=>d.data()).filter(u2=>u2.name);
-    list.innerHTML=users.slice(0,6).map(u2=>`<div class="presence-user"><div class="avatar" style="background:var(--indigo);">${(u2.name||'?')[0].toUpperCase()}<div class="dot"></div></div><span style="font-size:12px;color:var(--sub);">${escHtml(u2.name)}</span></div>`).join('');
-  });
+  // Presence via local state only
+  if(state.currentUser){
+    state.currentUser.online = true;
+    state.currentUser.lastSeen = new Date().toISOString();
+  }
 }
 
 /* ══ MAIL SYSTEM ════════════════════════════════════════════ */

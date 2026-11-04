@@ -787,5 +787,126 @@ router.get('/auth/me', (req, res) => {
 
 router.post('/auth/logout', (req, res) => res.json({ success: true }));
 
+// ══════════════════════════════════════════════════════════════════════════════
+// FILES (Studio Drive)
+// ═════════════════════════════════════════════════════════════════════════════
+
+const FILES_FILE = path.resolve(process.cwd(), 'server', 'data', 'files.json');
+
+async function supabaseGetFiles() {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from('files').select('*').order('uploaded_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (e) { console.warn('[Supabase] Files load failed:', e.message); return null; }
+}
+
+async function supabaseCreateFile(file) {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.from('files').insert([file]).select();
+    if (error) throw error;
+    return data ? data[0] : null;
+  } catch (e) { console.warn('[Supabase] File create failed:', e.message); return null; }
+}
+
+async function supabaseDeleteFile(id) {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('files').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (e) { console.warn('[Supabase] File delete failed:', e.message); return false; }
+}
+
+router.get('/api/files', async (req, res) => {
+  try {
+    let files = null;
+    if (supabase) {
+      files = await supabaseGetFiles();
+    }
+    if (!files) {
+      files = readJson(FILES_FILE, []);
+    }
+    const folder = req.query.folder || '';
+    if (folder) {
+      files = files.filter(f => f.folder === folder);
+    }
+    return res.json({ success: true, files });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/api/files/upload', async (req, res) => {
+  try {
+    const { filename, folder, data } = req.body;
+    if (!filename || !data) {
+      return res.status(400).json({ success: false, error: 'filename and data required' });
+    }
+    const file = {
+      id: 'file_' + Date.now(),
+      name: filename,
+      folder: folder || '',
+      data: data,
+      size: data ? Buffer.from(data, 'base64').length : 0,
+      type: '',
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: req.headers.authorization || 'user',
+      downloadURL: '/api/files/download/' + ('file_' + Date.now())
+    };
+    if (supabase) {
+      await supabaseGetFiles(); // ensure table exists
+      await supabaseCreateFile(file);
+    } else {
+      const list = readJson(FILES_FILE, []);
+      list.push(file);
+      writeJson(FILES_FILE, list);
+    }
+    return res.json({ success: true, file });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/api/files/:id/download', async (req, res) => {
+  try {
+    let file = null;
+    if (supabase) {
+      const { data } = await supabase.from('files').select('*').eq('id', req.params.id).single();
+      file = data;
+    } else {
+      const list = readJson(FILES_FILE, []);
+      file = list.find(f => f.id === req.params.id);
+    }
+    if (!file || !file.data) return res.status(404).json({ success: false, error: 'File not found' });
+    const buffer = Buffer.from(file.data, 'base64');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+    res.setHeader('Content-Type', file.type || 'application/octet-stream');
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/api/files/:id', async (req, res) => {
+  try {
+    let cloudOk = false;
+    if (supabase) {
+      const { error } = await supabase.from('files').delete().eq('id', req.params.id);
+      if (error) throw error;
+      cloudOk = true;
+    } else {
+      const list = readJson(FILES_FILE, []);
+      const filtered = list.filter(f => f.id !== req.params.id);
+      writeJson(FILES_FILE, filtered);
+    }
+    return res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
 
