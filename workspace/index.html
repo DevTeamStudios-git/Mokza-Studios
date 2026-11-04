@@ -209,7 +209,7 @@ nav{flex:1;padding:8px;display:flex;flex-direction:column;gap:2px;overflow-y:aut
 .role-badge.coowner{background:#1C1A40;color:var(--purple);}
 /* Verified badge */
 .verified-badge{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
-.verified-badge img{width:16px;height:16px;object-fit:contain;}
+.verified-badge img{width:24px;height:24px;object-fit:contain;}
 /* User profile modal */
 #profile-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:350;display:none;align-items:center;justify-content:center;}
 #profile-modal-bg.open{display:flex;}
@@ -785,6 +785,7 @@ const NAV = [
 
 /* ══ BOOTSTRAP ══════════════════════════════════════════════ */
 async function initAuth() {
+  const state = S;
   document.getElementById('loading').classList.add('hidden');
   // Check for OAuth callback in URL
   const p = new URLSearchParams(window.location.search);
@@ -830,17 +831,18 @@ async function apiRequest(path, options = {}) {
   options = options || {};
   options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
   if (options.body && typeof options.body !== 'string') options.body = JSON.stringify(options.body);
-  const res = await fetch('/api' + path, options);
+  const apiPath = path.startsWith('/api/') ? path : '/api' + path;
+  const res = await fetch(apiPath, options);
   if (!res.ok) throw new Error('API ' + res.status);
   return res.json();
 }
 
 function clearSession() {
-  state.sessionToken = null;
-  state.sessionExpiresAt = null;
-  state.sessionUser = null;
-  state.currentUser = null;
-  state.devModeActive = false;
+  S.sessionToken = null;
+  S.sessionExpiresAt = null;
+  S.sessionUser = null;
+  S.currentUser = null;
+  S.devModeActive = false;
   document.getElementById('devToggle').classList.remove('active');
   try { localStorage.removeItem('mokza_auth_token'); } catch (e) {}
   showLogin();
@@ -876,13 +878,13 @@ async function handleDiscordCallback(code) {
     const res = await fetch('/api/auth/discord/callback?code=' + code);
     const result = await res.json();
     if (res.success && res.user) {
-      state.sessionUser = res.user;
-      state.currentUser = {
+      S.sessionUser = res.user;
+      S.currentUser = {
         username: res.user.username,
         rank: res.user.rank,
         permissions: res.user.permissions
       };
-      state.devModeActive = true;
+      S.devModeActive = true;
       storeSession(result.token, res.user);
       document.getElementById('devToggle').classList.add('active');
       closeAuthModal();
@@ -930,7 +932,7 @@ function updateTopbar() {
 }
 
 /* ══ FIRESTORE ══════════════════════════════════════════════ */
-function uid() { return state.currentUser?.username || 'anon'; }
+function uid() { return S.currentUser?.username || 'anon'; }
 function col(name) { return null; }
 
 function setupFirestoreListeners() {
@@ -1105,7 +1107,7 @@ function initChat() { document.getElementById('chat-end')?.scrollIntoView(); }
 async function sendChatMsg() {
   const inp=document.getElementById('chat-input'), text=inp?.value?.trim();
   if(!text)return; inp.value='';
-  const u=state.currentUser;
+  const u=S.currentUser;
   await apiRequest('/api/chat', {
     method: 'POST',
     body: { id: 'm' + Date.now(), from: u.username, rank: u.rank, text: text.slice(0, 1000), ch: '#general' }
@@ -1498,7 +1500,7 @@ service cloud.firestore {
 function saveCalcUrl(){const url=document.getElementById('calc-url-input')?.value?.trim();S.calcUrl=url;localStorage.setItem('nexus_calc_url',url);alert('Calculator URL saved!');}
 function saveGroqKey(){const key=document.getElementById('groq-key-input')?.value?.trim();S.groqKey=key;localStorage.setItem('nexus_groq_key',key);alert('Groq API key saved!');}
 function saveDiscordSettings(){S.discordClientId=document.getElementById('discord-cid')?.value?.trim()||'';S.discordCfUrl=document.getElementById('discord-cf')?.value?.trim()||'';localStorage.setItem('nexus_discord_cid',S.discordClientId);localStorage.setItem('nexus_discord_cf',S.discordCfUrl);alert('Discord settings saved!');}
-async function updateDisplayName(){const name=prompt('New display name:',state.currentUser?.username||'');if(!name?.trim())return;state.currentUser.username=name.trim();updateTopbar();}
+async function updateDisplayName(){const name=prompt('New display name:',S.currentUser?.username||'');if(!name?.trim())return;S.currentUser.username=name.trim();updateTopbar();}
 
 /* ══ SPRINT ROOM ════════════════════════════════════════════ */
 function renderSprintRoom() {
@@ -1660,11 +1662,11 @@ async function submitStandup() {
   if (!y && !t) { alert('Fill in at least Yesterday or Today fields.'); return; }
   const text = `✅ Yesterday: ${y||'—'}\n🎯 Today: ${t||'—'}\n🚨 Blockers: ${b||'None'}`;
   if (!S.standups) S.standups = [];
-  S.standups.unshift({ text, time: Date.now(), author: (state.currentUser?.username||'Team') });
+  S.standups.unshift({ text, time: Date.now(), author: (S.currentUser?.username||'Team') });
   // Post to team chat
   await apiRequest('/api/chat', {
     method: 'POST',
-    body: { id: 'm' + Date.now(), from: state.currentUser?.username || 'Team', rank: state.currentUser?.rank || 'Developer', text: `📋 Standup — ${(state.currentUser?.username||'Team')}\n${text}`, ch: '#general' }
+    body: { id: 'm' + Date.now(), from: S.currentUser?.username || 'Team', rank: S.currentUser?.rank || 'Developer', text: `📋 Standup — ${(S.currentUser?.username||'Team')}\n${text}`, ch: '#general' }
   });
   pushNotification('Standup posted to #general!', 'info');
   navigate('sprint');
@@ -2263,7 +2265,7 @@ function initAdmin(){
   }).catch(()=>{});
 }
 async function nukeChat(){await apiRequest('/api/chat', { method: 'DELETE', body: { ids: [] } });pushNotification('Chat history cleared by admin.','admin');}
-async function pushNotifToAll(){const msg=prompt('Broadcast message:');if(!msg?.trim())return;await apiRequest('/api/chat', { method: 'POST', body: { id: 'msg_' + Date.now(), from: state.currentUser?.username || 'Admin', rank: state.currentUser?.rank || 'CoOwner', text: `📣 [ADMIN] ${msg.trim()}`, ch: '#general' } });pushNotification(`Admin broadcast: "${msg.trim()}"`,'admin');alert('Broadcast sent!');}
+async function pushNotifToAll(){const msg=prompt('Broadcast message:');if(!msg?.trim())return;await apiRequest('/api/chat', { method: 'POST', body: { id: 'msg_' + Date.now(), from: S.currentUser?.username || 'Admin', rank: S.currentUser?.rank || 'CoOwner', text: `📣 [ADMIN] ${msg.trim()}`, ch: '#general' } });pushNotification(`Admin broadcast: "${msg.trim()}"`,'admin');alert('Broadcast sent!');}
 
 /* ══ NOTIFICATIONS ══════════════════════════════════════════ */
 function toggleNotifPanel(){const panel=document.getElementById('notif-panel'),isOpen=panel.classList.contains('open');panel.classList.toggle('open',!isOpen);if(!isOpen){S.notifications.forEach(n=>n.unread=false);document.getElementById('notif-dot').style.display='none';renderNotifList();}}
@@ -2333,9 +2335,9 @@ function initKanban(){
 /* ══ PRESENCE ════════════════════════════════════════════════ */
 function startPresence(){
   // Presence via local state only
-  if(state.currentUser){
-    state.currentUser.online = true;
-    state.currentUser.lastSeen = new Date().toISOString();
+  if(S.currentUser){
+    S.currentUser.online = true;
+    S.currentUser.lastSeen = new Date().toISOString();
   }
 }
 

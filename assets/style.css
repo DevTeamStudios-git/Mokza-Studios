@@ -179,7 +179,7 @@ select option {
 .verified-badge {
   display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
 }
-.verified-img { width: 16px !important; height: 16px !important; flex-shrink: 0 !important; display: inline-block !important; }
+.verified-img { width: 24px !important; height: 24px !important; flex-shrink: 0 !important; display: inline-block !important; }
 .verified-badge span { font-size: 10px; font-weight: 800; }
 .verified-badge.blue { color: #1D9BF0; }
 .verified-badge.gold { color: #F59E0B; }
