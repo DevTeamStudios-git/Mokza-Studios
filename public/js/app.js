@@ -756,44 +756,40 @@ window.switchAuthTab = switchAuthTab;
 
 /* ── OAUTH CALLBACK HANDLING ── */
 function handleOAuthCallback() {
+  // The server returns to  /#?oauth=success&token=...&provider=...  (older links used ?token=...)
   var params = new URLSearchParams(window.location.search);
-  var token = params.get('token');
-  var provider = params.get('provider');
-  var error = params.get('error');
-  var msg = params.get('msg');
-  if (error) {
-    showNotification('OAuth Error', provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : 'OAuth', 'error');
-    showNotification('OAuth Error', msg || 'Unknown error', 'error');
-    window.history.replaceState({}, '', window.location.pathname);
-    return;
-  }
-  if (token) {
-    state.sessionToken = token;
-    state.sessionExpiresAt = Date.now() + (state.rememberMeDays || 90) * 86400000;
-    saveToFirestore();
-    apiRequest('/auth/me?token=' + token).then(function(res) {
-      if (res && res.success && res.user) {
-        state.sessionUser = res.user;
-        state.currentUser = {
-          username: res.user.username,
-          rank: res.user.rank,
-          permissions: res.user.permissions
-        };
-        state.devModeActive = true;
-        document.getElementById('devToggle').classList.add('active');
-        closeAuthModal();
-        showNotification('Welcome!', 'Logged in as ' + res.user.username + ' (' + res.user.rank + ')', 'success');
-        logActivity('User Login (OAuth ' + provider + ')', res.user.username + ' via ' + provider);
-        updateAuthUI();
-        renderPage();
-        saveToFirestore();
-      }
-    }).catch(function(e) {
-      console.error('[OAuth] Failed to fetch user:', e.message);
-      showNotification('Login Error', 'Failed to load user profile', 'error');
-    });
-  }
+  var hp = new URLSearchParams((window.location.hash || '').replace(/^#\??/, ''));
+  function pick(k) { return params.get(k) || hp.get(k); }
+  var token = pick('token');
+  var provider = pick('provider');
+  var error = pick('error') || (pick('oauth') === 'error' ? 'error' : null);
+  var msg = pick('msg');
+  if (!token && !error) return false;
   window.history.replaceState({}, '', window.location.pathname);
+  if (error) {
+    showNotification('OAuth Error', (provider ? provider.charAt(0).toUpperCase() + provider.slice(1) + ': ' : '') + (msg || 'Unknown error'), 'error');
+    return false;
+  }
+  apiRequest('/auth/me?token=' + encodeURIComponent(token)).then(function(res) {
+    if (res && res.success && res.user) {
+      storeSession(token, res.user);
+      state.currentUser = { username: res.user.username, rank: res.user.rank, permissions: res.user.permissions };
+      state.devModeActive = true;
+      var dev = document.getElementById('devToggle'); if (dev) dev.classList.add('active');
+      closeAuthModal();
+      showNotification('Welcome!', 'Logged in as ' + res.user.username + ' (' + res.user.rank + ')', 'success');
+      logActivity('User Login (OAuth ' + provider + ')', res.user.username + ' via ' + provider);
+      updateAuthUI();
+      renderPage();
+      saveToFirestore();
+    } else {
+      showNotification('Login Error', 'The server did not accept the login token.', 'error');
+    }
+  }).catch(function(e) {
+    console.error('[OAuth] Failed to fetch user:', e.message);
+    showNotification('Login Error', 'Failed to load user profile', 'error');
+  });
+  return true;
 }
 
 /* ── SESSION MANAGEMENT ── */
@@ -2528,9 +2524,9 @@ async function init() {
     updateAuthUI();
     logActivity('System', 'Website initialized');
     // Handle OAuth callback (redirect from Google/Discord)
-    handleOAuthCallback();
-    // Restore existing session from localStorage / state
-    restoreSession();
+    var _oauthBusy = handleOAuthCallback();
+    // Restore existing session from localStorage / state (skipped while a fresh login is being verified)
+    if (!_oauthBusy) restoreSession();
     // Start realtime call state polling (admin.js provides startCallPolling)
     if (typeof startCallPolling === 'function') startCallPolling();
     // Live sync first, so a problem in anything below can never stop messages from refreshing
