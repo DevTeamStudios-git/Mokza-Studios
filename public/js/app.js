@@ -597,6 +597,9 @@ This draft is a starting point for review, not a guarantee of enforceability or 
 var SESSION_STARTED = Date.now();
 var DEFAULT_NAV = JSON.parse(JSON.stringify(state.navigationLinks));
 
+state.accountUser = null;   // any signed-in Google/Discord account (incl. plain "User")
+state.accountInfo = { pending: null, last: null };
+
 const USERS = {
   'ThéoDevO': { passwordHash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner', permissions: 'ALL', lastSeen: null },
   'GabrielDevCoO': { passwordHash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner', permissions: 'ALL', lastSeen: null },
@@ -669,7 +672,7 @@ function escHtml(str) {
 }
 
 function canAccess(rank) {
-  const ranks = { Owner: 3, CoOwner: 2, Developer: 1, Apprentice: 0 };
+  const ranks = { Owner: 3, CoOwner: 2, Developer: 1, Apprentice: 0, User: -1 };
   const userRank = state.currentUser ? ranks[state.currentUser.rank] : -1;
   return userRank >= ranks[rank];
 }
@@ -773,11 +776,9 @@ function handleOAuthCallback() {
   apiRequest('/auth/me?token=' + encodeURIComponent(token)).then(function(res) {
     if (res && res.success && res.user) {
       storeSession(token, res.user);
-      state.currentUser = { username: res.user.username, rank: res.user.rank, permissions: res.user.permissions };
-      state.devModeActive = true;
-      var dev = document.getElementById('devToggle'); if (dev) dev.classList.add('active');
+      applyServerUser(res);
       closeAuthModal();
-      showNotification('Welcome!', 'Logged in as ' + res.user.username + ' (' + res.user.rank + ')', 'success');
+      showNotification('Welcome!', 'Logged in as ' + res.user.username + ' (' + rankLabel(res.user.rank) + ')' + (res.user.rank === 'User' ? ' — open My account to request Apprentice or Developer access.' : ''), 'success');
       logActivity('User Login (OAuth ' + provider + ')', res.user.username + ' via ' + provider);
       updateAuthUI();
       renderPage();
@@ -792,6 +793,78 @@ function handleOAuthCallback() {
   return true;
 }
 
+/* ── ACCOUNT TIERS: User (default) → Apprentice → Developer (by request) ── */
+function isLocalToken(t) { return typeof t === 'string' && t.indexOf('local_') === 0; }
+
+/* Applies what the server says about the signed-in account. Staff ranks get the staff UI; plain Users only get an account. */
+function applyServerUser(res) {
+  var u = res.user;
+  state.sessionUser = u;
+  state.accountUser = u;
+  state.accountInfo = { pending: res.pendingRequest || null, last: res.lastDecision || null };
+  if (canRankAccess(u.rank, 'Apprentice')) {
+    state.currentUser = { username: u.username, rank: u.rank, permissions: u.permissions };
+    state.devModeActive = true;
+  } else {
+    state.currentUser = null;
+    state.devModeActive = false;
+  }
+  var dev = document.getElementById('devToggle'); if (dev) dev.classList.toggle('active', !!state.currentUser);
+}
+function canRankAccess(rank, needed) {
+  var r = { Owner: 3, CoOwner: 2, Developer: 1, Apprentice: 0, User: -1 };
+  return (r[rank] === undefined ? -1 : r[rank]) >= r[needed];
+}
+
+function showAccountModal() {
+  var u = state.accountUser;
+  if (!u) { showAuthModal(); return; }
+  var info = state.accountInfo || {};
+  var staff = canRankAccess(u.rank, 'Apprentice');
+  var body = '<p style="margin:.2rem 0 1rem;color:var(--text-secondary)">Signed in as <strong>' + escHtml(u.username) + '</strong> — account type: <strong>' + escHtml(rankLabel(u.rank)) + '</strong></p>';
+  if (info.pending) {
+    body += '<div class="card-bg" style="padding:1rem;margin-bottom:1rem"><strong>Pending request:</strong> ' + escHtml(info.pending.requestedRank) + '<br><span style="color:var(--text-muted);font-size:.85rem">Sent ' + escHtml(new Date(info.pending.createdAt).toLocaleString()) + '. A Co-Owner or Developer will review it.</span></div>';
+  } else {
+    if (info.last) body += '<div class="card-bg" style="padding:1rem;margin-bottom:1rem">Last request (' + escHtml(info.last.requestedRank) + '): <strong>' + escHtml(info.last.status) + '</strong>' + (info.last.decisionNote ? '<br><span style="color:var(--text-muted);font-size:.85rem">' + escHtml(info.last.decisionNote) + '</span>' : '') + '</div>';
+    var canApp = !canRankAccess(u.rank, 'Apprentice'), canDev = !canRankAccess(u.rank, 'Developer');
+    if (canApp || canDev) {
+      body += '<label class="modal-label">Why do you want access? (optional)</label><textarea id="roleReqMsg" class="modal-input" rows="3" maxlength="500" placeholder="Tell us what you would work on…"></textarea><div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.8rem">'
+        + (canApp ? '<button class="btn btn-primary" onclick="requestRole(\'Apprentice\')">Request Apprentice</button>' : '')
+        + (canDev ? '<button class="btn btn-outline" onclick="requestRole(\'Developer\')">Request Developer</button>' : '')
+        + '</div><p style="margin-top:.8rem;color:var(--text-muted);font-size:.8rem">Verified status is not requestable; it is granted by the owners after review.</p>';
+    }
+  }
+  document.getElementById('authModal').innerHTML = '<div class="modal"><div class="modal-header"><h2>My account</h2><button class="modal-close" onclick="closeAuthModal()" aria-label="Close">' + svgIcon('x-mark', 20) + '</button></div><div class="modal-body">' + body + '</div><div class="modal-footer" style="display:flex;gap:.6rem;justify-content:space-between"><button class="btn btn-outline" onclick="refreshAccount(true)">Refresh status</button><button class="btn btn-outline" onclick="handleLogout()">Sign out</button></div></div>';
+  document.getElementById('authModal').classList.remove('hidden');
+}
+window.showAccountModal = showAccountModal;
+
+function requestRole(rank) {
+  var msg = (document.getElementById('roleReqMsg') || {}).value || '';
+  apiRequest('/role-requests', { method: 'POST', headers: { Authorization: 'Bearer ' + state.sessionToken }, body: { rank: rank, message: msg } }).then(function(res) {
+    if (res && res.success) { showNotification('Request sent', 'Your ' + rank + ' request is pending review.', 'success'); refreshAccount(true); }
+  }).catch(function(e) {
+    showNotification('Could not send', e.message === 'API 409' ? 'You already have a pending request.' : 'Please try again later (' + e.message + ').', 'error');
+  });
+}
+window.requestRole = requestRole;
+
+/* Re-reads the account from the server so an approved request takes effect without signing in again */
+function refreshAccount(reopen) {
+  if (!state.sessionToken || isLocalToken(state.sessionToken)) return Promise.resolve();
+  return apiRequest('/auth/me?token=' + encodeURIComponent(state.sessionToken)).then(function(res) {
+    if (!res || !res.success || !res.user) return;
+    var before = state.currentUser ? state.currentUser.rank : 'User';
+    applyServerUser(res);
+    storeSession(state.sessionToken, res.user);
+    if (res.user.rank !== before) showNotification('Account updated', 'You are now ' + rankLabel(res.user.rank) + '.', 'success');
+    updateAuthUI();
+    if (reopen && !document.getElementById('authModal').classList.contains('hidden')) showAccountModal();
+    renderPage();
+  }).catch(function() {});
+}
+window.refreshAccount = refreshAccount;
+
 /* ── SESSION MANAGEMENT ── */
 function restoreSession() {
   var token = state.sessionToken;
@@ -800,47 +873,32 @@ function restoreSession() {
       var raw = localStorage.getItem('mokza_auth_token');
       if (raw) {
         var data = JSON.parse(raw);
-        if (data.expiresAt > Date.now()) {
+        if (data && data.token && data.expiresAt > Date.now()) {
           state.sessionToken = data.token;
           state.sessionExpiresAt = data.expiresAt;
-          state.sessionUser = data.user;
-          state.currentUser = {
-            username: data.user.username,
-            rank: data.user.rank,
-            permissions: data.user.permissions
-          };
-          state.devModeActive = true;
-          document.getElementById('devToggle').classList.add('active');
+          if (isLocalToken(data.token) && data.user) {
+            // password logins are local to this browser
+            state.sessionUser = data.user;
+            state.currentUser = { username: data.user.username, rank: data.user.rank, permissions: data.user.permissions };
+            state.devModeActive = true;
+            var d0 = document.getElementById('devToggle'); if (d0) d0.classList.add('active');
+          }
         }
       }
     } catch (e) { /* ignore */ }
   }
-  if (state.sessionToken && state.sessionExpiresAt > Date.now()) {
-    apiRequest('/auth/me?token=' + state.sessionToken).then(function(res) {
+  if (state.sessionToken && state.sessionExpiresAt > Date.now() && !isLocalToken(state.sessionToken)) {
+    // Google/Discord accounts: the rank always comes from the server, never from what this browser stored
+    apiRequest('/auth/me?token=' + encodeURIComponent(state.sessionToken)).then(function(res) {
       if (res && res.success && res.user) {
-        state.sessionUser = res.user;
-        state.currentUser = {
-          username: res.user.username,
-          rank: res.user.rank,
-          permissions: res.user.permissions
-        };
-        state.devModeActive = true;
-        document.getElementById('devToggle').classList.add('active');
+        applyServerUser(res);
         updateAuthUI();
+        renderPage();
       } else {
         clearSession();
       }
-    }).catch(function() {
-      if (state.sessionUser) {
-        state.currentUser = {
-          username: state.sessionUser.username,
-          rank: state.sessionUser.rank,
-          permissions: state.sessionUser.permissions
-        };
-        state.devModeActive = true;
-        document.getElementById('devToggle').classList.add('active');
-        updateAuthUI();
-      }
+    }).catch(function(e) {
+      if (/API 401/.test(e.message)) clearSession();
     });
   }
 }
@@ -850,6 +908,8 @@ function clearSession() {
   state.sessionExpiresAt = null;
   state.sessionUser = null;
   state.currentUser = null;
+  state.accountUser = null;
+  state.accountInfo = { pending: null, last: null };
   state.devModeActive = false;
   document.getElementById('devToggle').classList.remove('active');
   try { localStorage.removeItem('mokza_auth_token'); } catch (e) {}
@@ -950,6 +1010,7 @@ function updateAuthUI() {
   var adminBtn = document.getElementById('adminBtn'); if (adminBtn) adminBtn.classList.toggle('hidden', !u);
   var editBtn = document.getElementById('editTextsBtn'); if (editBtn) editBtn.classList.toggle('hidden', !canEditAllText());
   var dev = document.getElementById('devToggle'); if (dev) dev.classList.toggle('active', !!u);
+  var accBtn = document.getElementById('accountBtn'); if (accBtn) { accBtn.classList.toggle('hidden', !state.accountUser); var lbl = document.getElementById('accountBtnLabel'); if (lbl && state.accountUser) lbl.textContent = (state.accountUser.name || state.accountUser.username || 'Account').split(' ')[0]; }
   if (!u) {
     if (typeof closeAdminPanel === 'function') closeAdminPanel();
     if (typeof setTextEditMode === 'function') setTextEditMode(false);
@@ -960,12 +1021,13 @@ function updateAuthUI() {
 }
 
 function toggleDevMode() {
-  if (!state.devModeActive) showAuthModal();
+  if (!state.devModeActive && state.accountUser) showAccountModal();
+  else if (!state.devModeActive) showAuthModal();
   else handleLogout();
 }
 
 /* ── PERSISTENCE (shared site data only — never sessions or personal UI state) ── */
-var SESSION_KEYS = ['currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive','chatMessages','suggestions','projectRequests','sessionToken','sessionExpiresAt','sessionUser','rememberMe','rememberMeDays'];
+var SESSION_KEYS = ['accountUser','accountInfo','currentPage','theme','devModeActive','currentUser','editMode','textEditMode','adminMenuOpen','adminSection','cloudView','searchQuery','chatChannel','inCall','micEnabled','videoEnabled','screenSharing','currentLanguage','callState','voiceChannel','meetingActive','chatMessages','suggestions','projectRequests','sessionToken','sessionExpiresAt','sessionUser','rememberMe','rememberMeDays'];
 var LOCAL_KEY = 'mokza_state_v2';
 
 function persistable() {
@@ -1450,6 +1512,9 @@ function toggleWorkspaceFullscreen() {
 window.toggleWorkspaceFullscreen = toggleWorkspaceFullscreen;
 
 function renderWorkspace() {
+  if (!state.currentUser && state.accountUser) {
+    return '<div class="card-bg" style="padding:3rem;text-align:center;max-width:600px;margin:0 auto;"><div class="empty-icon">' + svgIcon('lock', 20) + '</div><h3>Workspace access needed</h3><p style="margin-bottom:1.5rem;">You are signed in as a regular user. The workspace is for Apprentice and Developer accounts — you can request access from your account.</p><button class="btn btn-primary" onclick="showAccountModal()">Request access</button></div>';
+  }
   if (!state.currentUser) {
     return '<div class="card-bg" style="padding:3rem;text-align:center;max-width:600px;margin:0 auto;"><div class="empty-icon">' + svgIcon('lock', 20) + '</div><h3>' + escHtml(t('workspaceStaffTitle')) + '</h3><p style="margin-bottom:1.5rem;">' + escHtml(t('workspaceStaffDesc')) + '</p><button class="btn btn-primary" onclick="showAuthModal()">' + escHtml(t('signIn')) + '</button></div>';
   }
@@ -1467,7 +1532,7 @@ function submitSuggestion() {
   
   var suggestion = {
     id: 'sugg_' + Date.now(),
-    author: state.currentUser ? state.currentUser.username : 'Anonymous',
+    author: state.currentUser ? state.currentUser.username : (state.accountUser ? state.accountUser.username : 'Anonymous'),
     email: email,
     text: text,
     timestamp: new Date().toISOString(),
@@ -1478,7 +1543,7 @@ function submitSuggestion() {
   state.suggestions.unshift(suggestion);
   inp.value = '';
   if (emailInp) emailInp.value = '';
-  logActivity('Suggestion Submitted', 'New suggestion from ' + (state.currentUser ? state.currentUser.username : 'Anonymous'));
+  logActivity('Suggestion Submitted', 'New suggestion from ' + (state.currentUser ? state.currentUser.username : (state.accountUser ? state.accountUser.username : 'Anonymous')));
   
   // Save to Supabase via API
   apiRequest('/suggestions', {
