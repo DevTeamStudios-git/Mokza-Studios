@@ -1133,7 +1133,7 @@ router.delete('/files/:id', async (req, res) => {
 
 // ─── DevTBot bridge (Office Hub → Supabase ← bot) — CoOwner/Owner only ─────────
 const BOT_KINDS = ['overview','discord','warns','cases','appeals','automod','antiraid','reaction_roles','tickets','giveaways','polls','scheduled','leveling','music','settings'];
-const BOT_ACTIONS = ['warn','clearwarns','timeout','untimeout','kick','ban','unban','lockdown','lock_channel','slowmode','purge','announce','giveaway_end','giveaway_reroll','poll_end','ticket_close','automod_toggle','blacklist_add','blacklist_remove','case_note','case_expunge','set_status','music_pause','music_resume','music_skip','resync'];
+const BOT_ACTIONS = ['warn','clearwarns','timeout','untimeout','kick','ban','unban','lockdown','lock_channel','slowmode','purge','announce','giveaway_end','giveaway_reroll','poll_end','ticket_close','automod_toggle','blacklist_add','blacklist_remove','case_note','case_expunge','set_status','antiraid_config','music_pause','music_resume','music_skip','resync'];
 
 async function botAuth(req, res) {
   const acc = await authedAccount(req);
