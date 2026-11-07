@@ -775,6 +775,57 @@ async function upsertLoginAccount(profile) {
   });
 }
 
+/* ── STAFF PASSWORD LOGIN ──────────────────────────────────────────────────────────
+ * Owner/CoOwner/Developer staff sign in with a password (legacy dev-mode). Those
+ * logins previously created a client-only "local_" token with no server identity,
+ * so CoOwner+ could never open the Access Requests list. Password logins now get
+ * the same signed token as Google/Discord logins and a row in user_accounts.
+ * Ranks configured per staff name live here; rankings earned inside
+ * user_accounts (e.g. Owner via BOOTSTRAP_OWNER_EMAILS) are never downgraded.
+ * The default list mirrors the hashes shipped in app.js; override with the
+ * STAFF_ACCOUNTS env var (JSON: {"Name": {"hash": "<sha256 hex>", "rank": "Owner"}}).
+ */
+const STAFF_PASSWORD_SHA256 = (str) => crypto.createHash('sha256').update(str).digest('hex');
+const DEFAULT_STAFF_ACCOUNTS = {
+  'ThéoDevO': { hash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner' },
+  'GabrielDevCoO': { hash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner' },
+  'NeuraXIDev': { hash: 'f74590b85aa9394eb675739ab1364e795059599bcc6bf31b1491268459ab02ee', rank: 'Developer' },
+  'AprenticeDev': { hash: '7d94c0ca4536bae28c3de2a369bfe303a3f2a8081196ed5dab0578769c321487', rank: 'Apprentice' },
+};
+const STAFF_ACCOUNTS = (() => {
+  try { const env = JSON.parse(process.env.STAFF_ACCOUNTS || ''); return env && typeof env === 'object' && !Array.isArray(env) && Object.keys(env).length ? env : null; } catch (_) { return null; }
+})() || DEFAULT_STAFF_ACCOUNTS;
+
+const higherRank = (a, b) => ((RANK_LEVEL[a] === undefined ? -1 : RANK_LEVEL[a]) >= (RANK_LEVEL[b] === undefined ? -1 : RANK_LEVEL[b]) ? a : b);
+
+// POST /api/auth/password { username, password } → signed session for staff accounts
+router.post('/auth/password', async (req, res) => {
+  try {
+    const username = String((req.body && req.body.username) || '').trim();
+    const password = String((req.body && req.body.password) || '');
+    const cfg = STAFF_ACCOUNTS[username];
+    let ok = false;
+    if (cfg) {
+      const got = STAFF_PASSWORD_SHA256(password);
+      try { ok = got.length === String(cfg.hash).length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(String(cfg.hash))); } catch (_) { ok = false; }
+    }
+    if (!cfg || !ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    const id = 'staff_' + username;
+    const existing = await dbGetAccount(id);
+    const rank = existing ? higherRank(existing.rank, cfg.rank) : cfg.rank;
+    const acc = await dbSaveAccount({
+      id, email: (existing && existing.email) || null, name: username, picture: null,
+      provider: 'password', rank, last_login_at: new Date().toISOString(),
+      ...(existing ? {} : { created_at: new Date().toISOString() }),
+    });
+    const token = sign({ uid: acc.id, exp: Date.now() + 90 * 24 * 3600 * 1000 });
+    return res.json({ success: true, token, user: accountToUser(acc) });
+  } catch (err) {
+    console.error('[API] POST auth/password error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 async function finishLogin(res, profile, provider, ret) {
   const acc = await upsertLoginAccount({ ...profile, provider });
   const user = accountToUser(acc);
