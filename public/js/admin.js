@@ -540,7 +540,7 @@ function renderUsersSection(c) {
 function renderAccessSection(c) {
   c.innerHTML = '<h3>Access Requests</h3><p class="no-files">Loading…</p>';
   if (!state.sessionToken || isLocalToken(state.sessionToken)) {
-    c.innerHTML = '<h3>Access Requests</h3><p class="no-files">Requests are reviewed with a Google/Discord account. Sign in with an account that is Developer or higher to approve or deny them. (Password logins cannot review requests.)</p>';
+    c.innerHTML = '<h3>Access Requests</h3><p class="no-files">You are signed in with an offline/local token, so requests cannot be verified server-side. Log out and sign in again with your staff password (server online) or with Google/Discord to review requests.</p>';
     return;
   }
   apiRequest('/role-requests?status=pending', { headers: { Authorization: 'Bearer ' + state.sessionToken } }).then(function(res) {

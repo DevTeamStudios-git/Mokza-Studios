@@ -959,6 +959,29 @@ async function handleAuthSubmit() {
     return;
   }
   _authAttempts = 0; _authLockedUntil = 0;
+  /* Server-first login: password staff receive the same signed token as Google/Discord
+     accounts — this is what lets Owner/CoOwner see and review the Access Requests list. */
+  try {
+    var login = await apiRequest('/auth/password', { method: 'POST', body: { username: username, password: password } });
+    if (!login || !login.success || !login.token || !login.user) throw new Error('API 500');
+    var srvUser = login.user;
+    storeSession(login.token, srvUser);
+    state.currentUser = { username: username, rank: srvUser.rank || user.rank, permissions: srvUser.permissions || user.permissions };
+    state.devModeActive = true;
+    document.getElementById('devToggle').classList.add('active');
+    USERS[username].lastSeen = Date.now();
+    closeAuthModal();
+    showNotification('Welcome!', 'Logged in as ' + username + ' (' + (srvUser.rank || user.rank) + ')', 'success');
+    logActivity('User Login', username + ' logged in');
+    updateAuthUI();
+    renderPage();
+    saveToFirestore();
+    return;
+  } catch (e) {
+    // 4xx from the server means the credentials were rejected — do not silently fall back.
+    if (/API 4/.test(String(e && e.message))) { showNotification('Failed', 'Invalid credentials', 'error'); return; }
+    // API offline (e.g. local preview) → keep the offline-capable local login below.
+  }
   state.currentUser = { username: username, rank: user.rank, permissions: user.permissions };
   state.devModeActive = true;
   document.getElementById('devToggle').classList.add('active');

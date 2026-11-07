@@ -775,6 +775,57 @@ async function upsertLoginAccount(profile) {
   });
 }
 
+/* ── STAFF PASSWORD LOGIN ──────────────────────────────────────────────────────────
+ * Owner/CoOwner/Developer staff sign in with a password (legacy dev-mode). Those
+ * logins previously created a client-only "local_" token with no server identity,
+ * so CoOwner+ could never open the Access Requests list. Password logins now get
+ * the same signed token as Google/Discord logins and a row in user_accounts.
+ * Ranks configured per staff name live here; rankings earned inside
+ * user_accounts (e.g. Owner via BOOTSTRAP_OWNER_EMAILS) are never downgraded.
+ * The default list mirrors the hashes shipped in app.js; override with the
+ * STAFF_ACCOUNTS env var (JSON: {"Name": {"hash": "<sha256 hex>", "rank": "Owner"}}).
+ */
+const STAFF_PASSWORD_SHA256 = (str) => crypto.createHash('sha256').update(str).digest('hex');
+const DEFAULT_STAFF_ACCOUNTS = {
+  'ThéoDevO': { hash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner' },
+  'GabrielDevCoO': { hash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner' },
+  'NeuraXIDev': { hash: 'f74590b85aa9394eb675739ab1364e795059599bcc6bf31b1491268459ab02ee', rank: 'Developer' },
+  'AprenticeDev': { hash: '7d94c0ca4536bae28c3de2a369bfe303a3f2a8081196ed5dab0578769c321487', rank: 'Apprentice' },
+};
+const STAFF_ACCOUNTS = (() => {
+  try { const env = JSON.parse(process.env.STAFF_ACCOUNTS || ''); return env && typeof env === 'object' && !Array.isArray(env) && Object.keys(env).length ? env : null; } catch (_) { return null; }
+})() || DEFAULT_STAFF_ACCOUNTS;
+
+const higherRank = (a, b) => ((RANK_LEVEL[a] === undefined ? -1 : RANK_LEVEL[a]) >= (RANK_LEVEL[b] === undefined ? -1 : RANK_LEVEL[b]) ? a : b);
+
+// POST /api/auth/password { username, password } → signed session for staff accounts
+router.post('/auth/password', async (req, res) => {
+  try {
+    const username = String((req.body && req.body.username) || '').trim();
+    const password = String((req.body && req.body.password) || '');
+    const cfg = STAFF_ACCOUNTS[username];
+    let ok = false;
+    if (cfg) {
+      const got = STAFF_PASSWORD_SHA256(password);
+      try { ok = got.length === String(cfg.hash).length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(String(cfg.hash))); } catch (_) { ok = false; }
+    }
+    if (!cfg || !ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    const id = 'staff_' + username;
+    const existing = await dbGetAccount(id);
+    const rank = existing ? higherRank(existing.rank, cfg.rank) : cfg.rank;
+    const acc = await dbSaveAccount({
+      id, email: (existing && existing.email) || null, name: username, picture: null,
+      provider: 'password', rank, last_login_at: new Date().toISOString(),
+      ...(existing ? {} : { created_at: new Date().toISOString() }),
+    });
+    const token = sign({ uid: acc.id, exp: Date.now() + 90 * 24 * 3600 * 1000 });
+    return res.json({ success: true, token, user: accountToUser(acc) });
+  } catch (err) {
+    console.error('[API] POST auth/password error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 async function finishLogin(res, profile, provider, ret) {
   const acc = await upsertLoginAccount({ ...profile, provider });
   const user = accountToUser(acc);
@@ -1080,5 +1131,70 @@ router.delete('/files/:id', async (req, res) => {
   }
 });
 
-export default router;
+// ─── DevTBot bridge (Office Hub → Supabase ← bot) — CoOwner/Owner only ─────────
+const BOT_KINDS = ['overview','discord','warns','cases','appeals','automod','antiraid','reaction_roles','tickets','giveaways','polls','scheduled','leveling','music','settings'];
+const BOT_ACTIONS = ['warn','clearwarns','timeout','untimeout','kick','ban','unban','lockdown','lock_channel','slowmode','purge','announce','giveaway_end','giveaway_reroll','poll_end','ticket_close','automod_toggle','blacklist_add','blacklist_remove','case_note','case_expunge','set_status','antiraid_config','music_pause','music_resume','music_skip','resync'];
 
+async function botAuth(req, res) {
+  const acc = await authedAccount(req);
+  if (!acc) { res.status(401).json({ success: false, error: 'Sign in first' }); return null; }
+  if ((RANK_LEVEL[acc.rank] ?? -1) < RANK_LEVEL.CoOwner) { res.status(403).json({ success: false, error: 'CoOwner or Owner only' }); return null; }
+  if (!supabase) { res.status(503).json({ success: false, error: 'Database not configured' }); return null; }
+  return acc;
+}
+
+router.get('/bot/status', async (req, res) => {
+  try {
+    if (!(await botAuth(req, res))) return;
+    const { data, error } = await supabase.from('bot_status').select('*').eq('id', 'main').maybeSingle();
+    if (error) throw error;
+    const age = data ? Date.now() - new Date(data.updated_at).getTime() : null;
+    res.json({ success: true, online: !!data && age < 60000, updatedAt: data && data.updated_at, status: data ? data.data : null });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+router.get('/bot/data', async (req, res) => {
+  try {
+    if (!(await botAuth(req, res))) return;
+    const guild = String(req.query.guild || '');
+    const kinds = String(req.query.kind || '').split(',').filter(k => BOT_KINDS.includes(k));
+    if (!/^\d{5,25}$/.test(guild) || !kinds.length) return res.status(400).json({ success: false, error: 'guild and kind required' });
+    const { data, error } = await supabase.from('bot_data').select('kind,data,updated_at').eq('guild_id', guild).in('kind', kinds);
+    if (error) throw error;
+    const out = {};
+    (data || []).forEach(r => { out[r.kind] = { data: r.data, updatedAt: r.updated_at }; });
+    res.json({ success: true, data: out });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+router.post('/bot/commands', async (req, res) => {
+  try {
+    const acc = await botAuth(req, res);
+    if (!acc) return;
+    const b = req.body || {};
+    if (!BOT_ACTIONS.includes(b.action)) return res.status(400).json({ success: false, error: 'Unknown action' });
+    if (b.action !== 'set_status' && !/^\d{5,25}$/.test(String(b.guild_id || ''))) return res.status(400).json({ success: false, error: 'guild_id required' });
+    if (JSON.stringify(b.payload || {}).length > 4000) return res.status(400).json({ success: false, error: 'Payload too large' });
+    const pend = await supabase.from('bot_commands').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+    if ((pend.count || 0) >= 25) return res.status(429).json({ success: false, error: 'Too many queued actions, wait for the bot' });
+    const { data, error } = await supabase.from('bot_commands').insert([{
+      guild_id: b.guild_id ? String(b.guild_id) : null, action: b.action, payload: b.payload || {},
+      requested_by: acc.name || acc.email || acc.id, requested_rank: acc.rank,
+    }]).select('id').single();
+    if (error) throw error;
+    res.json({ success: true, id: data.id });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+router.get('/bot/commands', async (req, res) => {
+  try {
+    if (!(await botAuth(req, res))) return;
+    let q = supabase.from('bot_commands').select('id,guild_id,action,payload,status,result,requested_by,created_at,completed_at').order('created_at', { ascending: false }).limit(50);
+    if (req.query.id) q = q.eq('id', String(req.query.id));
+    const { data, error } = await q;
+    if (error) throw error;
+    res.json({ success: true, commands: data || [] });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+export default router;
