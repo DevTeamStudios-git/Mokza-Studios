@@ -39,6 +39,7 @@ var ADMIN_SECTIONS = [
   { id: 'cloud', label: 'Cloud', icon: 'cloud', min: 'Apprentice' },
   { id: 'chat', label: 'Chat', icon: 'chat', min: 'Developer' },
   { id: 'users', label: 'Users', icon: 'people', min: 'Apprentice' },
+  { id: 'access', label: 'Access Requests', icon: 'people', min: 'Developer' },
   { id: 'projects', label: 'Project Requests', icon: 'briefcase', min: 'Apprentice' },
   { id: 'messages', label: 'Messages', icon: 'inbox', min: 'Developer' },
   { id: 'suggestions', label: 'Suggestions', icon: 'sparkles', min: 'Apprentice' },
@@ -70,7 +71,7 @@ function renderAdminContent() {
     return '<button class="admin-tab' + (s.id === state.adminSection ? ' active' : '') + '" onclick="changeAdminSection(\'' + s.id + '\')">' + svgIcon(s.icon, 15) + ' ' + s.label + '</button>';
   }).join('');
   var c = $('adminContent');
-  var fn = { overview: renderOverviewSection, announcements: renderAnnouncementsSection, navigation: renderNavigationSection, elements: renderElementsSection, cloud: renderCloudSection, chat: renderChatSection, users: renderUsersSection, projects: renderProjectsSection, messages: renderMessagesSection, suggestions: renderSuggestionsSection, activity: renderActivitySection, site: renderSiteSection }[state.adminSection];
+  var fn = { overview: renderOverviewSection, announcements: renderAnnouncementsSection, navigation: renderNavigationSection, elements: renderElementsSection, cloud: renderCloudSection, chat: renderChatSection, users: renderUsersSection, access: renderAccessSection, projects: renderProjectsSection, messages: renderMessagesSection, suggestions: renderSuggestionsSection, activity: renderActivitySection, site: renderSiteSection }[state.adminSection];
   var st = c.scrollTop;
   fn(c);
   c.scrollTop = st;
@@ -536,6 +537,34 @@ function renderUsersSection(c) {
     return '<div class="user-item"><div class="user-avatar">' + escHtml(n[0]) + '</div><div class="user-info"><div class="user-name">' + escHtml(n) + verifiedBadge(u.rank) + (on ? ' <span style="color:var(--accent-success)">●</span>' : '') + '</div><div class="user-rank">' + rankLabel(u.rank) + ' · ' + escHtml(u.permissions) + '</div></div></div>';
   }).join('') + '</div>';
 }
+function renderAccessSection(c) {
+  c.innerHTML = '<h3>Access Requests</h3><p class="no-files">Loading…</p>';
+  if (!state.sessionToken || isLocalToken(state.sessionToken)) {
+    c.innerHTML = '<h3>Access Requests</h3><p class="no-files">Requests are reviewed with a Google/Discord account. Sign in with an account that is Developer or higher to approve or deny them. (Password logins cannot review requests.)</p>';
+    return;
+  }
+  apiRequest('/role-requests?status=pending', { headers: { Authorization: 'Bearer ' + state.sessionToken } }).then(function(res) {
+    if (state.adminSection !== 'access') return;
+    var list = (res && res.requests) || [];
+    c.innerHTML = '<h3>Access Requests (' + list.length + ')</h3>' + (list.length ? list.map(function(r) {
+      return '<div class="admin-row" style="align-items:flex-start"><div><div style="margin:.3rem 0"><strong>' + escHtml(r.username || r.accountId) + '</strong> wants <strong>' + escHtml(r.requestedRank) + '</strong></div>'
+        + (r.message ? '<div style="color:var(--text-muted);font-size:.85rem;margin:.2rem 0">' + escHtml(r.message) + '</div>' : '')
+        + '<div style="color:var(--text-muted);font-size:.75rem">' + escHtml(new Date(r.createdAt).toLocaleString()) + '</div></div>'
+        + '<div class="row-actions">' + rowBtn('check', 'Approve', 'decideRoleRequest(\'' + sid(r.id) + '\',\'approve\')') + rowBtn('x-mark', 'Deny', 'decideRoleRequest(\'' + sid(r.id) + '\',\'deny\')') + '</div></div>';
+    }).join('') : '<p class="no-files">No pending requests.</p>');
+  }).catch(function(e) {
+    c.innerHTML = '<h3>Access Requests</h3><p class="no-files">Could not load requests (' + escHtml(e.message) + '). ' + (/403/.test(e.message) ? 'Your account needs to be Developer or higher on the server.' : '') + '</p>';
+  });
+}
+function decideRoleRequest(id, decision) {
+  var note = decision === 'deny' ? (window.prompt('Reason (optional, shown to the user):') || '') : '';
+  apiRequest('/role-requests/' + encodeURIComponent(id), { method: 'PATCH', headers: { Authorization: 'Bearer ' + state.sessionToken }, body: { decision: decision, note: note } }).then(function() {
+    showNotification(decision === 'approve' ? 'Approved' : 'Denied', 'The request was ' + (decision === 'approve' ? 'approved' : 'denied') + '.', 'success');
+    logActivity('Access request ' + decision, id);
+    renderAdminContent();
+  }).catch(function(e) { showNotification('Failed', e.message, 'error'); });
+}
+window.decideRoleRequest = decideRoleRequest;
 function renderProjectsSection(c) {
   var projects = state.projectRequests || [];
   c.innerHTML = '<h3>Project Requests (' + projects.length + ')</h3>' + (projects.length ? projects.map(function(p) {

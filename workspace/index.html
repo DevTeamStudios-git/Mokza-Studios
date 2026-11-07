@@ -815,6 +815,12 @@ async function initAuth() {
 }
 
 function startSession(token, user, expiresAt) {
+  if (!user || !user.rank || user.rank === 'User') {
+    // Regular accounts are signed in on the main site but are not staff yet
+    showLogin();
+    showLoginError('Your account is a regular user. Request Apprentice or Developer access from My account on the main site, then come back.');
+    return;
+  }
   S.sessionToken = token;
   S.sessionExpiresAt = expiresAt || Date.now() + 90 * 86400000;
   S.sessionUser = user;

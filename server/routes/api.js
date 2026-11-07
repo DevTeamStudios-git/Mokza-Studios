@@ -719,10 +719,175 @@ function takeSession(req, res, provider, state) {
   res.setHeader('Set-Cookie', 'mokza_oauth=; HttpOnly; Secure; SameSite=Lax; Path=/api/auth; Max-Age=0');
   return p && p.provider === provider && p.state === state ? p : null;
 }
-function finishLogin(res, user, provider, ret) {
-  const token = sign({ user, exp: Date.now() + 90 * 24 * 3600 * 1000 });
+// ═══════════════════════════════════════════════════════════════════════════════
+// ACCOUNTS & ROLES   User (default for Google/Discord sign-in) → Apprentice → Developer (by request)
+// "Verified" is NOT requestable here; it is decided separately by the owners.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const RANK_LEVEL = { User: -1, Apprentice: 0, Developer: 1, CoOwner: 2, Owner: 3 };
+const REQUESTABLE_RANKS = ['Apprentice', 'Developer'];
+const RANK_PERMISSIONS = { User: 'USER', Apprentice: 'APPRENTICE', Developer: 'DEVELOPER', CoOwner: 'ALL', Owner: 'ALL' };
+// Optional: emails in this env var become Owner on sign-in, so someone can approve the first requests.
+const BOOTSTRAP_OWNER_EMAILS = (process.env.BOOTSTRAP_OWNER_EMAILS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+const ACCOUNTS_FILE = path.resolve(process.cwd(), 'server', 'data', 'accounts.json');
+const ROLE_REQUESTS_FILE = path.resolve(process.cwd(), 'server', 'data', 'role-requests.json');
+
+function accountToUser(a) {
+  const rank = RANK_LEVEL[a.rank] !== undefined ? a.rank : 'User';
+  return {
+    id: a.id, username: a.email || a.name || a.id, email: a.email, name: a.name, picture: a.picture,
+    provider: a.provider, rank, permissions: RANK_PERMISSIONS[rank], verified: false,
+  };
+}
+
+async function dbGetAccount(id) {
+  if (supabase) {
+    const { data, error } = await supabase.from('user_accounts').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    return data || null;
+  }
+  return readJson(ACCOUNTS_FILE, []).find((a) => a.id === id) || null;
+}
+
+async function dbSaveAccount(acc) {
+  if (supabase) {
+    const { data, error } = await supabase.from('user_accounts').upsert([acc], { onConflict: 'id' }).select().single();
+    if (error) throw error;
+    return data;
+  }
+  const all = readJson(ACCOUNTS_FILE, []);
+  const i = all.findIndex((a) => a.id === acc.id);
+  if (i >= 0) all[i] = { ...all[i], ...acc }; else all.push(acc);
+  writeJson(ACCOUNTS_FILE, all);
+  return i >= 0 ? all[i] : acc;
+}
+
+// First sign-in creates a plain "User". Later sign-ins keep whatever rank the account has earned.
+async function upsertLoginAccount(profile) {
+  const existing = await dbGetAccount(profile.id);
+  const email = (profile.email || '').toLowerCase();
+  let rank = existing ? existing.rank : 'User';
+  if (email && BOOTSTRAP_OWNER_EMAILS.indexOf(email) >= 0 && RANK_LEVEL[rank] < RANK_LEVEL.Owner) rank = 'Owner';
+  return dbSaveAccount({
+    id: profile.id, email: profile.email || null, name: profile.name || null, picture: profile.picture || null,
+    provider: profile.provider, rank, last_login_at: new Date().toISOString(),
+    ...(existing ? {} : { created_at: new Date().toISOString() }),
+  });
+}
+
+async function finishLogin(res, profile, provider, ret) {
+  const acc = await upsertLoginAccount({ ...profile, provider });
+  const user = accountToUser(acc);
+  const token = sign({ uid: acc.id, exp: Date.now() + 90 * 24 * 3600 * 1000 });
   res.redirect((ret || '/') + '#?oauth=success&token=' + encodeURIComponent(token) + '&provider=' + provider + '&user=' + encodeURIComponent(user.username));
 }
+
+// Resolves the signed token to the account's CURRENT rank from the database (never trusts rank stored in the token).
+async function authedAccount(req) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token;
+  const p = verify(token);
+  if (!p) return null;
+  const uid = p.uid || (p.user && p.user.id); // tokens issued before accounts existed carried the whole user
+  if (!uid) return null;
+  let acc = await dbGetAccount(uid);
+  if (!acc && p.user) acc = await upsertLoginAccount({ ...p.user, provider: p.user.provider || 'google' });
+  return acc;
+}
+
+async function dbListRequests({ status, accountId } = {}) {
+  if (supabase) {
+    let q = supabase.from('role_requests').select('*').order('created_at', { ascending: false }).limit(200);
+    if (status) q = q.eq('status', status);
+    if (accountId) q = q.eq('account_id', accountId);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  }
+  return readJson(ROLE_REQUESTS_FILE, []).filter((r) => (!status || r.status === status) && (!accountId || r.account_id === accountId));
+}
+
+async function dbSaveRequest(r) {
+  if (supabase) {
+    const { data, error } = await supabase.from('role_requests').upsert([r], { onConflict: 'id' }).select().single();
+    if (error) throw error;
+    return data;
+  }
+  const all = readJson(ROLE_REQUESTS_FILE, []);
+  const i = all.findIndex((x) => x.id === r.id);
+  if (i >= 0) all[i] = { ...all[i], ...r }; else all.unshift(r);
+  writeJson(ROLE_REQUESTS_FILE, all);
+  return r;
+}
+
+const requestToClient = (r) => ({ id: r.id, accountId: r.account_id, username: r.username, requestedRank: r.requested_rank, message: r.message, status: r.status, createdAt: r.created_at, decidedBy: r.decided_by, decidedAt: r.decided_at, decisionNote: r.decision_note });
+
+// A reviewer needs to outrank what is being requested (Developer requests: CoOwner+, Apprentice requests: Developer+).
+const reviewerNeeded = (requestedRank) => (requestedRank === 'Developer' ? 'CoOwner' : 'Developer');
+
+// POST /api/role-requests { rank: 'Apprentice' | 'Developer', message }
+router.post('/role-requests', async (req, res) => {
+  try {
+    const acc = await authedAccount(req);
+    if (!acc) return res.status(401).json({ success: false, error: 'Sign in first' });
+    const rank = req.body && req.body.rank;
+    if (REQUESTABLE_RANKS.indexOf(rank) < 0) return res.status(400).json({ success: false, error: 'Only Apprentice or Developer can be requested' });
+    if (RANK_LEVEL[acc.rank] >= RANK_LEVEL[rank]) return res.status(400).json({ success: false, error: 'You already have ' + acc.rank + ' or higher' });
+    const pending = await dbListRequests({ status: 'pending', accountId: acc.id });
+    if (pending.length) return res.status(409).json({ success: false, error: 'You already have a pending request', request: requestToClient(pending[0]) });
+    const saved = await dbSaveRequest({
+      id: 'rr_' + crypto.randomBytes(8).toString('hex'), account_id: acc.id, username: acc.email || acc.name || acc.id,
+      requested_rank: rank, message: String((req.body && req.body.message) || '').slice(0, 500), status: 'pending', created_at: new Date().toISOString(),
+    });
+    return res.json({ success: true, request: requestToClient(saved) });
+  } catch (err) {
+    console.error('[API] POST role-requests error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/role-requests/mine
+router.get('/role-requests/mine', async (req, res) => {
+  try {
+    const acc = await authedAccount(req);
+    if (!acc) return res.status(401).json({ success: false, error: 'Sign in first' });
+    const list = await dbListRequests({ accountId: acc.id });
+    return res.json({ success: true, requests: list.slice(0, 20).map(requestToClient) });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// GET /api/role-requests?status=pending   (Developer+ sees Apprentice requests, CoOwner+ sees all)
+router.get('/role-requests', async (req, res) => {
+  try {
+    const acc = await authedAccount(req);
+    if (!acc || RANK_LEVEL[acc.rank] < RANK_LEVEL.Developer) return res.status(403).json({ success: false, error: 'Developer+ required' });
+    const list = (await dbListRequests({ status: req.query.status || 'pending' })).filter((r) => RANK_LEVEL[acc.rank] >= RANK_LEVEL[reviewerNeeded(r.requested_rank)]);
+    return res.json({ success: true, requests: list.map(requestToClient) });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// PATCH /api/role-requests/:id { decision: 'approve' | 'deny', note }
+router.patch('/role-requests/:id', async (req, res) => {
+  try {
+    const acc = await authedAccount(req);
+    if (!acc) return res.status(401).json({ success: false, error: 'Sign in first' });
+    const reqRow = (await dbListRequests({})).find((r) => r.id === req.params.id);
+    if (!reqRow) return res.status(404).json({ success: false, error: 'Request not found' });
+    if (reqRow.status !== 'pending') return res.status(409).json({ success: false, error: 'Already ' + reqRow.status });
+    if (RANK_LEVEL[acc.rank] < RANK_LEVEL[reviewerNeeded(reqRow.requested_rank)]) return res.status(403).json({ success: false, error: reviewerNeeded(reqRow.requested_rank) + '+ required for this request' });
+    if (reqRow.account_id === acc.id) return res.status(403).json({ success: false, error: 'You cannot decide your own request' });
+    const decision = req.body && req.body.decision;
+    if (decision !== 'approve' && decision !== 'deny') return res.status(400).json({ success: false, error: 'decision must be approve or deny' });
+    if (decision === 'approve') {
+      const target = await dbGetAccount(reqRow.account_id);
+      if (target && RANK_LEVEL[target.rank] < RANK_LEVEL[reqRow.requested_rank]) await dbSaveAccount({ ...target, rank: reqRow.requested_rank });
+    }
+    const saved = await dbSaveRequest({ ...reqRow, status: decision === 'approve' ? 'approved' : 'denied', decided_by: acc.email || acc.name || acc.id, decided_at: new Date().toISOString(), decision_note: String((req.body && req.body.note) || '').slice(0, 300) });
+    return res.json({ success: true, request: requestToClient(saved) });
+  } catch (err) {
+    console.error('[API] PATCH role-requests error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 router.get('/auth/google', (req, res) => {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) return res.status(500).json({ success: false, error: 'Google OAuth not configured' });
@@ -744,7 +909,7 @@ router.get('/auth/google/callback', async (req, res) => {
     const tokens = await tokenRes.json();
     if (!tokens.access_token) throw new Error(tokens.error_description || tokens.error || 'No access token');
     const profile = await (await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: 'Bearer ' + tokens.access_token } })).json();
-    finishLogin(res, { id: 'google_' + profile.id, username: profile.email || profile.name, email: profile.email, name: profile.name, picture: profile.picture, provider: 'google', rank: 'Developer', permissions: 'DEVELOPER', verified: profile.verified_email }, 'google', session.r);
+    await finishLogin(res, { id: 'google_' + profile.id, username: profile.email || profile.name, email: profile.email, name: profile.name, picture: profile.picture, provider: 'google', rank: 'Developer', permissions: 'DEVELOPER', verified: profile.verified_email }, 'google', session.r);
   } catch (e) {
     console.error('[OAuth] Google callback error:', e.message);
     res.redirect('/#?oauth=error&provider=google&msg=' + encodeURIComponent(e.message));
@@ -771,19 +936,25 @@ router.get('/auth/discord/callback', async (req, res) => {
     const tokens = await tokenRes.json();
     if (!tokens.access_token) throw new Error(tokens.error_description || tokens.error || 'No access token');
     const profile = await (await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + tokens.access_token } })).json();
-    finishLogin(res, { id: 'discord_' + profile.id, username: profile.username + (profile.discriminator && profile.discriminator !== '0' ? '#' + profile.discriminator : ''), email: profile.email, name: profile.username, picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null, provider: 'discord', rank: 'Developer', permissions: 'DEVELOPER', verified: !!profile.verified }, 'discord', session.r);
+    await finishLogin(res, { id: 'discord_' + profile.id, username: profile.username + (profile.discriminator && profile.discriminator !== '0' ? '#' + profile.discriminator : ''), email: profile.email, name: profile.username, picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null, provider: 'discord', rank: 'Developer', permissions: 'DEVELOPER', verified: !!profile.verified }, 'discord', session.r);
   } catch (e) {
     console.error('[OAuth] Discord callback error:', e.message);
     res.redirect('/#?oauth=error&provider=discord&msg=' + encodeURIComponent(e.message));
   }
 });
 
-router.get('/auth/me', (req, res) => {
-  const token = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token;
-  if (!token) return res.status(401).json({ success: false, error: 'No token' });
-  const p = verify(token);
-  if (!p) return res.status(401).json({ success: false, error: 'Token expired' });
-  return res.json({ success: true, user: p.user });
+router.get('/auth/me', async (req, res) => {
+  try {
+    const token = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token;
+    if (!token) return res.status(401).json({ success: false, error: 'No token' });
+    const acc = await authedAccount(req);
+    if (!acc) return res.status(401).json({ success: false, error: 'Token expired' });
+    const mine = await dbListRequests({ accountId: acc.id });
+    return res.json({ success: true, user: accountToUser(acc), pendingRequest: mine.filter((r) => r.status === 'pending').map(requestToClient)[0] || null, lastDecision: mine.filter((r) => r.status !== 'pending').map(requestToClient)[0] || null });
+  } catch (err) {
+    console.error('[API] GET auth/me error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 router.post('/auth/logout', (req, res) => res.json({ success: true }));
