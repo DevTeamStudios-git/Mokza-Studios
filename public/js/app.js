@@ -1234,13 +1234,15 @@ function iconHtml(icon, size) {
 function renderPage() {
   var content = document.getElementById('pageContent');
   if (!content) return;
-  var announcements = state.announcements.filter(function(a) { return a.type === 'all' || state.currentUser; });
-  var annHtml = announcements.length > 0 ? '<div class="announcements-banner">' + announcements.map(function(a) {
+  var announcements = state.currentPage === 'home' ? state.announcements.filter(function(a) { return a.type === 'all' || state.currentUser; }) : [];
+  var annHtml = announcements.length > 0 ? announcements.map(function(a) {
     return '<div class="announcement ' + escHtml(a.type) + '"><div class="announcement-header"><span class="announcement-type ' + escHtml(a.type) + '">' + (a.type === 'staff' ? svgIcon('people', 16) + ' ' + escHtml(t('announcementStaff')) : '📢 ' + escHtml(t('announcementPublic'))) + '</span></div><div class="announcement-title">' + escHtml(a.title) + '</div><div class="announcement-content">' + escHtml(a.content) + '</div>' + (a.author ? '<div class="announcement-footer" style="margin-top:.6rem;font-size:.78rem;opacity:.6">' + escHtml(t('postedBy')) + ' ' + escHtml(a.author) + (a.timestamp ? ' · ' + escHtml(new Date(a.timestamp).toLocaleDateString()) : '') + '</div>' : '') + '</div>';
-  }).join('') + '</div>' : '';
+  }).join('') : '';
+  var announcementBanner = document.getElementById('announcementsBanner');
+  if (announcementBanner) announcementBanner.innerHTML = annHtml;
   var raid = state.raidMode ? '<div class="announcement staff" style="margin-bottom:1.5rem"><div class="announcement-title">' + escHtml(t('raidModeTitle')) + '</div><div class="announcement-content">' + escHtml(t('raidModeDesc')) + '</div></div>' : '';
   switch (state.currentPage) {
-    case 'home': content.innerHTML = renderHome(raid + annHtml); break;
+    case 'home': content.innerHTML = renderHome(raid); break;
     case 'about': content.innerHTML = renderAbout(); break;
     case 'contact': content.innerHTML = renderContact(); break;
     case 'community': content.innerHTML = renderCommunity(); break;

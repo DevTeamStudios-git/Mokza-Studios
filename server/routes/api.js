@@ -1231,5 +1231,70 @@ router.delete('/files/:id', requireRank('Apprentice'), async (req, res) => {
   }
 });
 
-export default router;
+// ─── DevTBot bridge (Office Hub → Supabase ← bot) — CoOwner/Owner only ─────────
+const BOT_KINDS = ['overview','discord','warns','cases','appeals','automod','antiraid','reaction_roles','tickets','giveaways','polls','scheduled','leveling','music','settings'];
+const BOT_ACTIONS = ['warn','clearwarns','timeout','untimeout','kick','ban','unban','lockdown','lock_channel','slowmode','purge','announce','giveaway_end','giveaway_reroll','poll_end','ticket_close','automod_toggle','blacklist_add','blacklist_remove','case_note','case_expunge','set_status','antiraid_config','music_pause','music_resume','music_skip','resync'];
 
+async function botAuth(req, res) {
+  const acc = await authedAccount(req);
+  if (!acc) { res.status(401).json({ success: false, error: 'Sign in first' }); return null; }
+  if ((RANK_LEVEL[acc.rank] ?? -1) < RANK_LEVEL.CoOwner) { res.status(403).json({ success: false, error: 'CoOwner or Owner only' }); return null; }
+  if (!supabase) { res.status(503).json({ success: false, error: 'Database not configured' }); return null; }
+  return acc;
+}
+
+router.get('/bot/status', async (req, res) => {
+  try {
+    if (!(await botAuth(req, res))) return;
+    const { data, error } = await supabase.from('bot_status').select('*').eq('id', 'main').maybeSingle();
+    if (error) throw error;
+    const age = data ? Date.now() - new Date(data.updated_at).getTime() : null;
+    res.json({ success: true, online: !!data && age < 60000, updatedAt: data && data.updated_at, status: data ? data.data : null });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+router.get('/bot/data', async (req, res) => {
+  try {
+    if (!(await botAuth(req, res))) return;
+    const guild = String(req.query.guild || '');
+    const kinds = String(req.query.kind || '').split(',').filter(k => BOT_KINDS.includes(k));
+    if (!/^\d{5,25}$/.test(guild) || !kinds.length) return res.status(400).json({ success: false, error: 'guild and kind required' });
+    const { data, error } = await supabase.from('bot_data').select('kind,data,updated_at').eq('guild_id', guild).in('kind', kinds);
+    if (error) throw error;
+    const out = {};
+    (data || []).forEach(r => { out[r.kind] = { data: r.data, updatedAt: r.updated_at }; });
+    res.json({ success: true, data: out });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+router.post('/bot/commands', async (req, res) => {
+  try {
+    const acc = await botAuth(req, res);
+    if (!acc) return;
+    const b = req.body || {};
+    if (!BOT_ACTIONS.includes(b.action)) return res.status(400).json({ success: false, error: 'Unknown action' });
+    if (b.action !== 'set_status' && !/^\d{5,25}$/.test(String(b.guild_id || ''))) return res.status(400).json({ success: false, error: 'guild_id required' });
+    if (JSON.stringify(b.payload || {}).length > 4000) return res.status(400).json({ success: false, error: 'Payload too large' });
+    const pend = await supabase.from('bot_commands').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+    if ((pend.count || 0) >= 25) return res.status(429).json({ success: false, error: 'Too many queued actions, wait for the bot' });
+    const { data, error } = await supabase.from('bot_commands').insert([{
+      guild_id: b.guild_id ? String(b.guild_id) : null, action: b.action, payload: b.payload || {},
+      requested_by: acc.name || acc.email || acc.id, requested_rank: acc.rank,
+    }]).select('id').single();
+    if (error) throw error;
+    res.json({ success: true, id: data.id });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+router.get('/bot/commands', async (req, res) => {
+  try {
+    if (!(await botAuth(req, res))) return;
+    let q = supabase.from('bot_commands').select('id,guild_id,action,payload,status,result,requested_by,created_at,completed_at').order('created_at', { ascending: false }).limit(50);
+    if (req.query.id) q = q.eq('id', String(req.query.id));
+    const { data, error } = await q;
+    if (error) throw error;
+    res.json({ success: true, commands: data || [] });
+  } catch (e) { res.status(502).json({ success: false, error: e.message }); }
+});
+
+export default router;
