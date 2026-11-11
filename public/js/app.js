@@ -958,7 +958,7 @@ async function handleAuthSubmit() {
   _authAttempts = 0; _authLockedUntil = 0;
   var srvUser = login.user;
   storeSession(login.token, srvUser);
-  state.currentUser = { username: username, rank: srvUser.rank, permissions: srvUser.permissions };
+  state.currentUser = { username: srvUser.name || username, rank: srvUser.rank, permissions: srvUser.permissions };
   state.devModeActive = true;
   document.getElementById('devToggle').classList.add('active');
   if (USERS[username]) USERS[username].lastSeen = Date.now();

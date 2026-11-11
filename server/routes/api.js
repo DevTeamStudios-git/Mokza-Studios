@@ -900,15 +900,23 @@ router.post('/auth/password', loginLimiter, async (req, res) => {
     const username = String((req.body && req.body.username) || '').trim();
     const password = String((req.body && req.body.password) || '');
     const code = String((req.body && req.body.code) || '');
-    const cfg = Object.prototype.hasOwnProperty.call(STAFF_ACCOUNTS, username) ? STAFF_ACCOUNTS[username] : null;
+    // match names tolerant of case and Unicode form (e.g. "é" typed as one or two code points)
+    const norm = (x) => String(x).normalize('NFC').toLowerCase();
+    const staffName = Object.keys(STAFF_ACCOUNTS).find((k) => norm(k) === norm(username)) || null;
+    const cfg = staffName ? STAFF_ACCOUNTS[staffName] : null;
     const ok = cfg ? checkSecret(password, cfg.hash) : false;
-    const codeOk = !process.env.STAFF_SECURITY_CODE_HASH || checkSecret(code, process.env.STAFF_SECURITY_CODE_HASH);
-    if (!cfg || !ok || !codeOk) return res.status(401).json({ success: false, error: 'Invalid credentials' });
-    const id = 'staff_' + username;
+    const codeRequired = !!process.env.STAFF_SECURITY_CODE_HASH;
+    const codeOk = !codeRequired || checkSecret(code, process.env.STAFF_SECURITY_CODE_HASH);
+    if (!cfg || !ok || !codeOk) {
+      // reason goes to the server log only (never the client, never any secret value)
+      console.warn('[Auth] staff login rejected:', !cfg ? 'unknown username (known: ' + Object.keys(STAFF_ACCOUNTS).length + ' accounts)' : !ok ? 'password does not match hash' : 'security code does not match STAFF_SECURITY_CODE_HASH');
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+    const id = 'staff_' + staffName;
     const existing = await dbGetAccount(id);
     const rank = existing ? higherRank(existing.rank, cfg.rank) : cfg.rank;
     const acc = await dbSaveAccount({
-      id, email: (existing && existing.email) || null, name: username, picture: null,
+      id, email: (existing && existing.email) || null, name: staffName, picture: null,
       provider: 'password', rank, last_login_at: new Date().toISOString(),
       ...(existing ? {} : { created_at: new Date().toISOString() }),
     });
