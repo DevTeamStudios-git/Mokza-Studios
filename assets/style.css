@@ -342,7 +342,7 @@ select option {
 .notification-message { font-size: 0.85rem; color: var(--text-secondary); }
 /* Announcements banner */
 .announcements-banner {
-  position: sticky; top: 72px; z-index: 45;
+  position: static;
   animation: slideInRight 0.4s ease;
 }
 .announcement {
