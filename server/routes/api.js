@@ -23,10 +23,10 @@ const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://develo
 const IS_PROD = !!process.env.VERCEL || process.env.NODE_ENV === 'production';
 // No fallback to other secrets or a public literal: a guessable signing key means forgeable Owner tokens.
 const AUTH_SECRET = process.env.AUTH_SECRET || (IS_PROD ? '' : crypto.randomBytes(32).toString('hex'));
-if (!AUTH_SECRET || AUTH_SECRET.length < 32) {
-  throw new Error('AUTH_SECRET must be set (at least 32 random characters). Generate one with: node scripts/hash-password.js --secret');
-}
-if (!process.env.AUTH_SECRET) console.warn('[Auth] AUTH_SECRET not set: using a random per-process secret (sessions reset on restart). Dev only.');
+// Without a strong secret, sign-in is switched off (public read endpoints keep working) instead of crashing the API.
+const AUTH_ENABLED = AUTH_SECRET.length >= 32;
+if (!AUTH_ENABLED) console.error('[Auth] AUTH_SECRET is missing or shorter than 32 chars: sign-in and all staff-only routes are DISABLED. Generate one with: node scripts/hash-password.js --secret');
+else if (!process.env.AUTH_SECRET) console.warn('[Auth] AUTH_SECRET not set: using a random per-process secret (sessions reset on restart). Dev only.');
 
 try { fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true }); } catch (_) {}
 
@@ -757,8 +757,9 @@ router.get('/chat-ids', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const b64u = (b) => Buffer.from(b).toString('base64url');
-const sign = (payload) => { const body = b64u(JSON.stringify(payload)); return body + '.' + crypto.createHmac('sha256', AUTH_SECRET).update(body).digest('base64url'); };
+const sign = (payload) => { if (!AUTH_ENABLED) throw new Error('auth disabled');  const body = b64u(JSON.stringify(payload)); return body + '.' + crypto.createHmac('sha256', AUTH_SECRET).update(body).digest('base64url'); };
 function verify(tok) {
+  if (!AUTH_ENABLED) return null;
   if (!tok || typeof tok !== 'string' || tok.indexOf('.') < 0) return null;
   const [body, sig] = tok.split('.');
   const good = crypto.createHmac('sha256', AUTH_SECRET).update(body).digest('base64url');
@@ -891,6 +892,9 @@ const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHead
 const higherRank = (a, b) => ((RANK_LEVEL[a] === undefined ? -1 : RANK_LEVEL[a]) >= (RANK_LEVEL[b] === undefined ? -1 : RANK_LEVEL[b]) ? a : b);
 
 // POST /api/auth/password { username, password } → signed session for staff accounts
+// login endpoints answer 503 (not a crash) while the server is not configured
+router.use(['/auth/password', '/auth/google', '/auth/discord'], (req, res, next) => (AUTH_ENABLED ? next() : res.status(503).json({ success: false, error: 'Sign-in is not configured on the server (AUTH_SECRET missing)' })));
+
 router.post('/auth/password', loginLimiter, async (req, res) => {
   try {
     const username = String((req.body && req.body.username) || '').trim();
