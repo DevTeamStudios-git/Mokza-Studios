@@ -3,6 +3,7 @@ import { supabase } from '../supabase/client.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import rateLimit from 'express-rate-limit';
 
 const router = express.Router();
 
@@ -19,9 +20,43 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://developpement-team.vercel.app/api/auth/discord/callback';
 // Serverless functions don't share memory, so state and sessions are signed tokens, not Maps.
-const AUTH_SECRET = process.env.AUTH_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || GOOGLE_CLIENT_SECRET || 'dev-only-secret';
+const IS_PROD = !!process.env.VERCEL || process.env.NODE_ENV === 'production';
+// No fallback to other secrets or a public literal: a guessable signing key means forgeable Owner tokens.
+const AUTH_SECRET = process.env.AUTH_SECRET || (IS_PROD ? '' : crypto.randomBytes(32).toString('hex'));
+if (!AUTH_SECRET || AUTH_SECRET.length < 32) {
+  throw new Error('AUTH_SECRET must be set (at least 32 random characters). Generate one with: node scripts/hash-password.js --secret');
+}
+if (!process.env.AUTH_SECRET) console.warn('[Auth] AUTH_SECRET not set: using a random per-process secret (sessions reset on restart). Dev only.');
 
 try { fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true }); } catch (_) {}
+
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+function bearerToken(req) {
+  const h = String(req.headers.authorization || '');
+  return /^Bearer /i.test(h) ? h.slice(7).trim() : null;
+}
+// Resolves the caller's CURRENT account (and rank) from the database; null if not signed in.
+async function softAuth(req) {
+  try { return await authedAccount(req); } catch (_) { return null; }
+}
+function requireRank(min) {
+  return async function (req, res, next) {
+    try {
+      const acc = await authedAccount(req);
+      if (!acc) return res.status(401).json({ success: false, error: 'Sign in first' });
+      if ((RANK_LEVEL[acc.rank] === undefined ? -1 : RANK_LEVEL[acc.rank]) < RANK_LEVEL[min]) return res.status(403).json({ success: false, error: min + '+ required' });
+      req.account = acc;
+      next();
+    } catch (err) {
+      console.error('[Auth] error:', err.message);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  };
+}
+const accName = (acc) => String(acc.name || acc.email || acc.id).slice(0, 80);
+const randId = (prefix) => prefix + crypto.randomBytes(8).toString('hex');
+const clip = (v, n) => String(v === undefined || v === null ? '' : v).slice(0, n);
+const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 // Helper: read JSON file
 function readJson(file, fallback) {
@@ -88,15 +123,15 @@ router.get('/website-state', async (req, res) => {
     return res.json({ success: true, state, updated_at: state?.updated_at || null });
   } catch (err) {
     console.error('[API] GET website-state error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // POST /api/website-state/save
-router.post('/website-state/save', async (req, res) => {
+router.post('/website-state/save', requireRank('Apprentice'), async (req, res) => {
   try {
-    const { data } = req.body;
-    if (!data) {
+    const { data } = req.body || {};
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
       return res.status(400).json({ success: false, error: 'No data provided' });
     }
 
@@ -112,7 +147,7 @@ router.post('/website-state/save', async (req, res) => {
     return res.json({ success: true, cloud: cloudOk, message: 'State saved', updated_at: savedAt });
   } catch (err) {
     console.error('[API] POST website-state/save error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -176,19 +211,19 @@ router.get('/announcements', async (req, res) => {
     return res.json({ success: true, announcements });
   } catch (err) {
     console.error('[API] GET announcements error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // POST /api/announcements
-router.post('/announcements', async (req, res) => {
+router.post('/announcements', requireRank('Developer'), async (req, res) => {
   try {
-    const { type, title, content, author } = req.body;
-    if (!type || !title || !content || !author) {
+    const { type, title, content } = req.body || {};
+    if (!type || !title || !content) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
-    const item = { type, title, content, author, timestamp: new Date().toISOString(), id: 'ann_' + Date.now() };
+    const item = { type: clip(type, 40), title: clip(title, 200), content: clip(content, 5000), author: accName(req.account), timestamp: new Date().toISOString(), id: randId('ann_') };
 
     let cloudItem = null;
     if (supabase) cloudItem = await supabaseCreateAnnouncement(item);
@@ -200,12 +235,12 @@ router.post('/announcements', async (req, res) => {
     return res.json({ success: true, announcement: cloudItem || item });
   } catch (err) {
     console.error('[API] POST announcements error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // DELETE /api/announcements/:id
-router.delete('/announcements/:id', async (req, res) => {
+router.delete('/announcements/:id', requireRank('Developer'), async (req, res) => {
   try {
     const { id } = req.params;
     let cloudOk = false;
@@ -218,7 +253,7 @@ router.delete('/announcements/:id', async (req, res) => {
     return res.json({ success: true, cloud: cloudOk });
   } catch (err) {
     console.error('[API] DELETE announcements error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -285,16 +320,26 @@ router.get('/tasks', async (req, res) => {
     return res.json({ success: true, tasks });
   } catch (err) {
     console.error('[API] GET tasks error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // POST /api/tasks
-router.post('/tasks', async (req, res) => {
+const TASK_FIELDS = ['title', 'description', 'priority', 'assignee', 'due_date', 'done'];
+function cleanTask(input) {
+  const out = {};
+  const b = input && typeof input === 'object' ? input : {};
+  TASK_FIELDS.forEach((k) => { if (b[k] !== undefined) out[k] = k === 'done' ? !!b[k] : clip(b[k], k === 'description' ? 2000 : 200); });
+  if (out.priority && ['low', 'medium', 'high'].indexOf(out.priority) < 0) out.priority = 'medium';
+  return out;
+}
+router.post('/tasks', requireRank('Apprentice'), async (req, res) => {
   try {
-    const task = req.body;
-    task.created_at = task.created_at || new Date().toISOString();
-    task.id = task.id || 'task_' + Date.now();
+    const task = cleanTask(req.body);
+    if (!task.title) return res.status(400).json({ success: false, error: 'title required' });
+    task.author = accName(req.account);
+    task.created_at = new Date().toISOString();
+    task.id = req.body && SAFE_ID.test(String(req.body.id || '')) ? String(req.body.id) : randId('task_');
 
     let cloudTask = null;
     if (supabase) cloudTask = await supabaseCreateTask(task);
@@ -306,15 +351,15 @@ router.post('/tasks', async (req, res) => {
     return res.json({ success: true, task: cloudTask || task });
   } catch (err) {
     console.error('[API] POST tasks error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // PATCH /api/tasks/:id
-router.patch('/tasks/:id', async (req, res) => {
+router.patch('/tasks/:id', requireRank('Apprentice'), async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = cleanTask(req.body);
 
     let cloudTask = null;
     if (supabase) cloudTask = await supabaseUpdateTask(id, updates);
@@ -326,15 +371,16 @@ router.patch('/tasks/:id', async (req, res) => {
       writeJson(TASKS_FILE, list);
       return res.json({ success: true, task: list[idx] });
     }
+    if (cloudTask) return res.json({ success: true, task: cloudTask });
     return res.status(404).json({ success: false, error: 'Task not found' });
   } catch (err) {
     console.error('[API] PATCH tasks error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // DELETE /api/tasks/:id
-router.delete('/tasks/:id', async (req, res) => {
+router.delete('/tasks/:id', requireRank('Apprentice'), async (req, res) => {
   try {
     const { id } = req.params;
     let cloudOk = false;
@@ -347,7 +393,7 @@ router.delete('/tasks/:id', async (req, res) => {
     return res.json({ success: true, cloud: cloudOk });
   } catch (err) {
     console.error('[API] DELETE tasks error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -432,20 +478,32 @@ router.get('/suggestions', async (req, res) => {
     let suggestions = null;
     if (supabase) suggestions = await supabaseGetSuggestions();
     if (!suggestions) suggestions = readJson(SUGGESTIONS_FILE, []);
+    // submitters' email addresses are private: only staff may see them
+    const acc = await softAuth(req);
+    if (!acc || RANK_LEVEL[acc.rank] < RANK_LEVEL.Apprentice) suggestions = suggestions.map((x) => { const { email, ...rest } = x; return rest; });
     return res.json({ success: true, suggestions });
   } catch (err) {
     console.error('[API] GET suggestions error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // POST /api/suggestions
 router.post('/suggestions', async (req, res) => {
   try {
-    const suggestion = req.body;
-    suggestion.timestamp = suggestion.timestamp || new Date().toISOString();
-    suggestion.id = suggestion.id || 'sugg_' + Date.now();
-    suggestion.status = suggestion.status || 'pending';
+    // Public endpoint: whitelist fields; status/timestamp are always set by the server.
+    const b = req.body && typeof req.body === 'object' ? req.body : {};
+    const email = clip(b.email, 200).trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ success: false, error: 'Invalid email' });
+    if (!clip(b.text, 2000).trim()) return res.status(400).json({ success: false, error: 'text required' });
+    const suggestion = {
+      id: SAFE_ID.test(String(b.id || '')) ? String(b.id) : randId('sugg_'),
+      author: clip(b.author || 'Anonymous', 80),
+      email: email || null,
+      text: clip(b.text, 2000),
+      timestamp: new Date().toISOString(),
+      status: 'pending',
+    };
 
     let cloudSuggestion = null;
     if (supabase) cloudSuggestion = await supabaseCreateSuggestion(suggestion);
@@ -459,15 +517,21 @@ router.post('/suggestions', async (req, res) => {
     return res.json({ success: true, suggestion: cloudSuggestion || suggestion });
   } catch (err) {
     console.error('[API] POST suggestions error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // PATCH /api/suggestions/:id
-router.patch('/suggestions/:id', async (req, res) => {
+router.patch('/suggestions/:id', requireRank('Apprentice'), async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body || {};
+    const b = req.body || {};
+    // moderation only: the reviewer identity and timestamps come from the server, never the client
+    if (['approved', 'denied', 'pending'].indexOf(b.status) < 0) return res.status(400).json({ success: false, error: 'invalid status' });
+    const now = new Date().toISOString();
+    const updates = { status: b.status };
+    if (b.status === 'approved') { updates.approvedBy = accName(req.account); updates.approvedAt = now; }
+    if (b.status === 'denied') { updates.deniedBy = accName(req.account); updates.deniedAt = now; updates.deleteAt = new Date(Date.now() + 5 * 60 * 1000).toISOString(); }
     if (supabase) {
       const updated = await supabaseUpdateSuggestion(id, updates);
       if (!updated) return res.status(502).json({ success: false, error: 'Database update failed or suggestion not found' });
@@ -483,12 +547,12 @@ router.patch('/suggestions/:id', async (req, res) => {
     return res.status(404).json({ success: false, error: 'Suggestion not found' });
   } catch (err) {
     console.error('[API] PATCH suggestions error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // DELETE /api/suggestions/:id
-router.delete('/suggestions/:id', async (req, res) => {
+router.delete('/suggestions/:id', requireRank('Apprentice'), async (req, res) => {
   try {
     const { id } = req.params;
     if (supabase) {
@@ -500,7 +564,7 @@ router.delete('/suggestions/:id', async (req, res) => {
     return res.json({ success: true, cloud: false });
   } catch (err) {
     console.error('[API] DELETE suggestions error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -522,15 +586,16 @@ router.get('/call-state', async (req, res) => {
     return res.json({ success: true, call });
   } catch (err) {
     console.error('[API] GET call-state error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // POST /api/call-state — update call state (from any user)
-router.post('/call-state', async (req, res) => {
+router.post('/call-state', requireRank('Apprentice'), async (req, res) => {
   try {
-    const { state: callState, updatedBy } = req.body;
-    if (!callState) {
+    const { state: callState } = req.body || {};
+    const updatedBy = accName(req.account);
+    if (!callState || typeof callState !== 'object' || JSON.stringify(callState).length > 20000) {
       return res.status(400).json({ success: false, error: 'No call state provided' });
     }
 
@@ -555,7 +620,7 @@ router.post('/call-state', async (req, res) => {
     return res.json({ success: true, cloud: cloudOk, call: payload });
   } catch (err) {
     console.error('[API] POST call-state error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -607,25 +672,28 @@ router.get('/chat', async (req, res) => {
     return res.json({ success: true, messages, latest });
   } catch (err) {
     console.error('[API] GET chat error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // POST /api/chat  { id, ch, from, rank, text, t, isBot, embed }
-router.post('/chat', async (req, res) => {
+router.post('/chat', requireRank('User'), async (req, res) => {
   try {
     const b = req.body || {};
+    const staff = RANK_LEVEL[req.account.rank] >= RANK_LEVEL.Apprentice;
+    const isBot = staff && !!b.isBot; // only staff clients may post bot/command replies
     const text = String(b.text || '').slice(0, CHAT_MAX_TEXT);
-    const from = String(b.from || '').slice(0, 60);
+    // sender name and rank come from the verified account, so they can't be spoofed
+    const from = (isBot && b.from ? String(b.from) : accName(req.account)).slice(0, 60);
     if (!text || !from) return res.status(400).json({ success: false, error: 'text and from are required' });
     const row = {
       client_id: String(b.id || 'm' + Date.now() + Math.random().toString(36).slice(2, 7)).slice(0, 80),
       channel: String(b.ch || '#general').slice(0, 40),
       from,
-      rank: b.rank ? String(b.rank).slice(0, 30) : null,
+      rank: isBot && b.rank ? String(b.rank).slice(0, 30) : req.account.rank,
       text,
       t: b.t ? String(b.t).slice(0, 20) : null,
-      is_bot: !!b.isBot,
+      is_bot: isBot,
       embed: b.embed && typeof b.embed === 'string' ? b.embed.slice(0, 8000) : (b.embed || null),
     };
     if (supabase) {
@@ -644,12 +712,12 @@ router.post('/chat', async (req, res) => {
     return res.json({ success: true, message: msg });
   } catch (err) {
     console.error('[API] POST chat error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
 // DELETE /api/chat  { ids: [...] }  — used by /clear
-router.delete('/chat', async (req, res) => {
+router.delete('/chat', requireRank('Apprentice'), async (req, res) => {
   try {
     const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(String).slice(0, 500) : [];
     if (!ids.length) return res.status(400).json({ success: false, error: 'ids required' });
@@ -662,7 +730,7 @@ router.delete('/chat', async (req, res) => {
     return res.json({ success: true, deleted: ids.length });
   } catch (err) {
     console.error('[API] DELETE chat error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -679,7 +747,7 @@ router.get('/chat-ids', async (req, res) => {
     }
     return res.json({ success: true, ids });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -767,7 +835,7 @@ async function upsertLoginAccount(profile) {
   const existing = await dbGetAccount(profile.id);
   const email = (profile.email || '').toLowerCase();
   let rank = existing ? existing.rank : 'User';
-  if (email && BOOTSTRAP_OWNER_EMAILS.indexOf(email) >= 0 && RANK_LEVEL[rank] < RANK_LEVEL.Owner) rank = 'Owner';
+  if (email && profile.verified === true && BOOTSTRAP_OWNER_EMAILS.indexOf(email) >= 0 && RANK_LEVEL[rank] < RANK_LEVEL.Owner) rank = 'Owner';
   return dbSaveAccount({
     id: profile.id, email: profile.email || null, name: profile.name || null, picture: profile.picture || null,
     provider: profile.provider, rank, last_login_at: new Date().toISOString(),
@@ -785,31 +853,53 @@ async function upsertLoginAccount(profile) {
  * The default list mirrors the hashes shipped in app.js; override with the
  * STAFF_ACCOUNTS env var (JSON: {"Name": {"hash": "<sha256 hex>", "rank": "Owner"}}).
  */
-const STAFF_PASSWORD_SHA256 = (str) => crypto.createHash('sha256').update(str).digest('hex');
-const DEFAULT_STAFF_ACCOUNTS = {
-  'ThéoDevO': { hash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner' },
-  'GabrielDevCoO': { hash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner' },
-  'NeuraXIDev': { hash: 'f74590b85aa9394eb675739ab1364e795059599bcc6bf31b1491268459ab02ee', rank: 'Developer' },
-  'AprenticeDev': { hash: '7d94c0ca4536bae28c3de2a369bfe303a3f2a8081196ed5dab0578769c321487', rank: 'Apprentice' },
-};
+/* Staff accounts come from the STAFF_ACCOUNTS env var (JSON), never from source code:
+ *   {"Name": {"hash": "scrypt$<salt>$<hex>", "rank": "Owner"}}
+ * Generate a hash with:  node scripts/hash-password.js
+ * Optional STAFF_SECURITY_CODE_HASH (same format) adds the extra "security code" gate server-side.
+ * Legacy unsalted SHA-256 hex hashes are still accepted but should be replaced. */
 const STAFF_ACCOUNTS = (() => {
-  try { const env = JSON.parse(process.env.STAFF_ACCOUNTS || ''); return env && typeof env === 'object' && !Array.isArray(env) && Object.keys(env).length ? env : null; } catch (_) { return null; }
-})() || DEFAULT_STAFF_ACCOUNTS;
+  try {
+    const env = JSON.parse(process.env.STAFF_ACCOUNTS || '');
+    if (!env || typeof env !== 'object' || Array.isArray(env)) return {};
+    const ok = {};
+    Object.keys(env).forEach((k) => { if (env[k] && env[k].hash && RANK_LEVEL[env[k].rank] !== undefined && env[k].rank !== 'User') ok[k] = env[k]; });
+    return ok;
+  } catch (_) { return {}; }
+})();
+if (!Object.keys(STAFF_ACCOUNTS).length) console.warn('[Auth] STAFF_ACCOUNTS is not set: staff password login is disabled.');
+
+function checkSecret(input, stored) {
+  try {
+    stored = String(stored || '');
+    if (stored.indexOf('scrypt$') === 0) {
+      const parts = stored.split('$');
+      const want = Buffer.from(parts[2] || '', 'hex');
+      if (!want.length) return false;
+      const got = crypto.scryptSync(input, parts[1], want.length);
+      return crypto.timingSafeEqual(got, want);
+    }
+    const got = Buffer.from(crypto.createHash('sha256').update(input).digest('hex'));
+    const want = Buffer.from(stored);
+    return got.length === want.length && crypto.timingSafeEqual(got, want);
+  } catch (_) { return false; }
+}
+
+// brute-force brake on the login endpoint (per IP; best effort across serverless instances)
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { success: false, error: 'Too many attempts. Try again later.' } });
 
 const higherRank = (a, b) => ((RANK_LEVEL[a] === undefined ? -1 : RANK_LEVEL[a]) >= (RANK_LEVEL[b] === undefined ? -1 : RANK_LEVEL[b]) ? a : b);
 
 // POST /api/auth/password { username, password } → signed session for staff accounts
-router.post('/auth/password', async (req, res) => {
+router.post('/auth/password', loginLimiter, async (req, res) => {
   try {
     const username = String((req.body && req.body.username) || '').trim();
     const password = String((req.body && req.body.password) || '');
-    const cfg = STAFF_ACCOUNTS[username];
-    let ok = false;
-    if (cfg) {
-      const got = STAFF_PASSWORD_SHA256(password);
-      try { ok = got.length === String(cfg.hash).length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(String(cfg.hash))); } catch (_) { ok = false; }
-    }
-    if (!cfg || !ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    const code = String((req.body && req.body.code) || '');
+    const cfg = Object.prototype.hasOwnProperty.call(STAFF_ACCOUNTS, username) ? STAFF_ACCOUNTS[username] : null;
+    const ok = cfg ? checkSecret(password, cfg.hash) : false;
+    const codeOk = !process.env.STAFF_SECURITY_CODE_HASH || checkSecret(code, process.env.STAFF_SECURITY_CODE_HASH);
+    if (!cfg || !ok || !codeOk) return res.status(401).json({ success: false, error: 'Invalid credentials' });
     const id = 'staff_' + username;
     const existing = await dbGetAccount(id);
     const rank = existing ? higherRank(existing.rank, cfg.rank) : cfg.rank;
@@ -822,7 +912,7 @@ router.post('/auth/password', async (req, res) => {
     return res.json({ success: true, token, user: accountToUser(acc) });
   } catch (err) {
     console.error('[API] POST auth/password error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -835,8 +925,7 @@ async function finishLogin(res, profile, provider, ret) {
 
 // Resolves the signed token to the account's CURRENT rank from the database (never trusts rank stored in the token).
 async function authedAccount(req) {
-  const token = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token;
-  const p = verify(token);
+  const p = verify(bearerToken(req));
   if (!p) return null;
   const uid = p.uid || (p.user && p.user.id); // tokens issued before accounts existed carried the whole user
   if (!uid) return null;
@@ -892,7 +981,7 @@ router.post('/role-requests', async (req, res) => {
     return res.json({ success: true, request: requestToClient(saved) });
   } catch (err) {
     console.error('[API] POST role-requests error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -903,7 +992,7 @@ router.get('/role-requests/mine', async (req, res) => {
     if (!acc) return res.status(401).json({ success: false, error: 'Sign in first' });
     const list = await dbListRequests({ accountId: acc.id });
     return res.json({ success: true, requests: list.slice(0, 20).map(requestToClient) });
-  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+  } catch (err) { res.status(500).json({ success: false, error: 'Server error' }); }
 });
 
 // GET /api/role-requests?status=pending   (Developer+ sees Apprentice requests, CoOwner+ sees all)
@@ -913,7 +1002,7 @@ router.get('/role-requests', async (req, res) => {
     if (!acc || RANK_LEVEL[acc.rank] < RANK_LEVEL.Developer) return res.status(403).json({ success: false, error: 'Developer+ required' });
     const list = (await dbListRequests({ status: req.query.status || 'pending' })).filter((r) => RANK_LEVEL[acc.rank] >= RANK_LEVEL[reviewerNeeded(r.requested_rank)]);
     return res.json({ success: true, requests: list.map(requestToClient) });
-  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+  } catch (err) { res.status(500).json({ success: false, error: 'Server error' }); }
 });
 
 // PATCH /api/role-requests/:id { decision: 'approve' | 'deny', note }
@@ -936,7 +1025,7 @@ router.patch('/role-requests/:id', async (req, res) => {
     return res.json({ success: true, request: requestToClient(saved) });
   } catch (err) {
     console.error('[API] PATCH role-requests error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -960,10 +1049,10 @@ router.get('/auth/google/callback', async (req, res) => {
     const tokens = await tokenRes.json();
     if (!tokens.access_token) throw new Error(tokens.error_description || tokens.error || 'No access token');
     const profile = await (await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: 'Bearer ' + tokens.access_token } })).json();
-    await finishLogin(res, { id: 'google_' + profile.id, username: profile.email || profile.name, email: profile.email, name: profile.name, picture: profile.picture, provider: 'google', rank: 'Developer', permissions: 'DEVELOPER', verified: profile.verified_email }, 'google', session.r);
+    await finishLogin(res, { id: 'google_' + profile.id, username: profile.email || profile.name, email: profile.email, name: profile.name, picture: profile.picture, provider: 'google', rank: 'Developer', permissions: 'DEVELOPER', verified: profile.verified_email === true }, 'google', session.r);
   } catch (e) {
     console.error('[OAuth] Google callback error:', e.message);
-    res.redirect('/#?oauth=error&provider=google&msg=' + encodeURIComponent(e.message));
+    res.redirect('/#?oauth=error&provider=google&msg=' + 'login_failed');
   }
 });
 
@@ -990,13 +1079,13 @@ router.get('/auth/discord/callback', async (req, res) => {
     await finishLogin(res, { id: 'discord_' + profile.id, username: profile.username + (profile.discriminator && profile.discriminator !== '0' ? '#' + profile.discriminator : ''), email: profile.email, name: profile.username, picture: profile.avatar ? 'https://cdn.discordapp.com/avatars/' + profile.id + '/' + profile.avatar + '.png' : null, provider: 'discord', rank: 'Developer', permissions: 'DEVELOPER', verified: !!profile.verified }, 'discord', session.r);
   } catch (e) {
     console.error('[OAuth] Discord callback error:', e.message);
-    res.redirect('/#?oauth=error&provider=discord&msg=' + encodeURIComponent(e.message));
+    res.redirect('/#?oauth=error&provider=discord&msg=' + 'login_failed');
   }
 });
 
 router.get('/auth/me', async (req, res) => {
   try {
-    const token = (req.headers.authorization || '').replace('Bearer ', '') || req.query.token;
+    const token = bearerToken(req);
     if (!token) return res.status(401).json({ success: false, error: 'No token' });
     const acc = await authedAccount(req);
     if (!acc) return res.status(401).json({ success: false, error: 'Token expired' });
@@ -1004,7 +1093,7 @@ router.get('/auth/me', async (req, res) => {
     return res.json({ success: true, user: accountToUser(acc), pendingRequest: mine.filter((r) => r.status === 'pending').map(requestToClient)[0] || null, lastDecision: mine.filter((r) => r.status !== 'pending').map(requestToClient)[0] || null });
   } catch (err) {
     console.error('[API] GET auth/me error:', err.message);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
@@ -1043,7 +1132,7 @@ async function supabaseDeleteFile(id) {
   } catch (e) { console.warn('[Supabase] File delete failed:', e.message); return false; }
 }
 
-router.get('/files', async (req, res) => {
+router.get('/files', requireRank('Apprentice'), async (req, res) => {
   try {
     let files = null;
     if (supabase) {
@@ -1056,44 +1145,50 @@ router.get('/files', async (req, res) => {
     if (folder) {
       files = files.filter(f => f.folder === folder);
     }
-    return res.json({ success: true, files });
+    return res.json({ success: true, files: files.map(({ data, ...meta }) => meta) });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-router.post('/files/upload', async (req, res) => {
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
+router.post('/files/upload', requireRank('Apprentice'), async (req, res) => {
   try {
-    const { filename, folder, data } = req.body;
-    if (!filename || !data) {
+    const { filename, folder, data } = req.body || {};
+    if (!filename || typeof data !== 'string' || !data) {
       return res.status(400).json({ success: false, error: 'filename and data required' });
     }
+    if (!/^[A-Za-z0-9+/=\s]+$/.test(data)) return res.status(400).json({ success: false, error: 'data must be base64' });
+    const size = Buffer.from(data, 'base64').length;
+    if (size > MAX_FILE_BYTES) return res.status(413).json({ success: false, error: 'File too large (max 4 MB)' });
+    const id = randId('file_');
     const file = {
-      id: 'file_' + Date.now(),
-      name: filename,
-      folder: folder || '',
-      data: data,
-      size: data ? Buffer.from(data, 'base64').length : 0,
+      id,
+      name: clip(String(filename).split(/[\\/]/).pop().replace(/[\u0000-\u001f"]/g, ''), 200) || 'file',
+      folder: clip(folder, 100),
+      data,
+      size,
       type: '',
       uploadedAt: new Date().toISOString(),
-      uploadedBy: req.headers.authorization || 'user',
-      downloadURL: '/api/files/download/' + ('file_' + Date.now())
+      uploadedBy: accName(req.account),
+      downloadURL: '/api/files/' + id + '/download',
     };
     if (supabase) {
-      await supabaseGetFiles(); // ensure table exists
-      await supabaseCreateFile(file);
+      const saved = await supabaseCreateFile(file);
+      if (!saved) return res.status(502).json({ success: false, error: 'Database insert failed' });
     } else {
       const list = readJson(FILES_FILE, []);
       list.push(file);
       writeJson(FILES_FILE, list);
     }
-    return res.json({ success: true, file });
+    const { data: _omit, ...meta } = file;
+    return res.json({ success: true, file: meta });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-router.get('/files/:id/download', async (req, res) => {
+router.get('/files/:id/download', requireRank('Apprentice'), async (req, res) => {
   try {
     let file = null;
     if (supabase) {
@@ -1105,15 +1200,16 @@ router.get('/files/:id/download', async (req, res) => {
     }
     if (!file || !file.data) return res.status(404).json({ success: false, error: 'File not found' });
     const buffer = Buffer.from(file.data, 'base64');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
-    res.setHeader('Content-Type', file.type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', "attachment; filename*=UTF-8''" + encodeURIComponent(file.name));
+    res.setHeader('Content-Type', 'application/octet-stream'); // never trust a stored type
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.send(buffer);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
-router.delete('/files/:id', async (req, res) => {
+router.delete('/files/:id', requireRank('Apprentice'), async (req, res) => {
   try {
     let cloudOk = false;
     if (supabase) {
@@ -1127,7 +1223,7 @@ router.delete('/files/:id', async (req, res) => {
     }
     return res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 });
 
