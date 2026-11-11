@@ -12,11 +12,18 @@
 
 const API_BASE = '/api';
 
+function authHeader() {
+  try {
+    const t = JSON.parse(localStorage.getItem('mokza_auth_token') || 'null');
+    return t && t.token && String(t.token).indexOf('local_') !== 0 ? { Authorization: 'Bearer ' + t.token } : {};
+  } catch (_) { return {}; }
+}
+
 async function apiRequest(path, options = {}) {
   const url = `${API_BASE}${path}`;
   const config = {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...authHeader(), ...(options.headers || {}) },
   };
   if (config.body && typeof config.body === 'object') {
     config.body = JSON.stringify(config.body);

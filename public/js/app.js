@@ -601,10 +601,10 @@ state.accountUser = null;   // any signed-in Google/Discord account (incl. plain
 state.accountInfo = { pending: null, last: null };
 
 const USERS = {
-  'ThéoDevO': { passwordHash: '0dfc6b27a925b6c5e47750a47906abc201310200dd01a82d6a683f96e4e41605', rank: 'Owner', permissions: 'ALL', lastSeen: null },
-  'GabrielDevCoO': { passwordHash: 'eaf5607c0ae46bd62bc68689a42b7a11e57d3f17ed60c26d399857d5bb59d6b8', rank: 'CoOwner', permissions: 'ALL', lastSeen: null },
-  'NeuraXIDev': { passwordHash: 'f74590b85aa9394eb675739ab1364e795059599bcc6bf31b1491268459ab02ee', rank: 'Developer', permissions: 'DEVELOPER', lastSeen: null },
-  'AprenticeDev': { passwordHash: '7d94c0ca4536bae28c3de2a369bfe303a3f2a8081196ed5dab0578769c321487', rank: 'Apprentice', permissions: 'APPRENTICE', lastSeen: null }
+  'ThéoDevO': { rank: 'Owner', permissions: 'ALL', lastSeen: null },
+  'GabrielDevCoO': { rank: 'CoOwner', permissions: 'ALL', lastSeen: null },
+  'NeuraXIDev': { rank: 'Developer', permissions: 'DEVELOPER', lastSeen: null },
+  'AprenticeDev': { rank: 'Apprentice', permissions: 'APPRENTICE', lastSeen: null }
 };
 
 const AUTH_MAX_ATTEMPTS = 5;
@@ -773,7 +773,7 @@ function handleOAuthCallback() {
     showNotification('OAuth Error', (provider ? provider.charAt(0).toUpperCase() + provider.slice(1) + ': ' : '') + (msg || 'Unknown error'), 'error');
     return false;
   }
-  apiRequest('/auth/me?token=' + encodeURIComponent(token)).then(function(res) {
+  apiRequest('/auth/me', { headers: { Authorization: 'Bearer ' + token } }).then(function(res) {
     if (res && res.success && res.user) {
       storeSession(token, res.user);
       applyServerUser(res);
@@ -852,7 +852,7 @@ window.requestRole = requestRole;
 /* Re-reads the account from the server so an approved request takes effect without signing in again */
 function refreshAccount(reopen) {
   if (!state.sessionToken || isLocalToken(state.sessionToken)) return Promise.resolve();
-  return apiRequest('/auth/me?token=' + encodeURIComponent(state.sessionToken)).then(function(res) {
+  return apiRequest('/auth/me').then(function(res) {
     if (!res || !res.success || !res.user) return;
     var before = state.currentUser ? state.currentUser.rank : 'User';
     applyServerUser(res);
@@ -889,7 +889,7 @@ function restoreSession() {
   }
   if (state.sessionToken && state.sessionExpiresAt > Date.now() && !isLocalToken(state.sessionToken)) {
     // Google/Discord accounts: the rank always comes from the server, never from what this browser stored
-    apiRequest('/auth/me?token=' + encodeURIComponent(state.sessionToken)).then(function(res) {
+    apiRequest('/auth/me').then(function(res) {
       if (res && res.success && res.user) {
         applyServerUser(res);
         updateAuthUI();
@@ -937,69 +937,33 @@ async function handleAuthSubmit() {
     return;
   }
   var code = document.getElementById('securityCodeInput').value;
-  var hashed = await sha256(code);
-  var SECURITY_CODE_HASH = 'bbf426ea8e5c0bf78035833c75064f60f810db695c3b4f16cecbe3ac5c20e957';
-  if (hashed !== SECURITY_CODE_HASH) {
+  var username = document.getElementById('usernameInput').value.trim();
+  var password = document.getElementById('passwordInput').value;
+  /* Credentials (and the security code) are verified ONLY by the server; nothing secret ships in this file. */
+  var login;
+  try {
+    login = await apiRequest('/auth/password', { method: 'POST', body: { username: username, password: password, code: code } });
+    if (!login || !login.success || !login.token || !login.user) throw new Error('API 500');
+  } catch (e) {
     _authAttempts++;
-    showNotification('Failed', 'Wrong code. ' + (AUTH_MAX_ATTEMPTS - _authAttempts) + ' attempt(s) left', 'error');
     if (_authAttempts >= AUTH_MAX_ATTEMPTS) {
       _authLockedUntil = Date.now() + AUTH_LOCKOUT_MS;
       logActivity('Security', 'Auth locked after too many failed attempts');
     }
-    return;
-  }
-  var username = document.getElementById('usernameInput').value.trim();
-  var password = document.getElementById('passwordInput').value;
-  var user = USERS[username];
-  if (!user) { showNotification('Failed', 'Invalid credentials', 'error'); return; }
-  var pwhash = await sha256(password);
-  if (pwhash !== user.passwordHash) {
-    _authAttempts++;
-    showNotification('Failed', 'Invalid credentials', 'error');
+    var msg = /API 429/.test(String(e && e.message)) ? 'Too many attempts. Try again later.'
+      : /API 4/.test(String(e && e.message)) ? 'Invalid credentials' : 'Login unavailable. Try again later.';
+    showNotification('Failed', msg, 'error');
     return;
   }
   _authAttempts = 0; _authLockedUntil = 0;
-  /* Server-first login: password staff receive the same signed token as Google/Discord
-     accounts — this is what lets Owner/CoOwner see and review the Access Requests list. */
-  try {
-    var login = await apiRequest('/auth/password', { method: 'POST', body: { username: username, password: password } });
-    if (!login || !login.success || !login.token || !login.user) throw new Error('API 500');
-    var srvUser = login.user;
-    storeSession(login.token, srvUser);
-    state.currentUser = { username: username, rank: srvUser.rank || user.rank, permissions: srvUser.permissions || user.permissions };
-    state.devModeActive = true;
-    document.getElementById('devToggle').classList.add('active');
-    USERS[username].lastSeen = Date.now();
-    closeAuthModal();
-    showNotification('Welcome!', 'Logged in as ' + username + ' (' + (srvUser.rank || user.rank) + ')', 'success');
-    logActivity('User Login', username + ' logged in');
-    updateAuthUI();
-    renderPage();
-    saveToFirestore();
-    return;
-  } catch (e) {
-    // 4xx from the server means the credentials were rejected — do not silently fall back.
-    if (/API 4/.test(String(e && e.message))) { showNotification('Failed', 'Invalid credentials', 'error'); return; }
-    // API offline (e.g. local preview) → keep the offline-capable local login below.
-  }
-  state.currentUser = { username: username, rank: user.rank, permissions: user.permissions };
+  var srvUser = login.user;
+  storeSession(login.token, srvUser);
+  state.currentUser = { username: username, rank: srvUser.rank, permissions: srvUser.permissions };
   state.devModeActive = true;
   document.getElementById('devToggle').classList.add('active');
-  USERS[username].lastSeen = Date.now();
-  var fakeToken = 'local_' + Date.now() + Math.random().toString(36).slice(2, 10);
-  storeSession(fakeToken, {
-    id: 'local_' + username,
-    username: username,
-    email: username,
-    name: username,
-    picture: null,
-    provider: 'local',
-    rank: user.rank,
-    permissions: user.permissions,
-    verified: true
-  });
+  if (USERS[username]) USERS[username].lastSeen = Date.now();
   closeAuthModal();
-  showNotification('Welcome!', 'Logged in as ' + username + ' (' + user.rank + ')', 'success');
+  showNotification('Welcome!', 'Logged in as ' + username + ' (' + srvUser.rank + ')', 'success');
   logActivity('User Login', username + ' logged in');
   updateAuthUI();
   renderPage();
@@ -1076,6 +1040,7 @@ function loadLocal() {
 async function apiRequest(path, options) {
   options = options || {};
   options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (!options.headers.Authorization && state.sessionToken && !isLocalToken(state.sessionToken)) options.headers.Authorization = 'Bearer ' + state.sessionToken;
   if (options.body && typeof options.body !== 'string') options.body = JSON.stringify(options.body);
   const res = await fetch('/api' + path, options);
   if (!res.ok) throw new Error('API ' + res.status);
@@ -1099,6 +1064,8 @@ async function saveToFirestore() {
   clearTimeout(_saveTimer); _saveTimer = null;
   _saving = true;
   saveLocal();                       // always keep a local copy so nothing is lost if the API is down
+  // Only signed-in staff may write the shared site state; everyone else keeps a local copy only.
+  if (!state.currentUser || !state.sessionToken || isLocalToken(state.sessionToken)) { _saving = false; return; }
   flashSaveIndicator('saving', 'Saving…');
   try {
     var saved = await apiRequest('/website-state/save', { method: 'POST', body: { data: persistable() } });

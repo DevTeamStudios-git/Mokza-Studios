@@ -11,9 +11,17 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Middleware
-app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// Same-origin by default. Set CORS_ORIGINS (comma-separated) to allow specific other origins.
+const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map((x) => x.trim()).filter(Boolean);
+app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : false }));
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+app.use(express.json({ limit: '6mb' })); // uploads are capped at 4 MB decoded (about 5.4 MB base64)
 
 // Rate limiting
 const limiter = rateLimit({
@@ -23,6 +31,14 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
 });
 app.use(limiter);
+
+// Reads are polled often, but still need an upper bound.
+app.use(rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  skip: (req) => !(req.method === 'GET' || req.method === 'HEAD'),
+  message: 'Too many requests from this IP, please try again later.',
+}));
 
 // Health check
 app.get('/api/health', (req, res) => {
