@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import rateLimit from 'express-rate-limit';
+import { checkSecret, describeSecret } from '../auth/secret.js';
 
 const router = express.Router();
 
@@ -870,22 +871,6 @@ const STAFF_ACCOUNTS = (() => {
 })();
 if (!Object.keys(STAFF_ACCOUNTS).length) console.warn('[Auth] STAFF_ACCOUNTS is not set: staff password login is disabled.');
 
-function checkSecret(input, stored) {
-  try {
-    stored = String(stored || '');
-    if (stored.indexOf('scrypt$') === 0) {
-      const parts = stored.split('$');
-      const want = Buffer.from(parts[2] || '', 'hex');
-      if (!want.length) return false;
-      const got = crypto.scryptSync(input, parts[1], want.length);
-      return crypto.timingSafeEqual(got, want);
-    }
-    const got = Buffer.from(crypto.createHash('sha256').update(input).digest('hex'));
-    const want = Buffer.from(stored);
-    return got.length === want.length && crypto.timingSafeEqual(got, want);
-  } catch (_) { return false; }
-}
-
 // brute-force brake on the login endpoint (per IP; best effort across serverless instances)
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { success: false, error: 'Too many attempts. Try again later.' } });
 
@@ -909,7 +894,13 @@ router.post('/auth/password', loginLimiter, async (req, res) => {
     const codeOk = !codeRequired || checkSecret(code, process.env.STAFF_SECURITY_CODE_HASH);
     if (!cfg || !ok || !codeOk) {
       // reason goes to the server log only (never the client, never any secret value)
-      console.warn('[Auth] staff login rejected:', !cfg ? 'unknown username (known: ' + Object.keys(STAFF_ACCOUNTS).length + ' accounts)' : !ok ? 'password does not match hash' : 'security code does not match STAFF_SECURITY_CODE_HASH');
+      const why = !cfg
+        ? 'unknown username "' + username.slice(0, 40) + '" (STAFF_ACCOUNTS holds ' + Object.keys(STAFF_ACCOUNTS).length + ' name(s): ' + Object.keys(STAFF_ACCOUNTS).join(', ') + ')'
+        : !ok
+          ? 'password does not match the stored hash for "' + staffName + '" — stored hash is ' + describeSecret(cfg.hash)
+          : 'security code does not match STAFF_SECURITY_CODE_HASH — stored hash is ' + describeSecret(process.env.STAFF_SECURITY_CODE_HASH);
+      // server log only: names and hash SHAPE, never a password, a code or any hash value
+      console.warn('[Auth] staff login rejected:', why);
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     const id = 'staff_' + staffName;
