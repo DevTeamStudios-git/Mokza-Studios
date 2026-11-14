@@ -12,6 +12,18 @@ Golden rules, for every step:
 
 ## 1. Run Mozora on your computer
 
+Every command in this guide runs from the **project folder**, the one that contains `package.json`
+(`Mokza Studios Website`), never from inside its `mozora` subfolder. Each new terminal starts
+somewhere else, so begin every terminal with:
+
+```powershell
+cd "C:\Users\gabet\Mokza Studios Website"
+```
+
+If you see `Cannot find module ...\mozora\server\index.js` or Vite reports
+`Failed to load url /mozora/web/main.tsx`, the terminal is in the `mozora` subfolder: run the `cd`
+above and start again.
+
 ```bash
 npm install
 ```
@@ -32,6 +44,10 @@ npm run mozora:api
 ```bash
 npx vite
 ```
+
+Stop the dev servers (Ctrl+C) when you are done. Vite currently listens on your whole network
+(`host: true` in `vite.config.js`) and has known dev-server vulnerabilities until the planned Vite
+upgrade, so do not leave it running on shared Wi-Fi.
 
 Open `http://localhost:5173/mozora/`. With the flag off you see "Mozora n'est pas encore activé sur
 ce site." To turn it on locally, set `MOZORA_ENABLED=1` for the API terminal and
@@ -63,7 +79,7 @@ npx playwright install chromium
 ```
 
 ```bash
-cd mozora/e2e && npx playwright test --config playwright.config.ts
+npm run mozora:e2e
 ```
 
 Success for each: it ends with `passed` or `clean` and exits without errors. If Playwright says a
@@ -107,8 +123,9 @@ untick **Production** and **Development**, keep only **Preview**:
 
 Do not add `MOZORA_DIRECT_URL` to Vercel at all: migrations never run from Vercel.
 
-Success: push any commit to the M0 branch; on the new preview,
-`/api/mozora/health` answers `{"status":"ok","database":"ok"}`.
+Success: on the next preview deployment (any pull request branch),
+`/api/mozora/health` answers `{"status":"ok","database":"ok"}`. Production is unaffected: it has
+none of these variables, so Mozora stays switched off there.
 
 ## 5. GitHub: secrets for CI
 
