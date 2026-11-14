@@ -1,0 +1,40 @@
+// Mozora data model (brief section 11). Everything lives in Postgres schema `mozora`.
+//
+// Rules that apply to every model added here:
+// - Host users are referenced by a TEXT `userId` (public.user_accounts.id). Never a foreign key to a
+//   host table, never a uuid.
+// - Timestamps are UTC timestamptz. Scores are integer hundredths, never floating point.
+// - Every table gets RLS enabled plus the single "mozora_app only" policy, added by hand in the
+//   migration SQL (Prisma cannot express RLS). scripts/check-migration-sql.mjs enforces both.
+//
+// Never run `prisma migrate dev`, `migrate reset` or `db push` against the shared production
+// database (D12). Development uses the dev project only.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  // Node ESM: compiled code must import "./x.js", not "./x.ts", to run on Vercel and plain Node.
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["mozora"]
+}
+
+// D2: server-side session behind the HttpOnly Mozora cookie. M0 ships the table so the migration
+// pipeline and the RLS check have something real to run on; the session endpoint arrives in M1.
+model MozoraSession {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)
+  lastSeenAt    DateTime  @default(now()) @db.Timestamptz(6)
+  stepUpAt      DateTime? @db.Timestamptz(6)
+  revokedAt     DateTime? @db.Timestamptz(6)
+  userAgentHash String?
+
+  @@index([userId, createdAt])
+  @@map("mozora_session")
+  @@schema("mozora")
+}
