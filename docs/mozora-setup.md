@@ -116,11 +116,10 @@ Switch projects in the Supabase dashboard and copy again.
 
 ## 4. Vercel: give Preview deployments their own settings
 
-Today every Vercel variable is scoped to Production only, so previews cannot sign in. Previews must
-use the dev project, never production.
+Previews must use the dev project ("Mozora"), never production. Every variable below is set for
+**Preview only**: when adding it, untick **Production** and **Development**.
 
-vercel.com > **mokzastudios** > **Settings** > **Environment Variables** > **Add**. For each row,
-untick **Production** and **Development**, keep only **Preview**:
+vercel.com > **mokzastudios** > **Settings** > **Environment Variables** > **Add New**.
 
 | Name | Value |
 |---|---|
@@ -128,12 +127,35 @@ untick **Production** and **Development**, keep only **Preview**:
 | `VITE_MOZORA_ENABLED` | `1` |
 | `MOZORA_DATABASE_URL` | the `MOZORA_DATABASE_URL` line from `mozora/.env.local` |
 | `AUTH_SECRET` | a NEW value, different from production: `node scripts/hash-password.js --secret` |
+| `SUPABASE_URL` | `https://tmdbnqhlxdtupnufwymi.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | dev project > **Project Settings** > **API Keys** > the **secret** key (`sb_secret_...`) |
+| `STAFF_ACCOUNTS` | test logins, made as described below |
+
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` give the preview's sign-in a database to save
+accounts in: the dev project's `user_accounts` and `role_requests` tables, which Mozora then reads.
+Without them, nothing can sign in on a preview.
+
+**Test logins for `STAFF_ACCOUNTS`.** Google and Discord cannot work on previews (their return
+address is fixed to the live domain), so previews use the staff password form. From the project
+folder run:
+
+```bash
+node scripts/make-staff-accounts.js
+```
+
+For each name it asks a password: type a NEW test password for the one or two accounts you want on
+previews (never a production password), and press Enter to skip the rest. It prints one line of
+JSON: paste that whole line as the value. CoOwner and Owner accounts see Mozora as an administrator; the others as members.
 
 Do not add `MOZORA_DIRECT_URL` to Vercel at all: migrations never run from Vercel.
 
-Success: on the next preview deployment (any pull request branch),
-`/api/mozora/health` answers `{"status":"ok","database":"ok"}`. Production is unaffected: it has
-none of these variables, so Mozora stays switched off there.
+**Variables only reach new deployments.** After adding or changing any of them, open vercel.com >
+**mokzastudios** > **Deployments**, pick the newest Preview, open its menu (three dots) and choose
+**Redeploy**. Then sign in on that preview with a test login and open `/mozora/`.
+
+Success: on the redeployed preview, `/api/mozora/health` answers
+`{"status":"ok","database":"ok"}`, and `/mozora/` shows "Connecté en tant que ..." with the access
+level. Production is unaffected: these variables are Preview-only.
 
 ## 5. GitHub: secrets for CI
 
