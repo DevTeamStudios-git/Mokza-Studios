@@ -1,28 +1,28 @@
 version: 2
 updates:
+  # npm: one weekly PR with every minor and patch update, grouped. Major versions are never proposed
+  # automatically: each one can change how the host or Mozora behaves (2026-11-14 examples: TypeScript 7
+  # silently turned off Vercel's type check; express-rate-limit 8 changes rate-limit keys) and gets
+  # its own deliberate PR with a characterization run.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+    open-pull-requests-limit: 3
     groups:
-      prisma:
-        patterns: ['prisma', '@prisma/*']
-      react:
-        patterns: ['react', 'react-dom', '@types/react', '@types/react-dom']
-      playwright:
-        patterns: ['@playwright/test', '@axe-core/playwright']
+      npm-minor-and-patch:
+        update-types: ['minor', 'patch']
     ignore:
-      # The host is on Vite 5 and Express 4; major upgrades are a separate, deliberate decision.
-      - dependency-name: vite
+      - dependency-name: '*'
         update-types: ['version-update:semver-major']
-      - dependency-name: '@vitejs/plugin-react'
-        update-types: ['version-update:semver-major']
-      - dependency-name: vitest
-        update-types: ['version-update:semver-major']
-      - dependency-name: express
-        update-types: ['version-update:semver-major']
+
+  # GitHub Actions: CI exercises every action on the PR itself, so majors are allowed, grouped in one PR.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+      day: monday
+    groups:
+      github-actions:
+        patterns: ['*']
