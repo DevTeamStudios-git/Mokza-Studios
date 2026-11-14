@@ -12,17 +12,10 @@ Golden rules, for every step:
 
 ## 1. Run Mozora on your computer
 
-Every command in this guide runs from the **project folder**, the one that contains `package.json`
-(`Mokza Studios Website`), never from inside its `mozora` subfolder. Each new terminal starts
-somewhere else, so begin every terminal with:
+Use `npm run ...` commands: npm always runs them from the project folder (the one that contains
+`package.json`, `Mokza Studios Website`), wherever your terminal is, even inside `mozora`.
 
-```powershell
-cd "C:\Users\gabet\Mokza Studios Website"
-```
-
-If you see `Cannot find module ...\mozora\server\index.js` or Vite reports
-`Failed to load url /mozora/web/main.tsx`, the terminal is in the `mozora` subfolder: run the `cd`
-above and start again.
+Once, after downloading or pulling changes:
 
 ```bash
 npm install
@@ -31,28 +24,43 @@ npm install
 Success: the last lines include `Generated Prisma Client`. If you see
 `npm warn allow-scripts`, that is expected; nothing else is needed.
 
-Start the three local servers, each in its own terminal:
+Then start two terminals.
+
+Terminal 1, the website and its API (Vite on port 5173, host API on port 3001):
 
 ```bash
-node server/index.js
+npm run dev
 ```
+
+Terminal 2, the Mozora API (port 3002):
 
 ```bash
 npm run mozora:api
 ```
 
-```bash
-npx vite
+Open `http://localhost:5173/mozora/`. With the flag off you see "Mozora n'est pas encore activé sur
+ce site."
+
+To see Mozora switched on, stop both terminals (Ctrl+C) and start them like this instead
+(PowerShell):
+
+```powershell
+$env:MOZORA_ENABLED='1'; $env:VITE_MOZORA_ENABLED='1'; npm run dev
 ```
 
-Stop the dev servers (Ctrl+C) when you are done. Vite currently listens on your whole network
-(`host: true` in `vite.config.js`) and has known dev-server vulnerabilities until the planned Vite
-upgrade, so do not leave it running on shared Wi-Fi.
+```powershell
+$env:MOZORA_ENABLED='1'; npm run mozora:api
+```
 
-Open `http://localhost:5173/mozora/`. With the flag off you see "Mozora n'est pas encore activé sur
-ce site." To turn it on locally, set `MOZORA_ENABLED=1` for the API terminal and
-`VITE_MOZORA_ENABLED=1` for the Vite terminal (in PowerShell: `$env:MOZORA_ENABLED='1'` before the
-command).
+The page then says "Connectez-vous sur le site Mokza Studios pour accéder à Mozora." Signing in
+locally needs the dev database logins from step 3.
+
+Stop the servers (Ctrl+C) when you are done: Vite listens on your whole network (`host: true` in
+`vite.config.js`), so do not leave it running on shared Wi-Fi.
+
+If you run raw commands such as `node server/index.js` or `npx vite` yourself, run them from the
+project folder (`cd "C:\Users\gabet\Mokza Studios Website"`). From the `mozora` subfolder they fail
+with `Cannot find module ...\mozora\server\index.js` or `Failed to load url /mozora/web/main.tsx`.
 
 ## 2. Run the checks
 
