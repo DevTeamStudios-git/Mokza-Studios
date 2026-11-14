@@ -1,0 +1,30 @@
+name: Bug
+description: Something in Mozora or the site does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Never paste member names, grades, observations or any personal data here. Describe the problem with fictional examples.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Mozora member app, Mozora Admin Portal, Mozora API, Host website, Workspace, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where (production, preview URL, local) and browser

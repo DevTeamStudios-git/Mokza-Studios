@@ -1,0 +1,15 @@
+{
+  "app.title": "Mozora",
+  "app.tagline": "Studio monthly quizzes",
+  "app.disabled": "Mozora is not enabled on this site yet.",
+  "status.loading": "Loading...",
+  "status.signedOut": "Sign in on the Mokza Studios site to use Mozora.",
+  "status.signedIn": "Signed in as {name}.",
+  "status.unavailable": "Mozora is temporarily unavailable. Try again in a few minutes.",
+  "capability.member": "Member",
+  "capability.trainer": "Trainer",
+  "capability.fullAdmin": "Administrator",
+  "capability.label": "Access: {capability}",
+  "action.backToSite": "Back to the site",
+  "shell.empty": "Cohorts and quizzes arrive in a later release."
+}

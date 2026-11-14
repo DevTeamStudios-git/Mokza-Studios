@@ -1,0 +1,15 @@
+{
+  "app.title": "Mozora",
+  "app.tagline": "Quiz mensuels du studio",
+  "app.disabled": "Mozora n'est pas encore activé sur ce site.",
+  "status.loading": "Chargement...",
+  "status.signedOut": "Connectez-vous sur le site Mokza Studios pour accéder à Mozora.",
+  "status.signedIn": "Connecté en tant que {name}.",
+  "status.unavailable": "Mozora est temporairement indisponible. Réessayez dans quelques minutes.",
+  "capability.member": "Membre",
+  "capability.trainer": "Formateur",
+  "capability.fullAdmin": "Administrateur",
+  "capability.label": "Accès : {capability}",
+  "action.backToSite": "Retour au site",
+  "shell.empty": "Les cohortes et les quiz arriveront dans une prochaine version."
+}

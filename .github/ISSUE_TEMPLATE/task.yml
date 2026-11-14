@@ -1,0 +1,21 @@
+name: Task
+description: A planned piece of work, usually part of a Mozora milestone.
+labels: [task]
+body:
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      placeholder: M1
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal and acceptance criteria
+    validations:
+      required: true
+  - type: checkboxes
+    id: host
+    attributes:
+      label: Host impact
+      options:
+        - label: This touches host files (only those on the allowed list, each in its own host commit)

@@ -1,0 +1,8 @@
+# Security-critical paths need the owner's review (brief section 15).
+/server/auth/                  @Gabrieldevgit
+/server/mozora/policy/         @Gabrieldevgit
+/server/mozora/config/roleMap.ts @Gabrieldevgit
+/mozora/prisma/                @Gabrieldevgit
+/mozora/db/                    @Gabrieldevgit
+/vercel.json                   @Gabrieldevgit
+/.github/                      @Gabrieldevgit

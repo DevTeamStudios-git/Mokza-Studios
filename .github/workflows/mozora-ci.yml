@@ -1,0 +1,175 @@
+# Mozora CI (brief section 15). Runs on pull requests that touch Mozora or the host files Mozora
+# depends on; website-only changes skip it.
+#
+# Secrets and variables (Settings > Secrets and variables > Actions). Jobs that need one are skipped,
+# not failed, while it is missing, so the workflow is green on a fresh repository:
+#   secret   MOZORA_DEV_ADMIN_URL        dev project, role postgres, direct connection (db-safety job)
+#   secret   MOZORA_DEV_DIRECT_URL       dev project, role mozora_migrator, ?schema=mozora (migrate deploy)
+#   variable MOZORA_DEV_SUPABASE_URL     https://<dev-ref>.supabase.co (data-api job)
+#   variable MOZORA_DEV_PUBLISHABLE_KEY  dev project publishable key (public by design)
+# Nothing here ever points at the production database.
+name: Mozora CI
+
+on:
+  pull_request:
+    paths:
+      - 'mozora/**'
+      - 'server/mozora/**'
+      - 'server/auth/**'
+      - 'api/mozora.ts'
+      - 'docs/mozora-*'
+      - '.github/**'
+      - 'vercel.json'
+      - 'vite.config.js'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mozora-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install (runs prisma generate)
+        run: npm ci
+
+      - name: No emoji in Mozora files
+        run: node mozora/scripts/lint-no-emoji.mjs
+
+      - name: No emoji in the PR title and commit messages
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node mozora/scripts/lint-no-emoji.mjs --text "$PR_TITLE"
+          git log --format=%B "$BASE_SHA..$HEAD_SHA" | node mozora/scripts/lint-no-emoji.mjs --stdin
+
+      - name: i18n key parity
+        run: node mozora/scripts/check-i18n.mjs
+
+      - name: Typecheck
+        run: npm run mozora:typecheck
+
+      - name: Unit tests (policy, route manifest, flag, guards)
+        run: npm run mozora:test
+
+      - name: Prisma schema is valid
+        run: npm run mozora:prisma:validate
+
+      - name: Migrations stay inside schema mozora
+        run: npm run mozora:migrations:check
+
+      - name: Web build
+        run: npm run build
+
+      - name: Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright, flag off (host unchanged, Mozora absent)
+        working-directory: mozora/e2e
+        env:
+          MOZORA_ENABLED: '0'
+        run: npx playwright test --config playwright.config.ts
+
+      - name: Playwright, flag on
+        working-directory: mozora/e2e
+        env:
+          MOZORA_ENABLED: '1'
+        run: npx playwright test --config playwright.config.ts
+
+      - name: Upload screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mozora-playwright
+          path: |
+            mozora/e2e/test-results
+            mozora/e2e/playwright-report
+          retention-days: 14
+
+  db-safety:
+    name: Shared-database safety (dev project)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ADMIN_URL: ${{ secrets.MOZORA_DEV_ADMIN_URL }}
+      MOZORA_DIRECT_URL: ${{ secrets.MOZORA_DEV_DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip when the dev database secret is not configured
+        id: gate
+        run: |
+          if [ -z "$ADMIN_URL" ]; then
+            echo "MOZORA_DEV_ADMIN_URL is not set; skipping the database checks."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install psql
+        if: steps.gate.outputs.run == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Roles and schema (idempotent)
+        if: steps.gate.outputs.run == 'true'
+        run: psql "$ADMIN_URL" -v ON_ERROR_STOP=1 -q -f mozora/db/10-roles-and-schema.sql
+
+      - name: D12 safety checks
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          psql "$ADMIN_URL" -v ON_ERROR_STOP=1 -q -A -F '|' -t -f mozora/db/tests/d12-safety.sql > d12.txt
+          cat d12.txt
+          if grep -q '|f$' d12.txt; then echo "A D12 safety check failed."; exit 1; fi
+          test "$(grep -c '|t$' d12.txt)" -ge 26
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true' && env.MOZORA_DIRECT_URL != ''
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Apply migrations to the dev project as mozora_migrator
+        if: steps.gate.outputs.run == 'true' && env.MOZORA_DIRECT_URL != ''
+        run: |
+          npm ci
+          npx prisma migrate deploy --config mozora/prisma/prisma.config.ts
+
+  data-api:
+    name: Data API cannot reach mozora (dev project)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: ${{ vars.MOZORA_DEV_SUPABASE_URL }}
+      PUBLISHABLE_KEY: ${{ vars.MOZORA_DEV_PUBLISHABLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Publishable key cannot read or write Mozora or host identity data
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$PUBLISHABLE_KEY" ]; then
+            echo "Dev project variables are not set; skipping."
+            exit 0
+          fi
+          node mozora/db/tests/data-api-check.mjs

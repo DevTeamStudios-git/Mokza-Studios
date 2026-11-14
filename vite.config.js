@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { copyFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { mozoraVitePlugins } from './mozora/vite-plugin.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,6 +14,11 @@ export default defineConfig({
     port: 5173,
     host: true,
     proxy: {
+      // Mozora's API runs on its own port locally (npm run mozora:api); must precede the /api/ rule.
+      '^/api/mozora/': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
       '^/api/': {
         target: 'http://localhost:3001',
         changeOrigin: true,
@@ -36,11 +42,13 @@ export default defineConfig({
         'workspace-notepad': './workspace/mokza-notepad.html',
         'workspace-passwords': './workspace/mokza-passwords.html',
         'workspace-snippets': './workspace/mokza-snippets.html',
+        mozora: './mozora/index.html',
       },
     },
     assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.svg', '**/*.gif'],
   },
   plugins: [
+    ...mozoraVitePlugins(),
     {
       name: 'copy-badges',
       closeBundle() {

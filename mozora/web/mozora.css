@@ -1,0 +1,63 @@
+/* Mozora shell styles. Built on the host tokens from assets/style.css (brief section 12); Mozora adds
+   only --mz-* tokens and never restyles host classes. Status text tokens are AA-safe in both themes. */
+:root {
+  --mz-space-1: 4px;
+  --mz-space-2: 8px;
+  --mz-space-3: 16px;
+  --mz-space-4: 24px;
+  --mz-space-5: 40px;
+  --mz-focus: var(--accent-primary);
+}
+
+/* Mozora owns its page, so it sets its own base instead of inheriting the host's body rules. */
+html,
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.mz-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--mz-space-5) var(--mz-space-3);
+  color: var(--text-primary);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.mz-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 var(--mz-space-1);
+}
+
+.mz-header p,
+.mz-muted {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.mz-card {
+  margin: var(--mz-space-4) 0;
+  padding: var(--mz-space-4);
+  background: var(--bg-card);
+  border: 1px solid var(--ov-08);
+  border-radius: var(--radius-md);
+}
+
+.mz-card p + p {
+  margin-top: var(--mz-space-2);
+}
+
+.mz-link {
+  color: var(--accent-primary);
+  text-underline-offset: 3px;
+}
+
+.mz-link:focus-visible,
+.mz-shell :focus-visible {
+  outline: 3px solid var(--mz-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
