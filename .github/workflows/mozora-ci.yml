@@ -42,7 +42,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -142,7 +142,7 @@ jobs:
           if grep -q '|f$' d12.txt; then echo "A D12 safety check failed."; exit 1; fi
           test "$(grep -c '|t$' d12.txt)" -ge 26
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.gate.outputs.run == 'true' && env.MOZORA_DIRECT_URL != ''
         with:
           node-version: 24
@@ -163,7 +163,7 @@ jobs:
       PUBLISHABLE_KEY: ${{ vars.MOZORA_DEV_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Publishable key cannot read or write Mozora or host identity data

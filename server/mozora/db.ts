@@ -11,14 +11,23 @@ export class MozoraUnavailable extends Error {
   }
 }
 
-let client: InstanceType<typeof PrismaClient> | null = null;
+// Small pool per serverless instance: Mozora shares the project's connection limits with the host.
+function createClient(url: string) {
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 3 }) });
+}
 
-export function prisma(): InstanceType<typeof PrismaClient> {
+// The client type is inferred from the constructor call. Annotating it as
+// InstanceType<typeof PrismaClient> picks the generic defaults (every log level), which does not match
+// a client built without a `log` option; strict and non-strict compilers disagree on it.
+type MozoraPrisma = ReturnType<typeof createClient>;
+
+let client: MozoraPrisma | null = null;
+
+export function prisma(): MozoraPrisma {
   if (client) return client;
   const url = process.env.MOZORA_DATABASE_URL;
   if (!url) throw new MozoraUnavailable('MOZORA_DATABASE_URL is not set');
-  // Small pool per serverless instance: Mozora shares the project's connection limits with the host.
-  client = new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 3 }) });
+  client = createClient(url);
   return client;
 }
 
