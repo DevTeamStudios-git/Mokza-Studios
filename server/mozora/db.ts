@@ -3,6 +3,8 @@
 // and the API answers 503. There is no file or memory fallback for member data (brief section 6).
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../mozora/generated/prisma/client.js';
+import { connectionConfig, errorCode } from './dbConnection.js';
+import { SUPABASE_ROOT_CA } from './supabaseCa.js';
 
 export class MozoraUnavailable extends Error {
   constructor(message: string) {
@@ -11,9 +13,19 @@ export class MozoraUnavailable extends Error {
   }
 }
 
-// Small pool per serverless instance: Mozora shares the project's connection limits with the host.
+// Small pool per serverless instance (Mozora shares the project's connection limits with the host),
+// encrypted and verified against Supabase's root certificate (see dbConnection.ts).
 function createClient(url: string) {
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 3 }) });
+  return new PrismaClient({ adapter: new PrismaPg(connectionConfig(url, SUPABASE_ROOT_CA)) });
+}
+
+// Fail closed, but leave a trace: the error code only (never the message, URL or data), so an
+// unreachable database can be diagnosed from the function logs.
+function unavailable(what: string, err: unknown): MozoraUnavailable {
+  const cause = err && typeof err === 'object' ? (err as { cause?: unknown }).cause : undefined;
+  const code = errorCode(cause) !== 'unknown' ? errorCode(cause) : errorCode(err);
+  console.error(`[mozora] ${what}: ${code}`);
+  return new MozoraUnavailable(what);
 }
 
 // The client type is inferred from the constructor call. Annotating it as
@@ -36,7 +48,7 @@ export async function pingDatabase(): Promise<void> {
     await prisma().$queryRaw`select 1`;
   } catch (err) {
     if (err instanceof MozoraUnavailable) throw err;
-    throw new MozoraUnavailable('database unreachable');
+    throw unavailable('database unreachable', err);
   }
 }
 
@@ -51,7 +63,7 @@ export async function findHostAccount(id: string): Promise<HostIdentity | null> 
       select id, name, email, rank from public.user_accounts where id = ${id} limit 1`;
   } catch (err) {
     if (err instanceof MozoraUnavailable) throw err;
-    throw new MozoraUnavailable('identity lookup failed');
+    throw unavailable('identity lookup failed', err);
   }
   return rows[0] ?? null;
 }
