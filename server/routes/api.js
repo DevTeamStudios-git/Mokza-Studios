@@ -4,7 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import rateLimit from 'express-rate-limit';
-import { checkSecret, describeSecret } from '../auth/secret.js';
+import {
+  RANK_LEVEL, higherRank, AUTH_ENABLED, TOKEN_TTL_MS, sign, verify, bearerToken,
+  accountToUser, dbGetAccount, dbSaveAccount, upsertLoginAccount, authedAccount,
+  checkSecret, describeSecret,
+} from '../auth/index.js';
 
 const router = express.Router();
 
@@ -20,22 +24,9 @@ const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'https://developp
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || '';
 const DISCORD_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://developpement-team.vercel.app/api/auth/discord/callback';
-// Serverless functions don't share memory, so state and sessions are signed tokens, not Maps.
-const IS_PROD = !!process.env.VERCEL || process.env.NODE_ENV === 'production';
-// No fallback to other secrets or a public literal: a guessable signing key means forgeable Owner tokens.
-const AUTH_SECRET = process.env.AUTH_SECRET || (IS_PROD ? '' : crypto.randomBytes(32).toString('hex'));
-// Without a strong secret, sign-in is switched off (public read endpoints keep working) instead of crashing the API.
-const AUTH_ENABLED = AUTH_SECRET.length >= 32;
-if (!AUTH_ENABLED) console.error('[Auth] AUTH_SECRET is missing or shorter than 32 chars: sign-in and all staff-only routes are DISABLED. Generate one with: node scripts/hash-password.js --secret');
-else if (!process.env.AUTH_SECRET) console.warn('[Auth] AUTH_SECRET not set: using a random per-process secret (sessions reset on restart). Dev only.');
-
 try { fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true }); } catch (_) {}
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
-function bearerToken(req) {
-  const h = String(req.headers.authorization || '');
-  return /^Bearer /i.test(h) ? h.slice(7).trim() : null;
-}
 // Resolves the caller's CURRENT account (and rank) from the database; null if not signed in.
 async function softAuth(req) {
   try { return await authedAccount(req); } catch (_) { return null; }
@@ -757,16 +748,6 @@ router.get('/chat-ids', async (req, res) => {
 // OAUTH (Google + Discord) — stateless: works on Vercel serverless
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const b64u = (b) => Buffer.from(b).toString('base64url');
-const sign = (payload) => { if (!AUTH_ENABLED) throw new Error('auth disabled');  const body = b64u(JSON.stringify(payload)); return body + '.' + crypto.createHmac('sha256', AUTH_SECRET).update(body).digest('base64url'); };
-function verify(tok) {
-  if (!AUTH_ENABLED) return null;
-  if (!tok || typeof tok !== 'string' || tok.indexOf('.') < 0) return null;
-  const [body, sig] = tok.split('.');
-  const good = crypto.createHmac('sha256', AUTH_SECRET).update(body).digest('base64url');
-  if (sig.length !== good.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(good))) return null;
-  try { const p = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')); return p.exp && p.exp > Date.now() ? p : null; } catch (_) { return null; }
-}
 const generateState = () => crypto.randomBytes(16).toString('hex');
 const generateCodeVerifier = () => crypto.randomBytes(32).toString('base64url');
 const sha256Base64Url = (str) => crypto.createHash('sha256').update(str).digest('base64url');
@@ -794,56 +775,8 @@ function takeSession(req, res, provider, state) {
 // "Verified" is NOT requestable here; it is decided separately by the owners.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const RANK_LEVEL = { User: -1, Apprentice: 0, Developer: 1, CoOwner: 2, Owner: 3 };
 const REQUESTABLE_RANKS = ['Apprentice', 'Developer'];
-const RANK_PERMISSIONS = { User: 'USER', Apprentice: 'APPRENTICE', Developer: 'DEVELOPER', CoOwner: 'ALL', Owner: 'ALL' };
-// Optional: emails in this env var become Owner on sign-in, so someone can approve the first requests.
-const BOOTSTRAP_OWNER_EMAILS = (process.env.BOOTSTRAP_OWNER_EMAILS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
-const ACCOUNTS_FILE = path.resolve(process.cwd(), 'server', 'data', 'accounts.json');
 const ROLE_REQUESTS_FILE = path.resolve(process.cwd(), 'server', 'data', 'role-requests.json');
-
-function accountToUser(a) {
-  const rank = RANK_LEVEL[a.rank] !== undefined ? a.rank : 'User';
-  return {
-    id: a.id, username: a.email || a.name || a.id, email: a.email, name: a.name, picture: a.picture,
-    provider: a.provider, rank, permissions: RANK_PERMISSIONS[rank], verified: false,
-  };
-}
-
-async function dbGetAccount(id) {
-  if (supabase) {
-    const { data, error } = await supabase.from('user_accounts').select('*').eq('id', id).maybeSingle();
-    if (error) throw error;
-    return data || null;
-  }
-  return readJson(ACCOUNTS_FILE, []).find((a) => a.id === id) || null;
-}
-
-async function dbSaveAccount(acc) {
-  if (supabase) {
-    const { data, error } = await supabase.from('user_accounts').upsert([acc], { onConflict: 'id' }).select().single();
-    if (error) throw error;
-    return data;
-  }
-  const all = readJson(ACCOUNTS_FILE, []);
-  const i = all.findIndex((a) => a.id === acc.id);
-  if (i >= 0) all[i] = { ...all[i], ...acc }; else all.push(acc);
-  writeJson(ACCOUNTS_FILE, all);
-  return i >= 0 ? all[i] : acc;
-}
-
-// First sign-in creates a plain "User". Later sign-ins keep whatever rank the account has earned.
-async function upsertLoginAccount(profile) {
-  const existing = await dbGetAccount(profile.id);
-  const email = (profile.email || '').toLowerCase();
-  let rank = existing ? existing.rank : 'User';
-  if (email && profile.verified === true && BOOTSTRAP_OWNER_EMAILS.indexOf(email) >= 0 && RANK_LEVEL[rank] < RANK_LEVEL.Owner) rank = 'Owner';
-  return dbSaveAccount({
-    id: profile.id, email: profile.email || null, name: profile.name || null, picture: profile.picture || null,
-    provider: profile.provider, rank, last_login_at: new Date().toISOString(),
-    ...(existing ? {} : { created_at: new Date().toISOString() }),
-  });
-}
 
 /* ── STAFF PASSWORD LOGIN ──────────────────────────────────────────────────────────
  * Owner/CoOwner/Developer staff sign in with a password (legacy dev-mode). Those
@@ -873,8 +806,6 @@ if (!Object.keys(STAFF_ACCOUNTS).length) console.warn('[Auth] STAFF_ACCOUNTS is 
 
 // brute-force brake on the login endpoint (per IP; best effort across serverless instances)
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: { success: false, error: 'Too many attempts. Try again later.' } });
-
-const higherRank = (a, b) => ((RANK_LEVEL[a] === undefined ? -1 : RANK_LEVEL[a]) >= (RANK_LEVEL[b] === undefined ? -1 : RANK_LEVEL[b]) ? a : b);
 
 // POST /api/auth/password { username, password } → signed session for staff accounts
 // login endpoints answer 503 (not a crash) while the server is not configured
@@ -911,7 +842,7 @@ router.post('/auth/password', loginLimiter, async (req, res) => {
       provider: 'password', rank, last_login_at: new Date().toISOString(),
       ...(existing ? {} : { created_at: new Date().toISOString() }),
     });
-    const token = sign({ uid: acc.id, exp: Date.now() + 90 * 24 * 3600 * 1000 });
+    const token = sign({ uid: acc.id, exp: Date.now() + TOKEN_TTL_MS });
     return res.json({ success: true, token, user: accountToUser(acc) });
   } catch (err) {
     console.error('[API] POST auth/password error:', err.message);
@@ -922,19 +853,8 @@ router.post('/auth/password', loginLimiter, async (req, res) => {
 async function finishLogin(res, profile, provider, ret) {
   const acc = await upsertLoginAccount({ ...profile, provider });
   const user = accountToUser(acc);
-  const token = sign({ uid: acc.id, exp: Date.now() + 90 * 24 * 3600 * 1000 });
+  const token = sign({ uid: acc.id, exp: Date.now() + TOKEN_TTL_MS });
   res.redirect((ret || '/') + '#?oauth=success&token=' + encodeURIComponent(token) + '&provider=' + provider + '&user=' + encodeURIComponent(user.username));
-}
-
-// Resolves the signed token to the account's CURRENT rank from the database (never trusts rank stored in the token).
-async function authedAccount(req) {
-  const p = verify(bearerToken(req));
-  if (!p) return null;
-  const uid = p.uid || (p.user && p.user.id); // tokens issued before accounts existed carried the whole user
-  if (!uid) return null;
-  let acc = await dbGetAccount(uid);
-  if (!acc && p.user) acc = await upsertLoginAccount({ ...p.user, provider: p.user.provider || 'google' });
-  return acc;
 }
 
 async function dbListRequests({ status, accountId } = {}) {
