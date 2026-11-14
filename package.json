@@ -7,18 +7,44 @@
     "dev": "concurrently \"vite\" \"node server/index.js\"",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "postinstall": "prisma generate --config mozora/prisma/prisma.config.ts",
+    "mozora:api": "tsx server/mozora/dev-server.ts",
+    "mozora:test": "vitest run --config mozora/vitest.config.ts",
+    "mozora:typecheck": "tsc -p mozora/tsconfig.server.json && tsc -p mozora/tsconfig.web.json && tsc -p mozora/tsconfig.e2e.json",
+    "mozora:lint": "node mozora/scripts/lint-no-emoji.mjs && node mozora/scripts/check-i18n.mjs",
+    "mozora:prisma:validate": "prisma validate --config mozora/prisma/prisma.config.ts",
+    "mozora:migrations:check": "node mozora/scripts/check-migration-sql.mjs",
+    "mozora:e2e": "playwright test --config mozora/e2e/playwright.config.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@supabase/supabase-js": "^2.45.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "express-rate-limit": "^7.3.1"
+    "express-rate-limit": "^7.3.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1",
+    "@types/express": "^4.17.25",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/supertest": "^7.2.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^8.2.2",
-    "vite": "^5.3.0"
+    "prisma": "^7.10.1",
+    "supertest": "^7.3.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^5.3.0",
+    "vitest": "^3.2.7"
   },
   "engines": {
     "node": ">=18.0.0"
